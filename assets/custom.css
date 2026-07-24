@@ -1,0 +1,20 @@
+@font-face {
+    font-family: Lexend;
+    src: url("lexendVariable.ttf")
+}
+
+.ag-theme-alpine.compact {
+    --ag-grid-size: 4px;
+}
+
+/* Hide floating filter button */
+.ag-floating-filter-button {
+    display: none !important;
+}
+
+.mantine-Notification-title {
+    font-weight: bold;
+}
+.mantine-Notification-description {
+    color: black;
+}

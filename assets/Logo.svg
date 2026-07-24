@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="100%" height="100%" viewBox="0 0 388 68" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+    <g transform="matrix(1,0,0,1,-1,-165)">
+        <g id="ArtBoard4" transform="matrix(1.821596,0,0,0.523077,-2.643192,126.292308)">
+            <rect x="2" y="74" width="213" height="130" style="fill:none;"/>
+            <g transform="matrix(0.916895,0,0,3.193054,-24.643974,-162.10753)">
+                <g transform="matrix(50,0,0,50,260.542209,112.5008)">
+                </g>
+                <text x="64.242px" y="112.501px" style="font-family:'Gogh-ExtraBold', 'Gogh';font-weight:800;font-size:50px;">e<tspan x="92.142px 119.042px 144.692px 172.692px 192.742px 227.742px " y="112.501px 112.501px 112.501px 112.501px 112.501px 112.501px ">akerDB</tspan></text>
+            </g>
+            <g transform="matrix(0.761341,-1.77932,0.193451,1.003849,-61.207351,144.181844)">
+                <path d="M67.227,172.646C61.871,163.105 59.848,144.949 62.494,129.374C65.582,110.808 67.838,81.922 67.614,71.997L75.764,71.997C74.544,94.099 75.492,106.501 78.08,109.264C79.474,110.576 81.151,111.612 82.595,114.171C88.449,124.547 89.577,144.042 85.147,161.477C80.717,178.912 73.431,183.651 67.577,173.275C67.441,173.034 67.227,172.646 67.227,172.646ZM69.582,154.722C72.654,160.167 76.29,158.182 78.463,149.629C80.636,141.076 79.954,131.438 76.882,125.992C73.81,120.547 70.174,122.532 68.001,131.085C65.827,139.638 66.551,149.35 69.582,154.722Z" style="fill:rgb(0,131,227);"/>
+            </g>
+        </g>
+    </g>
+</svg>

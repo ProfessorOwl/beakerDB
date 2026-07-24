@@ -1,0 +1,12 @@
+Uni Mainz Lager Excel/
+.DS_Store
+.vscode/
+.venv/
+__pycache__
+Chemikaliendatenbank Aktuell .accdb
+Chemikaliendatenbank.code-workspace
+Gestis Liste.xlsx
+Gestis-Liste.csv
+Testdaten/
+current.sqlite
+assets/Logo.af*
