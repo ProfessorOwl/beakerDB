@@ -79,10 +79,10 @@ def get_callbacks(app):
                 "",
                 "",
                 "",
-                True,  # Blende die Buttons Speichern und Löschen aus
-                True,
-                True,
-                "flex",
+                True,  # Blende den Speicher-Button aus
+                True,  # Blende den Löschen-Button aus
+                True,  # Blende "inputContainer" aus
+                "flex",  # Blende den Platzhalter ein
             )
         barcode = rows[0].get("Barcode", "")
         return (
@@ -979,7 +979,7 @@ def get_callbacks(app):
         prevent_initial_call=False,
     )
 
-    # Search for the string that the scanListener returns after firing and select the first available entry.
+    # Search for the string that the scanListener returns after firing and select the first available entry
     @app.callback(
         Output("mainGrid", "filterModel"),
         Output("mainGrid", "selectedRows"),
@@ -997,6 +997,7 @@ def get_callbacks(app):
         ):
             raise PreventUpdate
         barcode = event.get("detail").get("scanCode")
+
         filter = {
             "Barcode": {
                 "filterType": "text",

@@ -93,13 +93,8 @@ fensterLinks = html.Div(
                 },
             ],
             defaultColDef={
-                "filter": "agTextColumnFilter",
+                "filter": True,  # In custom.css ist ebenso der Filterbutton ausgeblendet, sodass nur die Suchzeile angezeigt wird
                 "floatingFilter": True,
-                "filterParams": {
-                    # Beschränke die Filteroptionen der Spalten auf diese 4 Optionen
-                    "filterOptions": ["contains"],
-                    "maxNumConditions": 0,  # Blende weitere Suchkonditionen aus
-                },
             },
             style={  # Passe die Größe an das Fenster an, ziehe die anderen Elementhöhen ab
                 "height": "calc(100vh - 150px)",
@@ -113,7 +108,6 @@ fensterLinks = html.Div(
                 "icons": {  # Vertausche die Richtung der Pfeile für das Sortieren, damit der Pfeil runterzeigt, wenn von A->Z sortiert wird
                     "sortAscending": "\u2193",  # ↓
                     "sortDescending": "\u2191",  # ↑
-                    "filter": "",
                 },
                 "localeText": {
                     "filterOoo": "Filter...",
