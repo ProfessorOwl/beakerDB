@@ -219,22 +219,37 @@ fensterRechts = [
                                 comp.NumberInput(  # Füllmenge
                                     "input-füllmenge",
                                     "Füllmenge",
-                                    w="67%",
-                                ),
-                                dmc.Select(
-                                    id="input-mengeneinheit",
-                                    w="30%",
-                                    value="1",
-                                    allowDeselect=False,
-                                    data=functions.generateSelectData(
-                                        functions.Mengeneinheiten,
-                                        ["mengeneinheit_id", "mengeneinheit"],
+                                    w="100%",
+                                    rightSection=dmc.Select(
+                                        id="input-mengeneinheit",
+                                        value="1",
+                                        allowDeselect=False,
+                                        data=functions.generateSelectData(
+                                            functions.Mengeneinheiten,
+                                            ["mengeneinheit_id", "mengeneinheit"],
+                                        ),
+                                        w=60,
                                     ),
+                                    className="mengeneinheit",
+                                ),
+                                dmc.Sparkline(
+                                    id="füllmenge_sparkline",
+                                    curveType="linear",
+                                    data=[],
+                                    fillOpacity=0.5,
+                                    withGradient=True,
+                                    h=36,
+                                    w="40%",
+                                    display=None,
+                                    flex="1 0 auto",
                                 ),
                             ],
                             justify="space-between",
                             align="end",
-                            gap=0,
+                            wrap="nowrap",
+                            gap="xs",
+                            grow=True,
+                            preventGrowOverflow=False,
                         ),
                         comp.DateInput(
                             "input-kaufdatum", "Kaufdatum", "input-kaufdatum-heute"

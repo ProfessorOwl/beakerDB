@@ -13,10 +13,12 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import DeclarativeBase, Session
 from sqlalchemy.engine import Engine
-from sqlalchemy import event
+from sqlalchemy.dialects.sqlite import JSON, DATE
+from sqlalchemy import event, text
 from pathlib import Path
 import shutil
 import datetime as dt
+import json
 
 engine = create_engine("sqlite:///current.sqlite")
 
@@ -58,7 +60,7 @@ class Inventar(Base):
     summenformel = Column("Summenformel", String())
     raum_id = Column("Raum_ID", ForeignKey("räume.Raum_ID"))
     lieferant_id = Column("Lieferant_ID", ForeignKey("lieferanten.Lieferant_ID"))
-    füllmenge = Column("Füllmenge", Float())
+    füllmenge = Column("Füllmenge", String())
     mengeneinheit_id = Column(
         "Mengeneinheit_ID", ForeignKey("mengeneinheiten.Mengeneinheit_ID")
     )
@@ -376,7 +378,7 @@ def getExistingData(id: str) -> dict[str, str]:
 
     if entryGestis and entryInventory:
         raise LookupError(
-            "entry is in both the inventory as well as the GESTIS table. Use unique identifiers for both tables!"
+            "Entry is in both the inventory as well as the GESTIS table. Use unique identifiers for both tables!"
         )
 
     entry = entryGestis or entryInventory

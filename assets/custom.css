@@ -18,3 +18,7 @@
 .mantine-Notification-description {
     color: black;
 }
+
+.mengeneinheit .mantine-NumberInput-section {
+    width: 60px
+}
