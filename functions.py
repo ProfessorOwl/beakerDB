@@ -186,7 +186,7 @@ def deleteInInventory(barcode: str):
 def updateInInventory(
     barcode,
     columnsSelect: list[str],
-    values: list[int | float | str],
+    values: list[None | int | float | str],
 ):
     """Update eine Zeile in der Inventartabelle mit Werten in den entsprechenden Spalten."""
     if len(columnsSelect) != len(values):

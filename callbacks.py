@@ -106,7 +106,6 @@ def get_callbacks(app):
         else:
             füllmenge_last_entry = füllmenge_raw
 
-        print(füllmenge_data)
         return (
             barcode,
             füllmenge_last_entry,
@@ -260,17 +259,17 @@ def get_callbacks(app):
                     color="yellow.3",
                 )
             )
-
+        füllmenge_data = []
         # Lade die historischen Einträge der Füllmenge und ergänze die neu eingetragene Füllmenge, falls sie nicht schon im Array unter diesem Datum vorhanden ist.
         füllmenge_raw = functions.selectInInventory(barcode, "füllmenge")
         if len(füllmenge_raw) != 0:
             füllmenge_history = json.loads(füllmenge_raw)
             if [zuletzt_geprüft, füllmenge] not in füllmenge_history:
                 füllmenge_history.append([zuletzt_geprüft, füllmenge])
+            füllmenge_data = [i[1] for i in füllmenge_history]
+            füllmenge_history = json.dumps(füllmenge_history)
         else:
-            füllmenge_history = füllmenge_raw
-
-        füllmenge_data = [i[1] for i in füllmenge_history]
+            füllmenge_history = None  ##FIXME - Bei diesem Fall werden die Arrays noch nicht richtig abgespeichert, das führt beim weiteren Aufrufen des Eintrags zu einem Fehler
 
         # Trage alle Werte in der Datenbank ein
         functions.updateInInventory(
@@ -295,7 +294,7 @@ def get_callbacks(app):
             [
                 name,
                 barcode,
-                json.dumps(füllmenge_history),
+                füllmenge_history,
                 kaufdatum,
                 reinheit,
                 konzentration,

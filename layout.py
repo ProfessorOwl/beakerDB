@@ -229,8 +229,9 @@ fensterRechts = [
                                             ["mengeneinheit_id", "mengeneinheit"],
                                         ),
                                         w=60,
+                                        variant="unstyled",
                                     ),
-                                    className="mengeneinheit",
+                                    className="mengeneinheit-NumberInput",
                                 ),
                                 dmc.Sparkline(
                                     id="füllmenge_sparkline",
@@ -446,25 +447,26 @@ modalNeuerEintragInner = dmc.Stack(
                                             comp.NumberInput(  # Füllmenge
                                                 "modal-input-füllmenge",
                                                 "Füllmenge",
-                                                w="67%",
-                                            ),
-                                            dmc.Select(  #  Mengeneinheit
-                                                id="modal-input-mengeneinheit",
-                                                w="30%",
-                                                value="1",
-                                                allowDeselect=False,
-                                                data=functions.generateSelectData(
-                                                    functions.Mengeneinheiten,
-                                                    [
-                                                        "mengeneinheit_id",
-                                                        "mengeneinheit",
-                                                    ],
+                                                w="100%",
+                                                rightSection=dmc.Select(  #  Mengeneinheit
+                                                    id="modal-input-mengeneinheit",
+                                                    value="1",
+                                                    allowDeselect=False,
+                                                    data=functions.generateSelectData(
+                                                        functions.Mengeneinheiten,
+                                                        [
+                                                            "mengeneinheit_id",
+                                                            "mengeneinheit",
+                                                        ],
+                                                    ),
+                                                    w=60,
+                                                    variant="unstyled",
                                                 ),
+                                                className="mengeneinheit-NumberInput",
                                             ),
                                         ],
                                         justify="space-between",
                                         align="end",
-                                        gap=0,
                                     ),
                                     comp.DateInput(  # Kaufdatum
                                         "modal-input-kaufdatum",
