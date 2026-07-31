@@ -259,17 +259,14 @@ def get_callbacks(app):
                     color="yellow.3",
                 )
             )
-        füllmenge_data = []
+
         # Lade die historischen Einträge der Füllmenge und ergänze die neu eingetragene Füllmenge, falls sie nicht schon im Array unter diesem Datum vorhanden ist.
-        füllmenge_raw = functions.selectInInventory(barcode, "füllmenge")
-        if len(füllmenge_raw) != 0:
-            füllmenge_history = json.loads(füllmenge_raw)
-            if [zuletzt_geprüft, füllmenge] not in füllmenge_history:
-                füllmenge_history.append([zuletzt_geprüft, füllmenge])
-            füllmenge_data = [i[1] for i in füllmenge_history]
-            füllmenge_history = json.dumps(füllmenge_history)
-        else:
-            füllmenge_history = None  ##FIXME - Bei diesem Fall werden die Arrays noch nicht richtig abgespeichert, das führt beim weiteren Aufrufen des Eintrags zu einem Fehler
+        füllmenge_history, füllmenge_data = functions.save_füllmenge(
+            barcode,
+            zuletzt_geprüft,
+            füllmenge,
+            set_props("füllmenge_sparkline_wrapper", {"hidden": False}),
+        )
 
         # Trage alle Werte in der Datenbank ein
         functions.updateInInventory(
@@ -533,6 +530,12 @@ def get_callbacks(app):
                     color="yellow.3",
                 )
             )
+        # Lade die historischen Einträge der Füllmenge und ergänze die neu eingetragene Füllmenge, falls sie nicht schon im Array unter diesem Datum vorhanden ist.
+        füllmenge_history, füllmenge_data = functions.save_füllmenge(
+            barcode,
+            zuletzt_geprüft,
+            füllmenge,
+        )
 
         # Trage alle Werte in der Datenbank ein
         functions.createInInventory(
@@ -556,7 +559,7 @@ def get_callbacks(app):
             [
                 name,
                 barcode,
-                füllmenge,
+                füllmenge_history,
                 kaufdatum,
                 reinheit,
                 konzentration,
@@ -598,7 +601,15 @@ def get_callbacks(app):
         n_clicksModal, n_clicksZurücksetzen, n_clicksAbbrechen, selector, opened
     ):
         if ctx.triggered_id == "stammdatenButtonAbbrechen":
-            return not opened, no_update, no_update, no_update, no_update, True
+            return (
+                not opened,
+                no_update,
+                no_update,
+                no_update,
+                no_update,
+                True,
+                no_update,
+            )
         df = pd.read_sql(
             f"SELECT * from {selector}",
             "sqlite:///current.sqlite",
@@ -955,8 +966,6 @@ def get_callbacks(app):
                 )
             )
         return json.dumps(modify_cache), messages, is_disabled, is_disabled
-        # else:
-        #     return json.dumps(modify_cache), messages, is_disabled, is_disabled
 
     # Aktualisiere alle Select-Felder, die Daten aus der Datenbank anzeigen, nachdem die Datenbank modifiziert wurde. Dadurch werden keine veralteten Daten angezeigt.
     @app.callback(
