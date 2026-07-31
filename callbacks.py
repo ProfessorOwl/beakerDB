@@ -59,7 +59,7 @@ def get_callbacks(app):
         Output("button-löschen", "disabled"),
         Output("inputContainer", "hidden"),
         Output("inputPlaceholder", "display"),
-        Output("füllmenge_sparkline", "display"),
+        Output("füllmenge_sparkline_wrapper", "hidden"),
         Output("füllmenge_sparkline", "data"),
         Input("mainGrid", "selectedRows"),
     )
@@ -85,13 +85,13 @@ def get_callbacks(app):
                 True,  # Blende den Löschen-Button aus
                 True,  # Blende "inputContainer" aus
                 "flex",  # Blende den Platzhalter ein
-                "None",
+                True,
                 no_update,
             )
         barcode = rows[0].get("Barcode", "")
 
         # Blende die Sparkline neben der Füllmenge standardmäßig aus
-        füllmenge_display = "None"
+        füllmenge_display = True
 
         füllmenge_data = []
 
@@ -101,7 +101,7 @@ def get_callbacks(app):
             füllmenge = json.loads(füllmenge_raw)
             füllmenge_last_entry = füllmenge[-1][1]
             if len(füllmenge) > 1:
-                füllmenge_display = "flex"  # Blende die Sparkline ein, wenn mehr als 1 Eintrag vorhanden ist
+                füllmenge_display = False  # Blende die Sparkline ein, wenn mehr als 1 Eintrag vorhanden ist
                 füllmenge_data = [i[1] for i in füllmenge]
         else:
             füllmenge_last_entry = füllmenge_raw
@@ -1398,3 +1398,16 @@ def get_callbacks(app):
             json.dumps(""),
             functions.getMainTable().to_dict("records"),
         )  # Lösche den gespeicherten Cache, um keinen unnötigen Platz zu verbrauchen. Erneuere außerdem die Tabelle, damit direkt der Inhalt der neuen Datenbank angezeigt wird.
+
+    # Öffnet das Modal zu den Füllständen
+    @app.callback(
+        Output("modal_füllstände_verlauf", "opened"),
+        Output("füllstände_kurve", "data"),
+        Input("füllmenge_sparkline_wrapper", "n_clicks"),
+        State("modal_füllstände_verlauf", "opened"),
+        State("mainGrid", "selectedRows"),
+    )
+    def open_füllstände_verlauf(n_clicks, opened, rows):
+        barcode = rows[0].get("Barcode", "")
+        data = functions.get_füllstände_data(barcode)
+        return True, data

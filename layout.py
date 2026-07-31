@@ -233,16 +233,28 @@ fensterRechts = [
                                     ),
                                     className="mengeneinheit-NumberInput",
                                 ),
-                                dmc.Sparkline(
-                                    id="füllmenge_sparkline",
-                                    curveType="linear",
-                                    data=[],
-                                    fillOpacity=0.5,
-                                    withGradient=True,
-                                    h=36,
-                                    w="40%",
-                                    display=None,
-                                    flex="1 0 auto",
+                                html.Button(
+                                    dmc.Sparkline(
+                                        id="füllmenge_sparkline",
+                                        curveType="linear",
+                                        data=[],
+                                        fillOpacity=0.5,
+                                        withGradient=True,
+                                        h=36,
+                                        w="100%",
+                                        display=None,
+                                        flex="1 0 auto",
+                                    ),
+                                    id="füllmenge_sparkline_wrapper",
+                                    style={
+                                        "width": "40%",
+                                        "height": "auto",
+                                        "flex": "1 0 auto",
+                                        "padding": "0",
+                                        "background": "None",
+                                        "border": "None",
+                                        "cursor": "help",
+                                    },
                                 ),
                             ],
                             justify="space-between",
@@ -866,6 +878,21 @@ modalBestätigungImportInner = dmc.Stack(
     ]
 )
 
+modal_füllstände_verlauf_inner = dmc.Stack(
+    [
+        dmc.Title("Füllstände", order=2),
+        dmc.LineChart(
+            id="füllstände_kurve",
+            curveType="linear",
+            dataKey="datum",
+            series=[{"name": "Füllmenge", "color": "indigo"}],
+            data=[],
+            h=300,
+        ),
+    ]
+)
+
+
 app.layout = dmc.MantineProvider(
     [
         dcc.Store(id="stammdatenCache"),
@@ -921,6 +948,14 @@ app.layout = dmc.MantineProvider(
         dmc.Modal(
             modalBestätigungImportInner,
             id="modalBestätigungImport",
+            centered=True,
+            withCloseButton=False,
+            opened=False,
+        ),
+        dmc.Modal(
+            modal_füllstände_verlauf_inner,
+            id="modal_füllstände_verlauf",
+            size="85%",
             centered=True,
             withCloseButton=False,
             opened=False,

@@ -400,3 +400,12 @@ def backup_db():
     )
     Path.mkdir(Path("backup"), exist_ok=True)
     shutil.copy(src_path, dest_path)
+
+
+def get_füllstände_data(barcode):
+    with Session(engine) as session:
+        stmt = select(Inventar.füllmenge).where(Inventar.barcode == barcode)
+        füllmenge = json.loads(session.scalars(stmt).one_or_none() or "")
+
+        data = [{"datum": i[0], "Füllmenge": i[1]} for i in füllmenge]
+        return data
