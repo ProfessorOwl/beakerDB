@@ -402,6 +402,24 @@ def backup_db():
     shutil.copy(src_path, dest_path)
 
 
+def save_füllmenge(barcode, date, füllmenge, additionalFunction=None):
+    füllmenge_data = []
+    füllmenge_raw = selectInInventory(barcode, "füllmenge")
+    if len(füllmenge_raw) != 0:
+        füllmenge_history = json.loads(füllmenge_raw)
+        if [date, füllmenge] not in füllmenge_history:
+            füllmenge_history.append([date, füllmenge])
+        füllmenge_data = [i[1] for i in füllmenge_history]
+        additionalFunction
+        füllmenge_history = json.dumps(füllmenge_history)
+    elif füllmenge:
+        füllmenge_history = [[date, füllmenge]]
+        füllmenge_history = json.dumps(füllmenge_history)
+    else:
+        füllmenge_history = None
+    return füllmenge_history, füllmenge_data
+
+
 def get_füllmenge_data(barcode):
     with Session(engine) as session:
         stmt = select(Inventar.füllmenge).where(Inventar.barcode == barcode)
