@@ -635,13 +635,8 @@ modalStammdatenInner = dmc.Stack(
         dag.AgGrid(
             id="stammGrid",
             defaultColDef={
-                "filter": "agTextColumnFilter",
+                "filter": True,
                 "floatingFilter": True,
-                "filterParams": {
-                    # Beschränke die Filteroptionen der Spalten auf diese 4 Optionen
-                    "filterOptions": ["contains"],
-                    "maxNumConditions": 0,  # Blende weitere Suchkonditionen aus
-                },
             },
             style={  # Passe die Größe an das Fenster an, ziehe die anderen Elementhöhen ab
                 "height": "580px",
