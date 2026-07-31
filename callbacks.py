@@ -41,11 +41,11 @@ def get_callbacks(app):
     # Callback das jedes Feld aktualisiert, sobald man eine neue Zeile in der Tabelle auswählt
     @app.callback(
         Output("input-barcode", "value"),
+        Output("input-füllmenge", "value"),
         Output("input-name", "value"),
         Output("input-summenformel", "value"),
         Output("input-cas-nr", "value"),
         Output("input-mengeneinheit", "value"),
-        Output("input-füllmenge", "value"),
         Output("input-kaufdatum", "value"),
         Output("input-lieferant", "value"),
         Output("input-hersteller", "value"),
@@ -59,6 +59,8 @@ def get_callbacks(app):
         Output("button-löschen", "disabled"),
         Output("inputContainer", "hidden"),
         Output("inputPlaceholder", "display"),
+        Output("füllmenge_sparkline_wrapper", "hidden"),
+        Output("füllmenge_sparkline", "data"),
         Input("mainGrid", "selectedRows"),
     )
     def update_fields(rows):
@@ -79,14 +81,34 @@ def get_callbacks(app):
                 "",
                 "",
                 "",
-                True,  # Blende die Buttons Speichern und Löschen aus
+                True,  # Blende den Speicher-Button aus
+                True,  # Blende den Löschen-Button aus
+                True,  # Blende "inputContainer" aus
+                "flex",  # Blende den Platzhalter ein
                 True,
-                True,
-                "flex",
+                no_update,
             )
         barcode = rows[0].get("Barcode", "")
+
+        # Blende die Sparkline neben der Füllmenge standardmäßig aus
+        füllmenge_display = True
+
+        füllmenge_data = []
+
+        # Extrahiere die letzte Füllmenge aus dem JSON-Array aller gespeicherten Füllmengen
+        füllmenge_raw = functions.selectInInventory(barcode, "füllmenge")
+        if len(füllmenge_raw) != 0:
+            füllmenge = json.loads(füllmenge_raw)
+            füllmenge_last_entry = füllmenge[-1][1]
+            if len(füllmenge) > 1:
+                füllmenge_display = False  # Blende die Sparkline ein, wenn mehr als 1 Eintrag vorhanden ist
+                füllmenge_data = [i[1] for i in füllmenge]
+        else:
+            füllmenge_last_entry = füllmenge_raw
+
         return (
             barcode,
+            füllmenge_last_entry,
             *[  # Gebe für jedes Feld den entsprechenden Wert aus der Inventartabelle zurück
                 functions.selectInInventory(barcode, x)
                 for x in [
@@ -94,7 +116,6 @@ def get_callbacks(app):
                     "summenformel",
                     "cas_nr",
                     "mengeneinheit_id",
-                    "füllmenge",
                     "kaufdatum",
                     "lieferant_id",
                     "hersteller_id",
@@ -110,12 +131,15 @@ def get_callbacks(app):
             False,
             False,
             "None",
+            füllmenge_display,
+            füllmenge_data,
         )
 
     # Sobald der Speicherbutton gedrückt wird, aktualisiere die Werte in der sichtbaren Tabelle wie auch in der Datenbank
     @app.callback(
         Output("mainGrid", "rowData", allow_duplicate=True),
         Output("notification-container", "sendNotifications"),
+        Output("füllmenge_sparkline", "data", allow_duplicate=True),
         Input("button-speichern", "n_clicks"),
         State("input-name", "value"),
         State("input-barcode", "value"),
@@ -177,7 +201,6 @@ def get_callbacks(app):
                 color="green.3",
             )
         ]
-
         if "," in str(füllmenge):
             füllmenge = füllmenge.replace(",", ".")
             messages.append(
@@ -213,7 +236,7 @@ def get_callbacks(app):
                 )
             )
         # Überprüfe, ob die Einstellung aktiviert ist, bei der das Datum beim Speichern automatisch auf das heutige gesetzt wird.
-        # Wenn ja, dann gebe hänge eine Nachricht an, dass das geschehen ist und überschreibe das vorherige Datum mit heute.
+        # Wenn ja, dann hänge eine Nachricht an, dass das geschehen ist und überschreibe das vorherige Datum mit heute.
         einstellungen_cache = json.loads(einstellungen_cache)
         if (
             einstellungen_cache.get("datumsänderung") == "change"
@@ -236,6 +259,17 @@ def get_callbacks(app):
                     color="yellow.3",
                 )
             )
+        füllmenge_data = []
+        # Lade die historischen Einträge der Füllmenge und ergänze die neu eingetragene Füllmenge, falls sie nicht schon im Array unter diesem Datum vorhanden ist.
+        füllmenge_raw = functions.selectInInventory(barcode, "füllmenge")
+        if len(füllmenge_raw) != 0:
+            füllmenge_history = json.loads(füllmenge_raw)
+            if [zuletzt_geprüft, füllmenge] not in füllmenge_history:
+                füllmenge_history.append([zuletzt_geprüft, füllmenge])
+            füllmenge_data = [i[1] for i in füllmenge_history]
+            füllmenge_history = json.dumps(füllmenge_history)
+        else:
+            füllmenge_history = None  ##FIXME - Bei diesem Fall werden die Arrays noch nicht richtig abgespeichert, das führt beim weiteren Aufrufen des Eintrags zu einem Fehler
 
         # Trage alle Werte in der Datenbank ein
         functions.updateInInventory(
@@ -260,7 +294,7 @@ def get_callbacks(app):
             [
                 name,
                 barcode,
-                füllmenge,
+                füllmenge_history,
                 kaufdatum,
                 reinheit,
                 konzentration,
@@ -278,10 +312,7 @@ def get_callbacks(app):
 
         df = functions.getMainTable()
 
-        return (
-            df.to_dict("records"),
-            messages,
-        )
+        return (df.to_dict("records"), messages, füllmenge_data)
 
     # Sobald der "Löschen"-Button gedrückt wird, soll die Zeile sowohl aus der sichtbaren Tabelle, wie auch der SQL-Datenbank gelöscht werden
     @app.callback(
@@ -979,7 +1010,7 @@ def get_callbacks(app):
         prevent_initial_call=False,
     )
 
-    # Search for the string that the scanListener returns after firing and select the first available entry.
+    # Search for the string that the scanListener returns after firing and select the first available entry
     @app.callback(
         Output("mainGrid", "filterModel"),
         Output("mainGrid", "selectedRows"),
@@ -997,6 +1028,7 @@ def get_callbacks(app):
         ):
             raise PreventUpdate
         barcode = event.get("detail").get("scanCode")
+
         filter = {
             "Barcode": {
                 "filterType": "text",
@@ -1366,3 +1398,16 @@ def get_callbacks(app):
             json.dumps(""),
             functions.getMainTable().to_dict("records"),
         )  # Lösche den gespeicherten Cache, um keinen unnötigen Platz zu verbrauchen. Erneuere außerdem die Tabelle, damit direkt der Inhalt der neuen Datenbank angezeigt wird.
+
+    # Öffnet das Modal zu den Füllmengen
+    @app.callback(
+        Output("modal_füllmenge_verlauf", "opened"),
+        Output("füllstände_kurve", "data"),
+        Input("füllmenge_sparkline_wrapper", "n_clicks"),
+        State("modal_füllmenge_verlauf", "opened"),
+        State("mainGrid", "selectedRows"),
+    )
+    def open_füllstände_verlauf(n_clicks, opened, rows):
+        barcode = rows[0].get("Barcode", "")
+        data = functions.get_füllmenge_data(barcode)
+        return True, data

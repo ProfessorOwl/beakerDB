@@ -93,13 +93,8 @@ fensterLinks = html.Div(
                 },
             ],
             defaultColDef={
-                "filter": "agTextColumnFilter",
+                "filter": True,  # In custom.css ist ebenso der Filterbutton ausgeblendet, sodass nur die Suchzeile angezeigt wird
                 "floatingFilter": True,
-                "filterParams": {
-                    # Beschränke die Filteroptionen der Spalten auf diese 4 Optionen
-                    "filterOptions": ["contains"],
-                    "maxNumConditions": 0,  # Blende weitere Suchkonditionen aus
-                },
             },
             style={  # Passe die Größe an das Fenster an, ziehe die anderen Elementhöhen ab
                 "height": "calc(100vh - 150px)",
@@ -113,7 +108,6 @@ fensterLinks = html.Div(
                 "icons": {  # Vertausche die Richtung der Pfeile für das Sortieren, damit der Pfeil runterzeigt, wenn von A->Z sortiert wird
                     "sortAscending": "\u2193",  # ↓
                     "sortDescending": "\u2191",  # ↑
-                    "filter": "",
                 },
                 "localeText": {
                     "filterOoo": "Filter...",
@@ -225,22 +219,50 @@ fensterRechts = [
                                 comp.NumberInput(  # Füllmenge
                                     "input-füllmenge",
                                     "Füllmenge",
-                                    w="67%",
-                                ),
-                                dmc.Select(
-                                    id="input-mengeneinheit",
-                                    w="30%",
-                                    value="1",
-                                    allowDeselect=False,
-                                    data=functions.generateSelectData(
-                                        functions.Mengeneinheiten,
-                                        ["mengeneinheit_id", "mengeneinheit"],
+                                    w="100%",
+                                    rightSection=dmc.Select(
+                                        id="input-mengeneinheit",
+                                        value="1",
+                                        allowDeselect=False,
+                                        data=functions.generateSelectData(
+                                            functions.Mengeneinheiten,
+                                            ["mengeneinheit_id", "mengeneinheit"],
+                                        ),
+                                        w=60,
+                                        variant="unstyled",
                                     ),
+                                    className="mengeneinheit-NumberInput",
+                                ),
+                                html.Button(
+                                    dmc.Sparkline(
+                                        id="füllmenge_sparkline",
+                                        curveType="linear",
+                                        data=[],
+                                        fillOpacity=0.5,
+                                        withGradient=True,
+                                        h=36,
+                                        w="100%",
+                                        display=None,
+                                        flex="1 0 auto",
+                                    ),
+                                    id="füllmenge_sparkline_wrapper",
+                                    style={
+                                        "width": "40%",
+                                        "height": "auto",
+                                        "flex": "1 0 auto",
+                                        "padding": "0",
+                                        "background": "None",
+                                        "border": "None",
+                                        "cursor": "help",
+                                    },
                                 ),
                             ],
                             justify="space-between",
                             align="end",
-                            gap=0,
+                            wrap="nowrap",
+                            gap="xs",
+                            grow=True,
+                            preventGrowOverflow=False,
                         ),
                         comp.DateInput(
                             "input-kaufdatum", "Kaufdatum", "input-kaufdatum-heute"
@@ -437,25 +459,26 @@ modalNeuerEintragInner = dmc.Stack(
                                             comp.NumberInput(  # Füllmenge
                                                 "modal-input-füllmenge",
                                                 "Füllmenge",
-                                                w="67%",
-                                            ),
-                                            dmc.Select(  #  Mengeneinheit
-                                                id="modal-input-mengeneinheit",
-                                                w="30%",
-                                                value="1",
-                                                allowDeselect=False,
-                                                data=functions.generateSelectData(
-                                                    functions.Mengeneinheiten,
-                                                    [
-                                                        "mengeneinheit_id",
-                                                        "mengeneinheit",
-                                                    ],
+                                                w="100%",
+                                                rightSection=dmc.Select(  #  Mengeneinheit
+                                                    id="modal-input-mengeneinheit",
+                                                    value="1",
+                                                    allowDeselect=False,
+                                                    data=functions.generateSelectData(
+                                                        functions.Mengeneinheiten,
+                                                        [
+                                                            "mengeneinheit_id",
+                                                            "mengeneinheit",
+                                                        ],
+                                                    ),
+                                                    w=60,
+                                                    variant="unstyled",
                                                 ),
+                                                className="mengeneinheit-NumberInput",
                                             ),
                                         ],
                                         justify="space-between",
                                         align="end",
-                                        gap=0,
                                     ),
                                     comp.DateInput(  # Kaufdatum
                                         "modal-input-kaufdatum",
@@ -855,6 +878,21 @@ modalBestätigungImportInner = dmc.Stack(
     ]
 )
 
+modal_füllmenge_verlauf_inner = dmc.Stack(
+    [
+        dmc.Title("Füllstände", order=2),
+        dmc.LineChart(
+            id="füllstände_kurve",
+            curveType="linear",
+            dataKey="datum",
+            series=[{"name": "Füllmenge", "color": "indigo"}],
+            data=[],
+            h=300,
+        ),
+    ]
+)
+
+
 app.layout = dmc.MantineProvider(
     [
         dcc.Store(id="stammdatenCache"),
@@ -910,6 +948,14 @@ app.layout = dmc.MantineProvider(
         dmc.Modal(
             modalBestätigungImportInner,
             id="modalBestätigungImport",
+            centered=True,
+            withCloseButton=False,
+            opened=False,
+        ),
+        dmc.Modal(
+            modal_füllmenge_verlauf_inner,
+            id="modal_füllmenge_verlauf",
+            size="85%",
             centered=True,
             withCloseButton=False,
             opened=False,

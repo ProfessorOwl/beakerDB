@@ -18,3 +18,20 @@
 .mantine-Notification-description {
     color: black;
 }
+
+.mengeneinheit-NumberInput .mantine-NumberInput-section {
+    width: 60px
+}
+
+.mengeneinheit-NumberInput .mantine-Select-input {
+    text-align: right;
+}
+
+#füllmenge_sparkline_wrapper .recharts-responsive-container :hover {
+    cursor: pointer;
+    filter: brightness(0.8) saturate(135%)
+}
+
+#füllmenge_sparkline_wrapper .recharts-surface :hover {
+    filter: initial;
+}
