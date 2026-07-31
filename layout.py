@@ -878,7 +878,7 @@ modalBestätigungImportInner = dmc.Stack(
     ]
 )
 
-modal_füllstände_verlauf_inner = dmc.Stack(
+modal_füllmenge_verlauf_inner = dmc.Stack(
     [
         dmc.Title("Füllstände", order=2),
         dmc.LineChart(
@@ -953,8 +953,8 @@ app.layout = dmc.MantineProvider(
             opened=False,
         ),
         dmc.Modal(
-            modal_füllstände_verlauf_inner,
-            id="modal_füllstände_verlauf",
+            modal_füllmenge_verlauf_inner,
+            id="modal_füllmenge_verlauf",
             size="85%",
             centered=True,
             withCloseButton=False,

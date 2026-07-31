@@ -1399,15 +1399,15 @@ def get_callbacks(app):
             functions.getMainTable().to_dict("records"),
         )  # Lösche den gespeicherten Cache, um keinen unnötigen Platz zu verbrauchen. Erneuere außerdem die Tabelle, damit direkt der Inhalt der neuen Datenbank angezeigt wird.
 
-    # Öffnet das Modal zu den Füllständen
+    # Öffnet das Modal zu den Füllmengen
     @app.callback(
-        Output("modal_füllstände_verlauf", "opened"),
+        Output("modal_füllmenge_verlauf", "opened"),
         Output("füllstände_kurve", "data"),
         Input("füllmenge_sparkline_wrapper", "n_clicks"),
-        State("modal_füllstände_verlauf", "opened"),
+        State("modal_füllmenge_verlauf", "opened"),
         State("mainGrid", "selectedRows"),
     )
     def open_füllstände_verlauf(n_clicks, opened, rows):
         barcode = rows[0].get("Barcode", "")
-        data = functions.get_füllstände_data(barcode)
+        data = functions.get_füllmenge_data(barcode)
         return True, data

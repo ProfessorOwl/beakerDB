@@ -402,7 +402,7 @@ def backup_db():
     shutil.copy(src_path, dest_path)
 
 
-def get_füllstände_data(barcode):
+def get_füllmenge_data(barcode):
     with Session(engine) as session:
         stmt = select(Inventar.füllmenge).where(Inventar.barcode == barcode)
         füllmenge = json.loads(session.scalars(stmt).one_or_none() or "")
