@@ -598,7 +598,15 @@ def get_callbacks(app):
         n_clicksModal, n_clicksZurücksetzen, n_clicksAbbrechen, selector, opened
     ):
         if ctx.triggered_id == "stammdatenButtonAbbrechen":
-            return not opened, no_update, no_update, no_update, no_update, True
+            return (
+                not opened,
+                no_update,
+                no_update,
+                no_update,
+                no_update,
+                True,
+                no_update,
+            )
         df = pd.read_sql(
             f"SELECT * from {selector}",
             "sqlite:///current.sqlite",
