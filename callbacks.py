@@ -695,10 +695,15 @@ def get_callbacks(app):
 
         # Finde eine ungenutzte ID
         unusedID = None
-        for i in range(len(firstColumnEntries) - 1):
-            diff = firstColumnEntries[i + 1] - firstColumnEntries[i]
-            if diff > 1:
-                unusedID = firstColumnEntries[i] + 1
+        print(firstColumnEntries)
+
+        if firstColumnEntries == []:
+            unusedID = 1
+        else:
+            for i in range(len(firstColumnEntries) - 1):
+                diff = firstColumnEntries[i + 1] - firstColumnEntries[i]
+                if diff > 1:
+                    unusedID = firstColumnEntries[i] + 1
 
         if unusedID == None:
             unusedID = firstColumnEntries[-1] + 1
