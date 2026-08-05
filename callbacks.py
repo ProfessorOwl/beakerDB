@@ -91,17 +91,17 @@ def get_callbacks(app):
         barcode = rows[0].get("Barcode", "")
 
         # Blende die Sparkline neben der Füllmenge standardmäßig aus
-        füllmenge_display = True
+        füllmenge_hidden = True
 
         füllmenge_data = []
 
         # Extrahiere die letzte Füllmenge aus dem JSON-Array aller gespeicherten Füllmengen
         füllmenge_raw = functions.selectInInventory(barcode, "füllmenge")
-        if len(füllmenge_raw) != 0:
+        if len(füllmenge_raw or []) != 0 and füllmenge_raw:
             füllmenge = json.loads(füllmenge_raw)
             füllmenge_last_entry = füllmenge[-1][1]
             if len(füllmenge) > 1:
-                füllmenge_display = False  # Blende die Sparkline ein, wenn mehr als 1 Eintrag vorhanden ist
+                füllmenge_hidden = False  # Blende die Sparkline ein, wenn mehr als 1 Eintrag vorhanden ist
                 füllmenge_data = [i[1] for i in füllmenge]
         else:
             füllmenge_last_entry = füllmenge_raw
@@ -131,7 +131,7 @@ def get_callbacks(app):
             False,
             False,
             "None",
-            füllmenge_display,
+            füllmenge_hidden,
             füllmenge_data,
         )
 
@@ -139,6 +139,7 @@ def get_callbacks(app):
     @app.callback(
         Output("mainGrid", "rowData", allow_duplicate=True),
         Output("notification-container", "sendNotifications"),
+        Output("füllmenge_sparkline_wrapper", "hidden", allow_duplicate=True),
         Output("füllmenge_sparkline", "data", allow_duplicate=True),
         Input("button-speichern", "n_clicks"),
         State("input-name", "value"),
@@ -265,8 +266,12 @@ def get_callbacks(app):
             barcode,
             zuletzt_geprüft,
             füllmenge,
-            set_props("füllmenge_sparkline_wrapper", {"hidden": False}),
         )
+
+        füllmenge_hidden = True
+
+        if len(füllmenge_data) > 1:
+            füllmenge_hidden = False
 
         # Trage alle Werte in der Datenbank ein
         functions.updateInInventory(
@@ -309,7 +314,7 @@ def get_callbacks(app):
 
         df = functions.getMainTable()
 
-        return (df.to_dict("records"), messages, füllmenge_data)
+        return (df.to_dict("records"), messages, füllmenge_hidden, füllmenge_data)
 
     # Sobald der "Löschen"-Button gedrückt wird, soll die Zeile sowohl aus der sichtbaren Tabelle, wie auch der SQL-Datenbank gelöscht werden
     @app.callback(

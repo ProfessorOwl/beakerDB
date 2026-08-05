@@ -269,6 +269,7 @@ fensterRechts = [
                                         "border": "None",
                                         "cursor": "help",
                                     },
+                                    hidden=True,
                                 ),
                             ],
                             justify="space-between",
