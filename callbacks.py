@@ -661,7 +661,7 @@ def get_callbacks(app):
             True,
         )
 
-    # Delete all notifications in the in the queue and currently displayed when the modal is opened or closed
+    # Delete all notifications in the the queue and currently displayed when the modal is opened or closed
     @app.callback(
         Output("notification-container", "clean", allow_duplicate=True),
         Input("modalStammdaten", "opened"),
@@ -750,6 +750,23 @@ def get_callbacks(app):
                 }
             )
             return (no_update, True, json.dumps(cache), False, False)
+
+    # Blende den Zeile löschen-Button aus, wenn die Zeile mit der ID 0 ausgewählt ist.
+    @app.callback(
+        Output("stammdatenButtonZeileLöschen", "disabled", allow_duplicate=True),
+        Input("stammGrid", "selectedRows"),
+        State("stammGrid", "columnDefs"),
+    )
+    def toggleDeleteButton(selectedRows, columnDefs):
+        if selectedRows:
+            selectedRow = selectedRows[0]
+        firstColumnName = columnDefs[0].get("field")
+        selectedRowID = selectedRow.get(firstColumnName)
+
+        if selectedRowID == 0:
+            return True
+        else:
+            return False
 
     # Speichere die Zeilen im Cache ab, wenn ein Zeileneintrag geändert wird
     @app.callback(
