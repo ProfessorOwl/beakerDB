@@ -695,7 +695,6 @@ def get_callbacks(app):
 
         # Finde eine ungenutzte ID
         unusedID = None
-        print(firstColumnEntries)
 
         if firstColumnEntries == []:
             unusedID = 1

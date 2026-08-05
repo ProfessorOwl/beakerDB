@@ -81,7 +81,7 @@ fensterLinks = html.Div(
                     "field": "CAS-Nr",
                     "sortable": True,
                 },
-                {"field": "Name", "flex": 1, "sortable": True},
+                {"field": "Name", "sortable": True},
                 {
                     "field": "Summenformel",
                     "cellRenderer": "SummenformelRenderer",
@@ -90,6 +90,12 @@ fensterLinks = html.Div(
                 {
                     "field": "Raum",
                     "sortable": True,
+                },
+                {
+                    "field": "Zuletzt_geprüft",
+                    "headerName": "Prüfdatum",
+                    "sortable": True,
+                    "filter": "agTextColumnFilter",
                 },
             ],
             defaultColDef={
@@ -104,7 +110,15 @@ fensterLinks = html.Div(
             dashGridOptions={
                 "theme": {"function": "themeQuartz.withParams({fontFamily: 'Lexend'})"},
                 "suppressFieldDotNotation": True,
-                "rowSelection": "single",  # Aktiviere das Auswählen von Zeilen
+                "autoSizeStrategy": {
+                    "type": "fitCellContents",
+                    "scaleUpToFitGridWidth": True,
+                },
+                "rowSelection": {
+                    "mode": "singleRow",
+                    "enableClickSelection": True,
+                    "checkboxes": False,
+                },  # Aktiviere das Auswählen von Zeilen
                 "icons": {  # Vertausche die Richtung der Pfeile für das Sortieren, damit der Pfeil runterzeigt, wenn von A->Z sortiert wird
                     "sortAscending": "\u2193",  # ↓
                     "sortDescending": "\u2191",  # ↑
@@ -647,7 +661,11 @@ modalStammdatenInner = dmc.Stack(
                 "theme": {"function": "themeQuartz.withParams({fontFamily: 'Lexend'})"},
                 "suppressScrollOnNewData": True,
                 "suppressFieldDotNotation": True,
-                "rowSelection": "single",  # Aktiviere das Auswählen von Zeilen
+                "rowSelection": {
+                    "mode": "singleRow",
+                    "enableClickSelection": True,
+                    "checkboxes": False,
+                },  # Aktiviere das Auswählen von Zeilen
                 "localeText": {
                     "filterOoo": "Filter...",
                     "applyFilter": "Filter anwenden",

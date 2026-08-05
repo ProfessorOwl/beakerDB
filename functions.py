@@ -356,7 +356,7 @@ def insertStammdaten(selector: str, columns: list[str], values: list[str]):
 
 def getMainTable():
     df = pd.read_sql(
-        "SELECT `CAS-Nr`, Name, Summenformel, Barcode, Raum FROM inventar INNER JOIN räume ON inventar.Raum_ID == räume.Raum_ID",
+        "SELECT `CAS-Nr`, Name, Summenformel, Barcode, Raum, Zuletzt_geprüft FROM inventar INNER JOIN räume ON inventar.Raum_ID == räume.Raum_ID",
         "sqlite:///current.sqlite",
         dtype_backend="pyarrow",
     )
