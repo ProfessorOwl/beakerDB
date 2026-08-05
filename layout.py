@@ -114,11 +114,18 @@ fensterLinks = html.Div(
                     "type": "fitCellContents",
                     "scaleUpToFitGridWidth": True,
                 },
-                "rowSelection": {
+                "rowSelection": {  # Aktiviere das Auswählen von Zeilen
                     "mode": "singleRow",
                     "enableClickSelection": True,
                     "checkboxes": False,
-                },  # Aktiviere das Auswählen von Zeilen
+                },
+                "overlayComponentParams": {
+                    "loading": {"overlayText": "Lädt..."},
+                    "noRows": {"overlayText": "Keine Einträge vorhanden"},
+                    "noMatchingRows": {
+                        "overlayText": "Keine passenden Einträge gefunden"
+                    },
+                },
                 "icons": {  # Vertausche die Richtung der Pfeile für das Sortieren, damit der Pfeil runterzeigt, wenn von A->Z sortiert wird
                     "sortAscending": "\u2193",  # ↓
                     "sortDescending": "\u2191",  # ↑
