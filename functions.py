@@ -395,9 +395,9 @@ def getExistingData(id: str) -> dict[str, str]:
 def backup_db():
     """Kopiere die Datenbank in den Backup-Ordner"""
     src_path = Path("current.sqlite")
-    dest_path = Path("backup") / (
-        dt.datetime.today().isoformat(timespec="seconds") + ".sqlite"
-    )
+    time = dt.datetime.today().isoformat(timespec="seconds")
+    time = time.replace(":", "")
+    dest_path = Path("backup") / (time + ".sqlite")
     Path.mkdir(Path("backup"), exist_ok=True)
     shutil.copy(src_path, dest_path)
 
