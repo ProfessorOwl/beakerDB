@@ -9,10 +9,6 @@ beakerDB ist eine Datenbank, die primär für Chemikalien entworfen wurde und f�
 
 Ein Feature von beakerDB ist die Unterstützung eines Barcodescanners. Mit einem Barcode versehene Chemikalien können so einfach gescannt und somit ihr Eintrag in der Datenbank angepasst werden.
 
-
-> [!Caution]
-> Momentan funktioniert die Datenbank noch nicht richtig mit einer leeren Datenbank. Jede Tabelle in der Stammdatendatenbank muss bereits mindestens einen Eintrag besitzen. 
-
 ## Installation
 
 Die Datenbank kommt in Form einer Pythonanwendung, die einen lokalen Webserver unter `http://localhost:8050/` bereitstellt. 
