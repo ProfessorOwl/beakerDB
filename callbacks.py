@@ -870,12 +870,14 @@ def get_callbacks(app):
             values = []
             for c, v in cached.items():
                 if c != "op":
-                    # Die Spalte "Gebäude_ID" bei Gebäuden enthält nicht die ID, sondern einen zusammengesetzten String aus ID und Wert. Extrahiere also vor dem Speichern die ID.
+                    # Die Spalte "Gebäude_ID" bei Räumen enthält nicht die ID, sondern einen zusammengesetzten String aus ID und Wert. Extrahiere also vor dem Speichern die ID.
+                    columns.append(c)
                     if c == "Gebäude_ID":
-                        columns.append(c)
-                        values.append(v.split(":")[0])
+                        try:
+                            values.append(v.split(":")[0])
+                        except:  # Bei den Gebäuden ist die Gebäude_ID eine gewöhnliche ID, also muss sie nicht vorher gesplitted werden.
+                            values.append(v)
                     else:
-                        columns.append(c)
                         values.append(v)
                 if c == "op":
                     op = v
