@@ -385,9 +385,21 @@ def get_callbacks(app):
         Input("modal-button-speichern", "n_clicks"),
         State("einstellungenCache", "data"),
         State("modalNeuerEintrag", "opened"),
+        Input("scanListener", "n_events"),
+        State("scanListener", "event"),
+        State("modalNeuerEintrag", "opened"),
+        State("modalStammdaten", "opened"),
     )
     def openModalNeuerEintrag(
-        n_clicks1, n_clicks2, n_clicks3, einstellungen_cache, opened
+        n_clicks1,
+        n_clicks2,
+        n_clicks3,
+        einstellungen_cache,
+        opened,
+        n_events,
+        event,
+        isNeuerEintragOpen,
+        isStammdatenOpen,
     ):
         einstellungen_cache = json.loads(einstellungen_cache)
         if (
@@ -397,6 +409,40 @@ def get_callbacks(app):
             input_geprüft = TODAY
         else:
             input_geprüft = ""
+
+        if ctx.triggered_id == "scanListener":
+            if (
+                not event
+                or not event.get("detail")
+                or isNeuerEintragOpen
+                or isStammdatenOpen
+            ):
+                raise PreventUpdate
+            barcode = event.get("detail").get("scanCode")
+
+            if functions.selectInInventory(barcode, "barcode") == None:
+                return (
+                    not opened,
+                    True,
+                    None,
+                    "",
+                    barcode,
+                    "",
+                    "",
+                    "1",
+                    "",
+                    "",
+                    "0",
+                    "0",
+                    "0",
+                    "",
+                    "",
+                    "",
+                    "",
+                    input_geprüft,
+                )
+            else:
+                raise PreventUpdate
 
         return (
             not opened,
