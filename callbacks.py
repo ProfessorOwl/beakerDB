@@ -65,35 +65,42 @@ def get_callbacks(app):
         Input("mainGrid", "selectedRows"),
     )
     def update_fields(rows):
+
+        # Standardobjekt, wenn nichts angezeigt werden kann oder soll
+        nothing_selected = (
+            "",
+            "",
+            "",
+            "",
+            "1",
+            "",
+            "",
+            "0",
+            "0",
+            "0",
+            "",
+            "",
+            "",
+            "",
+            "",
+            True,  # Blende den Speicher-Button aus
+            True,  # Blende den Löschen-Button aus
+            True,  # Blende "inputContainer" aus
+            "flex",  # Blende den Platzhalter ein
+            True,
+            no_update,
+        )
+
         if not rows:  # Wenn nichts ausgewählt ist
-            return (
-                "",
-                "",
-                "",
-                "",
-                "1",
-                "",
-                "",
-                "0",
-                "0",
-                "0",
-                "",
-                "",
-                "",
-                "",
-                "",
-                True,  # Blende den Speicher-Button aus
-                True,  # Blende den Löschen-Button aus
-                True,  # Blende "inputContainer" aus
-                "flex",  # Blende den Platzhalter ein
-                True,
-                no_update,
-            )
+            return nothing_selected
         barcode = rows[0].get("Barcode", "")
+
+        # Wenn der Barcode nicht in der Tabelle hinterlegt ist, dann zeige den Platzhalter an und setze die anderen Werte zurück
+        if functions.selectInInventory(barcode, "barcode") == None:
+            return nothing_selected
 
         # Blende die Sparkline neben der Füllmenge standardmäßig aus
         füllmenge_hidden = True
-
         füllmenge_data = []
 
         # Extrahiere die letzte Füllmenge aus dem JSON-Array aller gespeicherten Füllmengen
