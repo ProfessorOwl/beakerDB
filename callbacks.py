@@ -21,6 +21,7 @@ import datetime as dt
 import icons
 from pathlib import Path
 import shutil
+import dash_mantine_components as dmc
 
 DEFAULT_SETTINGS = json.loads(Path("default_settings.json").read_bytes())
 TODAY = dt.date.today().isoformat()
@@ -91,17 +92,17 @@ def get_callbacks(app):
         barcode = rows[0].get("Barcode", "")
 
         # Blende die Sparkline neben der Füllmenge standardmäßig aus
-        füllmenge_display = True
+        füllmenge_hidden = True
 
         füllmenge_data = []
 
         # Extrahiere die letzte Füllmenge aus dem JSON-Array aller gespeicherten Füllmengen
         füllmenge_raw = functions.selectInInventory(barcode, "füllmenge")
-        if len(füllmenge_raw) != 0:
+        if len(füllmenge_raw or []) != 0 and füllmenge_raw:
             füllmenge = json.loads(füllmenge_raw)
             füllmenge_last_entry = füllmenge[-1][1]
             if len(füllmenge) > 1:
-                füllmenge_display = False  # Blende die Sparkline ein, wenn mehr als 1 Eintrag vorhanden ist
+                füllmenge_hidden = False  # Blende die Sparkline ein, wenn mehr als 1 Eintrag vorhanden ist
                 füllmenge_data = [i[1] for i in füllmenge]
         else:
             füllmenge_last_entry = füllmenge_raw
@@ -131,7 +132,7 @@ def get_callbacks(app):
             False,
             False,
             "None",
-            füllmenge_display,
+            füllmenge_hidden,
             füllmenge_data,
         )
 
@@ -139,6 +140,7 @@ def get_callbacks(app):
     @app.callback(
         Output("mainGrid", "rowData", allow_duplicate=True),
         Output("notification-container", "sendNotifications"),
+        Output("füllmenge_sparkline_wrapper", "hidden", allow_duplicate=True),
         Output("füllmenge_sparkline", "data", allow_duplicate=True),
         Input("button-speichern", "n_clicks"),
         State("input-name", "value"),
@@ -265,8 +267,12 @@ def get_callbacks(app):
             barcode,
             zuletzt_geprüft,
             füllmenge,
-            set_props("füllmenge_sparkline_wrapper", {"hidden": False}),
         )
+
+        füllmenge_hidden = True
+
+        if len(füllmenge_data) > 1:
+            füllmenge_hidden = False
 
         # Trage alle Werte in der Datenbank ein
         functions.updateInInventory(
@@ -309,7 +315,7 @@ def get_callbacks(app):
 
         df = functions.getMainTable()
 
-        return (df.to_dict("records"), messages, füllmenge_data)
+        return (df.to_dict("records"), messages, füllmenge_hidden, füllmenge_data)
 
     # Sobald der "Löschen"-Button gedrückt wird, soll die Zeile sowohl aus der sichtbaren Tabelle, wie auch der SQL-Datenbank gelöscht werden
     @app.callback(
@@ -615,17 +621,48 @@ def get_callbacks(app):
             "sqlite:///current.sqlite",
             dtype_backend="pyarrow",
         )
+
         headings = functions.getHeadings(selector)
         cache = dict()
         columnDefs = [
             {"field": i, "sortable": True, "editable": True} for i in headings
         ]
-        columnDefs[-1].update(
+        columnDefs[-1].update(  # Letzte Spalte füllt den übrigen Raum aus
             {"flex": True}
-        )  # Letzte Spalte füllt den übrigen Raum aus
-        columnDefs[0].update(
+        )
+        columnDefs[0].update(  # Erste Spalte (Primärschlüssel) ist nicht editierbar
             {"editable": False}
-        )  # Erste Spalte (Primärschlüssel) ist nicht editierbar
+        )
+        # Verwende die Namen der Gebäude in einem Selektor statt nur der Gebäude ID als Zahl
+        if columnDefs[1].get("field") == "Gebäude_ID":
+            label_value = functions.generateSelectData(
+                functions.Gebäude, ["gebäude_id", "gebäude"]
+            )
+
+            # Dict zum Nachschlagen der Values
+            data_lookup = {i.get("value"): i.get("label") for i in label_value}
+            # Liste für den Selektor. Die ID steht am Anfang, um für Eindeutigkeit zu sorgen und sie später wieder zu extrahieren
+            data = [i.get("value", "") + ": " + i.get("label", "") for i in label_value]
+
+            # Ändere die ID-Spalte, sodass die Namen mit den Werten des Selektors übereinstimmen.
+            df["Gebäude_ID"] = df["Gebäude_ID"].map(
+                lambda x: str(x) + ": " + str(data_lookup.get(str(x)))
+            )
+
+            # Aktualisiere die Eigenschaften der Spalte
+            columnDefs[1].update(
+                {
+                    "headerName": "Gebäude",
+                    "cellEditor": {"function": "AllFunctionalComponentEditors"},
+                    "cellEditorParams": {
+                        "component": dmc.Select(
+                            data=data,
+                            allowDeselect=False,
+                        ),
+                    },
+                    "cellEditorPopup": True,  # Ist notwendig, damit der Selektor nicht in der Zelle clippt
+                }
+            )
 
         if ctx.triggered_id == "stammdatenButtonZurücksetzen":
             return (
@@ -661,7 +698,7 @@ def get_callbacks(app):
             True,
         )
 
-    # Delete all notifications in the in the queue and currently displayed when the modal is opened or closed
+    # Delete all notifications in the the queue and currently displayed when the modal is opened or closed
     @app.callback(
         Output("notification-container", "clean", allow_duplicate=True),
         Input("modalStammdaten", "opened"),
@@ -695,10 +732,14 @@ def get_callbacks(app):
 
         # Finde eine ungenutzte ID
         unusedID = None
-        for i in range(len(firstColumnEntries) - 1):
-            diff = firstColumnEntries[i + 1] - firstColumnEntries[i]
-            if diff > 1:
-                unusedID = firstColumnEntries[i] + 1
+
+        if firstColumnEntries == []:
+            unusedID = 1
+        else:
+            for i in range(len(firstColumnEntries) - 1):
+                diff = firstColumnEntries[i + 1] - firstColumnEntries[i]
+                if diff > 1:
+                    unusedID = firstColumnEntries[i] + 1
 
         if unusedID == None:
             unusedID = firstColumnEntries[-1] + 1
@@ -750,6 +791,23 @@ def get_callbacks(app):
                 }
             )
             return (no_update, True, json.dumps(cache), False, False)
+
+    # Blende den Zeile löschen-Button aus, wenn die Zeile mit der ID 0 ausgewählt ist.
+    @app.callback(
+        Output("stammdatenButtonZeileLöschen", "disabled", allow_duplicate=True),
+        Input("stammGrid", "selectedRows"),
+        State("stammGrid", "columnDefs"),
+    )
+    def toggleDeleteButton(selectedRows, columnDefs):
+        if selectedRows:
+            selectedRow = selectedRows[0]
+        firstColumnName = columnDefs[0].get("field")
+        selectedRowID = selectedRow.get(firstColumnName)
+
+        if selectedRowID == 0:
+            return True
+        else:
+            return False
 
     # Speichere die Zeilen im Cache ab, wenn ein Zeileneintrag geändert wird
     @app.callback(
@@ -812,10 +870,16 @@ def get_callbacks(app):
             values = []
             for c, v in cached.items():
                 if c != "op":
-                    columns.append(c)
-                    values.append(v)
+                    # Die Spalte "Gebäude_ID" bei Gebäuden enthält nicht die ID, sondern einen zusammengesetzten String aus ID und Wert. Extrahiere also vor dem Speichern die ID.
+                    if c == "Gebäude_ID":
+                        columns.append(c)
+                        values.append(v.split(":")[0])
+                    else:
+                        columns.append(c)
+                        values.append(v)
                 if c == "op":
                     op = v
+
             # Falls ein Fehler passiert, hänge eine Nachricht an
             if len(columns) == 0:
                 messages.append(

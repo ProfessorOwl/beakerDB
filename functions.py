@@ -159,7 +159,7 @@ stammdatenTables = {
 def selectInInventory(
     barcode: str,
     columnSelect: str,
-) -> str:
+) -> str | None:
     """Lese den Wert einer Spalte der Inventartabelle aus, in dessen Zeile der entsprechende Barcode steht."""
     with Session(engine) as session:
         stmt = select(getattr(Inventar, columnSelect)).where(
@@ -168,7 +168,7 @@ def selectInInventory(
         item = session.scalars(stmt).one_or_none()
         session.close()
     if item is None:
-        return ""
+        return None
     else:
         return str(item)
 
@@ -356,7 +356,7 @@ def insertStammdaten(selector: str, columns: list[str], values: list[str]):
 
 def getMainTable():
     df = pd.read_sql(
-        "SELECT `CAS-Nr`, Name, Summenformel, Barcode, Raum FROM inventar INNER JOIN räume ON inventar.Raum_ID == räume.Raum_ID",
+        "SELECT `CAS-Nr`, Name, Summenformel, Barcode, Raum, Zuletzt_geprüft FROM inventar INNER JOIN räume ON inventar.Raum_ID == räume.Raum_ID",
         "sqlite:///current.sqlite",
         dtype_backend="pyarrow",
     )
@@ -402,15 +402,14 @@ def backup_db():
     shutil.copy(src_path, dest_path)
 
 
-def save_füllmenge(barcode, date, füllmenge, additionalFunction=None):
+def save_füllmenge(barcode, date, füllmenge):
     füllmenge_data = []
     füllmenge_raw = selectInInventory(barcode, "füllmenge")
-    if len(füllmenge_raw) != 0:
+    if len(füllmenge_raw or []) != 0 and füllmenge_raw:
         füllmenge_history = json.loads(füllmenge_raw)
-        if [date, füllmenge] not in füllmenge_history:
+        if [date, füllmenge] != füllmenge_history[-1]:
             füllmenge_history.append([date, füllmenge])
         füllmenge_data = [i[1] for i in füllmenge_history]
-        additionalFunction
         füllmenge_history = json.dumps(füllmenge_history)
     elif füllmenge:
         füllmenge_history = [[date, füllmenge]]
