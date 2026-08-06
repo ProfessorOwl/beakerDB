@@ -633,18 +633,23 @@ def get_callbacks(app):
         columnDefs[0].update(  # Erste Spalte (Primärschlüssel) ist nicht editierbar
             {"editable": False}
         )
-        # TODO - Vielleicht die Werte mithilfe von einem Python-Skript auf den Gebäudenamen statt der ID setzen?
-        # Verwende die Namen der Gebäude statt der Gebäude ID
+        # Verwende die Namen der Gebäude in einem Selektor statt nur der Gebäude ID als Zahl
         if columnDefs[1].get("field") == "Gebäude_ID":
             label_value = functions.generateSelectData(
                 functions.Gebäude, ["gebäude_id", "gebäude"]
             )
+
+            # Dict zum Nachschlagen der Values
             data_lookup = {i.get("value"): i.get("label") for i in label_value}
+            # Liste für den Selektor. Die ID steht am Anfang, um für Eindeutigkeit zu sorgen und sie später wieder zu extrahieren
             data = [i.get("value", "") + ": " + i.get("label", "") for i in label_value]
+
+            # Ändere die ID-Spalte, sodass die Namen mit den Werten des Selektors übereinstimmen.
             df["Gebäude_ID"] = df["Gebäude_ID"].map(
                 lambda x: str(x) + ": " + str(data_lookup.get(str(x)))
             )
 
+            # Aktualisiere die Eigenschaften der Spalte
             columnDefs[1].update(
                 {
                     "headerName": "Gebäude",
@@ -655,7 +660,7 @@ def get_callbacks(app):
                             allowDeselect=False,
                         ),
                     },
-                    "cellEditorPopup": True,
+                    "cellEditorPopup": True,  # Ist notwendig, damit der Selektor nicht in der Zelle clippt
                 }
             )
 
@@ -843,7 +848,6 @@ def get_callbacks(app):
             is_disabled = True
         else:
             is_disabled = False
-        print(cache)
         return json.dumps(cache), is_disabled, is_disabled
 
     # Speichere die geänderten Zeilen der Stammdatentabelle in der Datenbank ab.
