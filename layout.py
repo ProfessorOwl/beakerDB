@@ -669,11 +669,11 @@ modalStammdatenInner = dmc.Stack(
                 "theme": {"function": "themeQuartz.withParams({fontFamily: 'Lexend'})"},
                 "suppressScrollOnNewData": True,
                 "suppressFieldDotNotation": True,
-                "rowSelection": {
+                "rowSelection": {  # Aktiviere das Auswählen von Zeilen
                     "mode": "singleRow",
                     "enableClickSelection": True,
                     "checkboxes": False,
-                },  # Aktiviere das Auswählen von Zeilen
+                },
                 "localeText": {
                     "filterOoo": "Filter...",
                     "applyFilter": "Filter anwenden",

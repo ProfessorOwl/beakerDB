@@ -21,6 +21,7 @@ import datetime as dt
 import icons
 from pathlib import Path
 import shutil
+import dash_mantine_components as dmc
 
 DEFAULT_SETTINGS = json.loads(Path("default_settings.json").read_bytes())
 TODAY = dt.date.today().isoformat()
@@ -620,17 +621,43 @@ def get_callbacks(app):
             "sqlite:///current.sqlite",
             dtype_backend="pyarrow",
         )
+
         headings = functions.getHeadings(selector)
         cache = dict()
         columnDefs = [
             {"field": i, "sortable": True, "editable": True} for i in headings
         ]
-        columnDefs[-1].update(
+        columnDefs[-1].update(  # Letzte Spalte füllt den übrigen Raum aus
             {"flex": True}
-        )  # Letzte Spalte füllt den übrigen Raum aus
-        columnDefs[0].update(
+        )
+        columnDefs[0].update(  # Erste Spalte (Primärschlüssel) ist nicht editierbar
             {"editable": False}
-        )  # Erste Spalte (Primärschlüssel) ist nicht editierbar
+        )
+        # TODO - Vielleicht die Werte mithilfe von einem Python-Skript auf den Gebäudenamen statt der ID setzen?
+        # Verwende die Namen der Gebäude statt der Gebäude ID
+        if columnDefs[1].get("field") == "Gebäude_ID":
+            label_value = functions.generateSelectData(
+                functions.Gebäude, ["gebäude_id", "gebäude"]
+            )
+            data_lookup = {i.get("value"): i.get("label") for i in label_value}
+            data = [i.get("value", "") + ": " + i.get("label", "") for i in label_value]
+            df["Gebäude_ID"] = df["Gebäude_ID"].map(
+                lambda x: str(x) + ": " + str(data_lookup.get(str(x)))
+            )
+
+            columnDefs[1].update(
+                {
+                    "headerName": "Gebäude",
+                    "cellEditor": {"function": "AllFunctionalComponentEditors"},
+                    "cellEditorParams": {
+                        "component": dmc.Select(
+                            data=data,
+                            allowDeselect=False,
+                        ),
+                    },
+                    "cellEditorPopup": True,
+                }
+            )
 
         if ctx.triggered_id == "stammdatenButtonZurücksetzen":
             return (
@@ -816,6 +843,7 @@ def get_callbacks(app):
             is_disabled = True
         else:
             is_disabled = False
+        print(cache)
         return json.dumps(cache), is_disabled, is_disabled
 
     # Speichere die geänderten Zeilen der Stammdatentabelle in der Datenbank ab.
@@ -838,10 +866,16 @@ def get_callbacks(app):
             values = []
             for c, v in cached.items():
                 if c != "op":
-                    columns.append(c)
-                    values.append(v)
+                    # Die Spalte "Gebäude_ID" bei Gebäuden enthält nicht die ID, sondern einen zusammengesetzten String aus ID und Wert. Extrahiere also vor dem Speichern die ID.
+                    if c == "Gebäude_ID":
+                        columns.append(c)
+                        values.append(v.split(":")[0])
+                    else:
+                        columns.append(c)
+                        values.append(v)
                 if c == "op":
                     op = v
+
             # Falls ein Fehler passiert, hänge eine Nachricht an
             if len(columns) == 0:
                 messages.append(
