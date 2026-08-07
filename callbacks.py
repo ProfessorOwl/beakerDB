@@ -1450,6 +1450,8 @@ def get_callbacks(app):
             return (
                 dcc.send_file(src_path),
                 no_update,
+                no_update,
+                no_update,
             )  # Gibt die momentan geöffnete Datenbank an die Download-Komponente weiter
 
         if ctx.triggered_id == "einstellung_datenbank_importieren_daten":
