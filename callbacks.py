@@ -1099,34 +1099,49 @@ def get_callbacks(app):
         Output("modal-input-lieferant", "data"),
         Output("modal-input-raum", "data"),
         Input("stammdatenButtonSpeichern", "n_clicks"),
+        Input("button-speichern", "n_clicks"),
     )
-    def updateLists(n_clicks):
-        return (
-            functions.generateSelectData_Namen(),
-            functions.generateSelectData(
-                functions.Mengeneinheiten,
-                ["mengeneinheit_id", "mengeneinheit"],
-            ),
-            functions.generateSelectData(
-                functions.Hersteller, ["hersteller_id", "hersteller"]
-            ),
-            functions.generateSelectData(
-                functions.Lieferanten, ["lieferant_id", "lieferant"]
-            ),
-            functions.generateSelectData_Räume(),
-            functions.generateSelectData_Namen(),
-            functions.generateSelectData(
-                functions.Mengeneinheiten,
-                ["mengeneinheit_id", "mengeneinheit"],
-            ),
-            functions.generateSelectData(
-                functions.Hersteller, ["hersteller_id", "hersteller"]
-            ),
-            functions.generateSelectData(
-                functions.Lieferanten, ["lieferant_id", "lieferant"]
-            ),
-            functions.generateSelectData_Räume(),
-        )
+    def updateLists(n_clicks_stammdaten, n_clicks_speichern):
+        if ctx.triggered_id == "stammdatenButtonSpeichern":
+            return (
+                functions.generateSelectData_Namen(),
+                functions.generateSelectData(
+                    functions.Mengeneinheiten,
+                    ["mengeneinheit_id", "mengeneinheit"],
+                ),
+                functions.generateSelectData(
+                    functions.Hersteller, ["hersteller_id", "hersteller"]
+                ),
+                functions.generateSelectData(
+                    functions.Lieferanten, ["lieferant_id", "lieferant"]
+                ),
+                functions.generateSelectData_Räume(),
+                functions.generateSelectData_Namen(),
+                functions.generateSelectData(
+                    functions.Mengeneinheiten,
+                    ["mengeneinheit_id", "mengeneinheit"],
+                ),
+                functions.generateSelectData(
+                    functions.Hersteller, ["hersteller_id", "hersteller"]
+                ),
+                functions.generateSelectData(
+                    functions.Lieferanten, ["lieferant_id", "lieferant"]
+                ),
+                functions.generateSelectData_Räume(),
+            )
+        else:
+            return (
+                functions.generateSelectData_Namen(),
+                no_update,
+                no_update,
+                no_update,
+                no_update,
+                functions.generateSelectData_Namen(),
+                no_update,
+                no_update,
+                no_update,
+                no_update,
+            )
 
     # Initialisiere den Scan-Script, der zwischen normalem Input und gescannten Input unterscheidet. Scanner soll als normale Tastatur funktionieren, wenn Stammdaten- oder "Neuer Eintrag"-Fenster geöffnet ist.
     clientside_callback(

@@ -238,7 +238,7 @@ def generateSelectData(table: Type[Base], columns: list[str]) -> list[dict]:
 
 
 def generateSelectData_Räume() -> list[dict]:
-    """Generiere eine Liste mit den Auswahlmöglichkeiten für die Dropdown-Selektoren für die Räume, die nach den Gebäuden sortiert sein sollen"""
+    """Generiere eine Liste mit den Auswahlmöglichkeiten für die Dropdown-Selektoren für die Räume, die nach den Gebäuden gruppiert sein sollen"""
     with Session(engine) as session:
         stmt1 = select(Räume.raum_id, Räume.raum, Gebäude.gebäude).join(
             Gebäude, Räume.gebäude_id == Gebäude.gebäude_id
@@ -259,7 +259,7 @@ def generateSelectData_Räume() -> list[dict]:
 
 
 def generateSelectData_Namen() -> list[dict]:
-    """Generiere eine Liste mit den Auswahlmöglichkeiten für die Dropdown-Selektoren für die Räume, die nach den Gebäuden sortiert sein sollen"""
+    """Generiere eine Liste mit den Auswahlmöglichkeiten für die Dropdown-Selektoren für die Chemikalien. Diese sind nach dem Inventar und der GESTIS-Liste gruppiert."""
     with Session(engine) as session:
         stmt1 = select(Inventar.barcode, Inventar.name)
         stmt2 = select(Gestisdaten.id, Gestisdaten.name)
