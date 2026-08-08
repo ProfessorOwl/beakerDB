@@ -52,6 +52,7 @@ fensterLinks = html.Div(
                             "Neuer Eintrag",
                             id="button-open-modal",
                             rightSection=DashIconify(icon=icons.add, height=24),
+                            n_clicks=0,
                         ),
                         dmc.Tooltip(
                             dmc.ActionIcon(
@@ -353,16 +354,15 @@ fensterRechts = [
                         "Speichern",
                         id="button-speichern",
                         color="green",
-                        disabled=True,
                         rightSection=DashIconify(icon=icons.save),
                         size="lg",
                         fullWidth=True,
+                        n_clicks=0,
                     ),
                     dmc.Button(
                         "Löschen",
                         id="button-löschen",
                         color="red",
-                        disabled=True,
                         rightSection=DashIconify(icon=icons.delete),
                         size="lg",
                         fullWidth=True,
@@ -588,6 +588,7 @@ modalNeuerEintragInner = dmc.Stack(
                                         rightSection=DashIconify(icon=icons.save),
                                         size="lg",
                                         fullWidth=True,
+                                        n_clicks=0,
                                     ),
                                     # dmc.Tooltip(
                                     #     target="#modal-button-speichern",
@@ -735,7 +736,7 @@ modalEinstellungenInner = dmc.Stack(
         dmc.ScrollAreaAutosize(
             dmc.Stack(
                 [
-                    dmc.Stack(  # TODO - Benötigt noch die gesamte Logik
+                    dmc.Stack(
                         [
                             dmc.Title("Datenbank verwalten", order=4),
                             dmc.Text(
@@ -913,16 +914,38 @@ modal_füllmenge_verlauf_inner = dmc.Stack(
     ]
 )
 
+modal_bestätigung_speichern = dmc.Stack(
+    [
+        dmc.Title("Eintrag speichern?", order=2),
+        dmc.Group(
+            [
+                dmc.Button("Ja", id="speichern_bestätigung_ja"),
+                dmc.Button(
+                    "Abbrechen",
+                    id="speichern_bestätigung_abbrechen",
+                    variant="outline",
+                    color="grey",
+                ),
+            ],
+            grow=True,
+            preventGrowOverflow=False,
+        ),
+        dmc.Tooltip(
+            target="#speichern_bestätigung_ja",
+            label=dmc.Kbd("Enter"),
+        ),
+    ]
+)
 
 app.layout = dmc.MantineProvider(
     [
         dcc.Store(id="stammdatenCache"),
         dcc.Store(id="einstellungenCache", storage_type="local"),
         dcc.Store(id="current_db_cache"),
-        dcc.Interval(  # FIXME - Diese Komponente und das korrespondierende Callback funktionieren nicht, da n_intervals nicht inkrementiert wird, selbst wenn disabled = False und interval=10
+        dcc.Interval(
             id="einstellung_backup_häufigkeit_helper",
             disabled=True,
-            interval=1000,
+            interval=60000,
             n_intervals=0,
         ),
         dmc.NotificationContainer(
@@ -933,7 +956,12 @@ app.layout = dmc.MantineProvider(
         ),
         EventListener(  # Global keyboard shortcut listener
             id="keyboardListener",
-            events=[{"event": "keydown", "props": ["key", "shiftKey"]}],
+            events=[
+                {
+                    "event": "keydown",
+                    "props": ["key", "shiftKey", "target.tagName"],
+                }
+            ],
         ),
         dmc.Grid(
             [
@@ -981,13 +1009,20 @@ app.layout = dmc.MantineProvider(
             withCloseButton=False,
             opened=False,
         ),
-        # dmc.Tooltip(
-        #     target="#button-speichern",
-        #     label=[dmc.Kbd("Shift"), " + ", dmc.Kbd("Enter")],
-        # ),
-        # dmc.Tooltip(
-        #     target="#button-open-modal", label=[dmc.Kbd("Shift"), " + ", dmc.Kbd("N")]
-        # ),
+        dmc.Modal(
+            modal_bestätigung_speichern,
+            id="modal_bestätigung_speichern",
+            centered=True,
+            withCloseButton=False,
+            opened=False,
+        ),
+        dmc.Tooltip(
+            target="#button-speichern",
+            label=[dmc.Kbd("Shift"), " + ", dmc.Kbd("Enter")],
+        ),
+        dmc.Tooltip(
+            target="#button-open-modal", label=[dmc.Kbd("Shift"), " + ", dmc.Kbd("N")]
+        ),
     ],
     theme={
         "fontFamily": "Lexend",

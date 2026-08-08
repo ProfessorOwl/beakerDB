@@ -56,8 +56,6 @@ def get_callbacks(app):
         Output("input-molmasse", "value"),
         Output("input-lösungsmittel", "value"),
         Output("input-geprüft", "value"),
-        Output("button-speichern", "disabled"),
-        Output("button-löschen", "disabled"),
         Output("inputContainer", "hidden"),
         Output("inputPlaceholder", "display"),
         Output("füllmenge_sparkline_wrapper", "hidden"),
@@ -83,8 +81,6 @@ def get_callbacks(app):
             "",
             "",
             "",
-            True,  # Blende den Speicher-Button aus
-            True,  # Blende den Löschen-Button aus
             True,  # Blende "inputContainer" aus
             "flex",  # Blende den Platzhalter ein
             True,
@@ -135,8 +131,6 @@ def get_callbacks(app):
                     "zuletzt_geprüft",
                 ]
             ],
-            False,
-            False,
             False,
             "None",
             füllmenge_hidden,
@@ -1556,3 +1550,82 @@ def get_callbacks(app):
         barcode = rows[0].get("Barcode", "")
         data = functions.get_füllmenge_data(barcode)
         return True, data
+
+    # Führe Keyboard-Shortcuts aus
+    @app.callback(
+        Input("keyboardListener", "n_events"),
+        Input("keyboardListener", "event"),
+        State("inputContainer", "hidden"),
+        State("modalNeuerEintrag", "opened"),
+        State("button-speichern", "n_clicks"),
+        State("modal-button-speichern", "n_clicks"),
+        State("modal-button-speichern", "disabled"),
+        State("button-open-modal", "n_clicks"),
+        State("modal_bestätigung_speichern", "opened"),
+        State("speichern_bestätigung_ja", "n_clicks"),
+    )
+    def execute_shortcut(
+        n_events,
+        event,
+        is_input_hidden,
+        is_neuer_eintrag_open,
+        eintrag_speichern_n_clicks,
+        neuen_eintrag_speichern_n_clicks,
+        is_modal_speichern_disabled,
+        neuer_eintrag_n_clicks,
+        is_speichern_bestätigung_open,
+        speichern_bestätigung_ja_n_clicks,
+    ):
+        print("n_events", n_events, "event", event)
+        key = event.get("key")
+        is_shift = event.get("shiftKey")
+        tag_name = event.get("target.tagName")
+
+        if is_shift:
+            if key == "Enter":
+                if not is_input_hidden and not is_neuer_eintrag_open:
+                    set_props("modal_bestätigung_speichern", {"opened": True})
+                elif is_neuer_eintrag_open and not is_modal_speichern_disabled:
+                    set_props("modal_bestätigung_speichern", {"opened": True})
+
+            elif key == "N" and tag_name != "INPUT" and not is_neuer_eintrag_open:
+                set_props("button-open-modal", {"n_clicks": neuer_eintrag_n_clicks + 1})
+
+        if key == "Enter":
+            if is_speichern_bestätigung_open:
+                set_props(
+                    "speichern_bestätigung_ja",
+                    {"n_clicks": speichern_bestätigung_ja_n_clicks + 1},
+                )
+
+    # Kontrolliert die Logik hinter dem "Eintrag Speichern" Modal
+    @app.callback(
+        Output("modal_bestätigung_speichern", "opened"),
+        Input("speichern_bestätigung_ja", "n_clicks"),
+        Input("speichern_bestätigung_abbrechen", "n_clicks"),
+        State("button-speichern", "n_clicks"),
+        State("modal-button-speichern", "n_clicks"),
+        State("modalNeuerEintrag", "opened"),
+    )
+    def confirm_save(
+        ja_n_clicks,
+        abbrechen_n_clicks,
+        eintrag_speichern_n_clicks,
+        neuen_eintrag_speichern_n_clicks,
+        is_neuer_eintrag_open,
+    ):
+
+        if ctx.triggered_id == "speichern_bestätigung_ja":
+            if is_neuer_eintrag_open:
+                set_props(
+                    "modal-button-speichern",
+                    {"n_clicks": neuen_eintrag_speichern_n_clicks + 1},
+                )
+            elif not is_neuer_eintrag_open:
+                set_props(
+                    "button-speichern", {"n_clicks": eintrag_speichern_n_clicks + 1}
+                )
+        elif ctx.triggered_id == "speichern_bestätigung_abbrechen":
+            pass
+
+        return False
