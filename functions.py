@@ -156,68 +156,63 @@ stammdatenTables = {
 }
 
 
-def selectInInventory(
-    barcode: str,
-    columnSelect: str,
-) -> str | None:
-    """Lese den Wert einer Spalte der Inventartabelle aus, in dessen Zeile der entsprechende Barcode steht."""
+def select_value(barcode: str, columnSelect: str, table) -> str:
+    """Lese den Wert einer Spalte der Tabelle aus, in dessen Zeile der entsprechende Barcode steht."""
     with Session(engine) as session:
-        stmt = select(getattr(Inventar, columnSelect)).where(
-            Inventar.barcode == barcode
-        )
+        stmt = select(getattr(table, columnSelect)).where(table.barcode == barcode)
         item = session.scalars(stmt).one_or_none()
         session.close()
     if item is None:
-        return None
+        return ""
     else:
         return str(item)
 
 
-def deleteInInventory(barcode: str):
+def delete_entry(barcode: str, table):
     """Lösche den Eintrag mit dem enstprechenden Barcode"""
     with Session(engine) as session:
-        entry = session.get(Inventar, barcode)
+        entry = session.get(table, barcode)
         session.delete(entry)
         session.commit()
         session.close()
     return
 
 
-def updateInInventory(
-    barcode,
+def update_row(
+    barcode: str,
     columnsSelect: list[str],
     values: list[None | int | float | str],
+    table,
 ):
-    """Update eine Zeile in der Inventartabelle mit Werten in den entsprechenden Spalten."""
+    """Update eine Zeile in der Tabelle mit Werten in den entsprechenden Spalten."""
     if len(columnsSelect) != len(values):
         raise ValueError(
             "columnsSelect und values müssen die gleiche Anzahl Elemente besitzen"
         )
     dict = {
-        getattr(Inventar, columnsSelect[i]): values[i]
-        for i in range(len(columnsSelect))
+        getattr(table, columnsSelect[i]): values[i] for i in range(len(columnsSelect))
     }
     for k, v in dict.items():
         if v == "":
             dict.update({k: None})
     with Session(engine) as session:
-        session.query(Inventar).filter_by(barcode=barcode).update(dict)
+        session.query(table).filter_by(barcode=barcode).update(dict)
         session.commit()
         session.close()
 
 
-def createInInventory(
+def create_row(
     columnsSelect: list[str],
     values: list[int | float | str | None],
+    table,
 ):
-    """Erstelle eine neue Zeile in der Inventartabelle mit Werten in den entsprechenden Spalten."""
+    """Erstelle eine neue Zeile in der Tabelle mit Werten in den entsprechenden Spalten."""
     if len(columnsSelect) != len(values):
         raise ValueError(
             "columnsSelect und values müssen die gleiche Anzahl Elemente besitzen"
         )
 
     with Session(engine) as session:
-        table = Inventar()
         for i in range(len(columnsSelect)):
             setattr(table, columnsSelect[i], values[i])
         session.add(table)
@@ -404,7 +399,7 @@ def backup_db():
 
 def save_füllmenge(barcode, date, füllmenge):
     füllmenge_data = []
-    füllmenge_raw = selectInInventory(barcode, "füllmenge")
+    füllmenge_raw = select_value(barcode, "füllmenge", Inventar)
     if len(füllmenge_raw or []) != 0 and füllmenge_raw:
         füllmenge_history = json.loads(füllmenge_raw)
         if [date, füllmenge] != füllmenge_history[-1]:

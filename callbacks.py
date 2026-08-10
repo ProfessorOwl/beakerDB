@@ -70,8 +70,8 @@ def get_callbacks(app):
             "",
             "",
             "",
-            "1",
             "",
+            "1",
             "",
             "0",
             "0",
@@ -92,7 +92,7 @@ def get_callbacks(app):
         barcode = rows[0].get("Barcode", "")
 
         # Wenn der Barcode nicht in der Tabelle hinterlegt ist, dann zeige den Platzhalter an und setze die anderen Werte zurück
-        if functions.selectInInventory(barcode, "barcode") == None:
+        if functions.select_value(barcode, "barcode", functions.Inventar) == None:
             return nothing_selected
 
         # Blende die Sparkline neben der Füllmenge standardmäßig aus
@@ -100,7 +100,7 @@ def get_callbacks(app):
         füllmenge_data = []
 
         # Extrahiere die letzte Füllmenge aus dem JSON-Array aller gespeicherten Füllmengen
-        füllmenge_raw = functions.selectInInventory(barcode, "füllmenge")
+        füllmenge_raw = functions.select_value(barcode, "füllmenge", functions.Inventar)
         if len(füllmenge_raw or []) != 0 and füllmenge_raw:
             füllmenge = json.loads(füllmenge_raw)
             füllmenge_last_entry = füllmenge[-1][1]
@@ -114,7 +114,7 @@ def get_callbacks(app):
             barcode,
             füllmenge_last_entry,
             *[  # Gebe für jedes Feld den entsprechenden Wert aus der Inventartabelle zurück
-                functions.selectInInventory(barcode, x)
+                functions.select_value(barcode, x, functions.Inventar)
                 for x in [
                     "name",
                     "summenformel",
@@ -276,7 +276,7 @@ def get_callbacks(app):
             füllmenge_hidden = False
 
         # Trage alle Werte in der Datenbank ein
-        functions.updateInInventory(
+        functions.update_row(
             barcode,
             [
                 "name",
@@ -312,6 +312,7 @@ def get_callbacks(app):
                 mengeneinheitID,
                 zuletzt_geprüft,
             ],
+            functions.Inventar,
         )
 
         df = functions.getMainTable()
@@ -328,7 +329,7 @@ def get_callbacks(app):
     )
     def removeRow(n_clicks, rows):
         barcode = rows[0].get("Barcode", "")
-        functions.deleteInInventory(barcode)
+        functions.delete_entry(barcode, functions.Inventar)
         global df  # Greife auf den globalen Dataframe zurück, damit die Tabelle auch nach Pagerefresh oder auf einem anderen Computer geändert ist
         df = functions.getMainTable()
         return (
@@ -414,7 +415,7 @@ def get_callbacks(app):
                 raise PreventUpdate
             barcode = event.get("detail").get("scanCode")
 
-            if functions.selectInInventory(barcode, "barcode") == None:
+            if functions.select_value(barcode, "barcode", functions.Inventar) == None:
                 return (
                     not opened,
                     True,
@@ -471,7 +472,7 @@ def get_callbacks(app):
         State("modal-input-barcode", "value"),
     )
     def is_barcode_used(n_blur, barcode):
-        selected = functions.selectInInventory(barcode, "barcode")
+        selected = functions.select_value(barcode, "barcode", functions.Inventar)
         if "" == barcode:
             return ("Barcode darf nicht leer sein", True)
         elif selected == barcode:
@@ -589,9 +590,8 @@ def get_callbacks(app):
             zuletzt_geprüft,
             füllmenge,
         )
-
         # Trage alle Werte in der Datenbank ein
-        functions.createInInventory(
+        functions.create_row(
             [
                 "name",
                 "barcode",
@@ -626,6 +626,7 @@ def get_callbacks(app):
                 mengeneinheitID,
                 zuletzt_geprüft,
             ],
+            functions.Inventar(),
         )
 
         global df  # Greife auf den globalen Dataframe zurück, damit die Tabelle auch nach Pagerefresh oder auf einem anderen Computer geändert ist
@@ -1576,27 +1577,25 @@ def get_callbacks(app):
         is_speichern_bestätigung_open,
         speichern_bestätigung_ja_n_clicks,
     ):
-        print("n_events", n_events, "event", event)
         key = event.get("key")
         is_shift = event.get("shiftKey")
         tag_name = event.get("target.tagName")
-
         if is_shift:
             if key == "Enter":
                 if not is_input_hidden and not is_neuer_eintrag_open:
                     set_props("modal_bestätigung_speichern", {"opened": True})
+                    return
                 elif is_neuer_eintrag_open and not is_modal_speichern_disabled:
                     set_props("modal_bestätigung_speichern", {"opened": True})
+                    return
+            # REVIEW - Was ist in dem Fall, dass mit dem Scanner ein Eintrag mit einem großen N eingescannt wird? Dann sollte dieses Callback auch aktivieren, was jedoch nicht gewünscht ist. Vielleicht gibt es eine Möglichkeit, das Callback nach Ausführung vom Scan-Event wieder zurückgängig zu machen? Evtl. durch Überprüfen, ob das Neuer-Eintrag-Fenster geöffnet ist? Oder vielleicht mit Strg/Command abhängig vom Betriebssystem?
 
-            elif key == "N" and tag_name != "INPUT" and not is_neuer_eintrag_open:
-                set_props("button-open-modal", {"n_clicks": neuer_eintrag_n_clicks + 1})
-
-        if key == "Enter":
-            if is_speichern_bestätigung_open:
-                set_props(
-                    "speichern_bestätigung_ja",
-                    {"n_clicks": speichern_bestätigung_ja_n_clicks + 1},
-                )
+            elif key == "N":
+                if tag_name != "INPUT" and not is_neuer_eintrag_open:
+                    set_props(
+                        "button-open-modal", {"n_clicks": neuer_eintrag_n_clicks + 1}
+                    )
+                    return
 
     # Kontrolliert die Logik hinter dem "Eintrag Speichern" Modal
     @app.callback(
