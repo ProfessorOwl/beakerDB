@@ -1025,7 +1025,7 @@ app.layout = dmc.MantineProvider(
             label=[
                 dmc.Kbd("Shift"),
                 " + ",
-                functions.function_key(),
+                functions.system_key(),
                 " + ",
                 dmc.Kbd("N"),
             ],
