@@ -17,8 +17,10 @@ from sqlalchemy.dialects.sqlite import JSON, DATE
 from sqlalchemy import event, text
 from pathlib import Path
 import shutil
+import platform
 import datetime as dt
 import json
+import dash_mantine_components as dmc
 
 engine = create_engine("sqlite:///current.sqlite")
 
@@ -421,3 +423,12 @@ def get_füllmenge_data(barcode):
 
         data = [{"datum": i[0], "Füllmenge": i[1]} for i in füllmenge]
         return data
+
+
+# Declare the function key for Windows (ctrl) and Mac (command) depending on the OS for use in keyboard shortcuts
+def function_key() -> dmc.Kbd:
+    """Returns either `dmc.Kbd("⌘")` or `dmc.Kbd("Strg")` depending on the system"""
+    if platform.system() == "Darwin":
+        return dmc.Kbd("⌘")
+    else:
+        return dmc.Kbd("Strg")

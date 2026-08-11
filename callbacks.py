@@ -22,6 +22,7 @@ import icons
 from pathlib import Path
 import shutil
 import dash_mantine_components as dmc
+import platform
 
 DEFAULT_SETTINGS = json.loads(Path("default_settings.json").read_bytes())
 TODAY = dt.date.today().isoformat()
@@ -1579,6 +1580,8 @@ def get_callbacks(app):
     ):
         key = event.get("key")
         is_shift = event.get("shiftKey")
+        is_metaKey = event.get("metaKey")
+        is_ctrlKey = event.get("ctrlKey")
         tag_name = event.get("target.tagName")
         if is_shift:
             if key == "Enter":
@@ -1588,14 +1591,19 @@ def get_callbacks(app):
                 elif is_neuer_eintrag_open and not is_modal_speichern_disabled:
                     set_props("modal_bestätigung_speichern", {"opened": True})
                     return
-            # REVIEW - Was ist in dem Fall, dass mit dem Scanner ein Eintrag mit einem großen N eingescannt wird? Dann sollte dieses Callback auch aktivieren, was jedoch nicht gewünscht ist. Vielleicht gibt es eine Möglichkeit, das Callback nach Ausführung vom Scan-Event wieder zurückgängig zu machen? Evtl. durch Überprüfen, ob das Neuer-Eintrag-Fenster geöffnet ist? Oder vielleicht mit Strg/Command abhängig vom Betriebssystem?
-
-            elif key == "N":
-                if tag_name != "INPUT" and not is_neuer_eintrag_open:
-                    set_props(
-                        "button-open-modal", {"n_clicks": neuer_eintrag_n_clicks + 1}
-                    )
-                    return
+            elif (
+                is_metaKey
+                and platform.system() == "Darwin"
+                or is_ctrlKey
+                and platform.system() == "Windows"
+            ):
+                if key.lower() == "n":
+                    if tag_name != "INPUT" and not is_neuer_eintrag_open:
+                        set_props(
+                            "button-open-modal",
+                            {"n_clicks": neuer_eintrag_n_clicks + 1},
+                        )
+                        return
 
     # Kontrolliert die Logik hinter dem "Eintrag Speichern" Modal
     @app.callback(

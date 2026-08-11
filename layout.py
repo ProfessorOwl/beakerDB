@@ -959,7 +959,7 @@ app.layout = dmc.MantineProvider(
             events=[
                 {
                     "event": "keydown",
-                    "props": ["key", "shiftKey", "target.tagName"],
+                    "props": ["key", "shiftKey", "metaKey", "ctrlKey" "target.tagName"],
                 }
             ],
         ),
@@ -1021,7 +1021,14 @@ app.layout = dmc.MantineProvider(
             label=[dmc.Kbd("Shift"), " + ", dmc.Kbd("Enter")],
         ),
         dmc.Tooltip(
-            target="#button-open-modal", label=[dmc.Kbd("Shift"), " + ", dmc.Kbd("N")]
+            target="#button-open-modal",
+            label=[
+                dmc.Kbd("Shift"),
+                " + ",
+                functions.function_key(),
+                " + ",
+                dmc.Kbd("N"),
+            ],
         ),
     ],
     theme={
