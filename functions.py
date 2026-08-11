@@ -426,7 +426,7 @@ def get_füllmenge_data(barcode):
 
 
 # Declare the function key for Windows (ctrl) and Mac (command) depending on the OS for use in keyboard shortcuts
-def function_key() -> dmc.Kbd:
+def system_key() -> dmc.Kbd:
     """Returns either `dmc.Kbd("⌘")` or `dmc.Kbd("Strg")` depending on the system"""
     if platform.system() == "Darwin":
         return dmc.Kbd("⌘")
