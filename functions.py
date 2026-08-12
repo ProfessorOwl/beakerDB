@@ -59,20 +59,40 @@ class Inventar(Base):
     cas_nr = Column("CAS-Nr", String())
     name = Column("Name", String())
     summenformel = Column("Summenformel", String())
-    raum_id = Column("Raum_ID", ForeignKey("räume.Raum_ID"))
-    lieferant_id = Column("Lieferant_ID", ForeignKey("lieferanten.Lieferant_ID"))
+    raum_id = Column(
+        "Raum_ID",
+        ForeignKey("räume.Raum_ID"),
+        default=0,
+    )
+    lieferant_id = Column(
+        "Lieferant_ID",
+        ForeignKey("lieferanten.Lieferant_ID"),
+        default=0,
+    )
     füllmenge = Column("Füllmenge", String())
     mengeneinheit_id = Column(
-        "Mengeneinheit_ID", ForeignKey("mengeneinheiten.Mengeneinheit_ID")
+        "Mengeneinheit_ID",
+        ForeignKey(
+            "mengeneinheiten.Mengeneinheit_ID",
+        ),
+        default=1,
     )
     kaufdatum = Column("Kaufdatum", String())
-    hersteller_id = Column("Hersteller_ID", ForeignKey("hersteller.Hersteller_ID"))
+    hersteller_id = Column(
+        "Hersteller_ID",
+        ForeignKey("hersteller.Hersteller_ID"),
+        default=0,
+    )
     reinheit = Column("Reinheit", String())
     konzentration = Column("Konzentration", String())
     lösungsmittel = Column("Lösungsmittel", String())
     molmasse = Column("Molmasse", Float())
     zuletzt_geprüft = Column("Zuletzt_geprüft", String())
-    archiviert = Column("Archiviert", Integer())
+    archiviert = Column(
+        "Archiviert",
+        Integer(),
+        default=0,
+    )
 
     def __repr__(self) -> str:
         return f"Inventar(barcode={self.barcode!r}, cas-nr={self.cas_nr!r}, name={self.name!r}, summenformel={self.summenformel!r}, raum_id={self.raum_id!r}, lieferant_id={self.lieferant_id!r}, füllmenge={self.füllmenge!r}, mengeneinheit_id={self.mengeneinheit_id!r},kaufdatum={self.kaufdatum!r}, hersteller_id={self.hersteller_id!r}, reinheit={self.reinheit!r}, konzentration={self.konzentration!r}, lösungsmittel={self.lösungsmittel!r}, molmasse={self.molmasse!r}, zuletzt_geprüft={self.zuletzt_geprüft!r}), archiviert={self.archiviert!r}"
@@ -91,7 +111,7 @@ class Gebäude(Base):
 class Gestisdaten(Base):
     __tablename__ = "gestisdaten"
 
-    id = Column("ID", Integer, nullable=False, primary_key=True, autoincrement=True)
+    id = Column("ID", Integer(), nullable=False, primary_key=True, autoincrement=True)
     cas_nr = Column("CAS-Nr", String())
     name = Column("Name", String())
     summenformel = Column("Summenformel", String())

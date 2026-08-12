@@ -1716,6 +1716,7 @@ def get_callbacks(app):
     # Control the logic of the to_archive Button
     @app.callback(
         Output("mainGrid", "rowData", allow_duplicate=True),
+        Output("notification-container", "sendNotifications", allow_duplicate=True),
         Input("button_to_archive", "n_clicks"),
         State("input-name", "leftSection"),
         State("mainGrid", "selectedRows"),
@@ -1726,8 +1727,39 @@ def get_callbacks(app):
         if left_section:
             functions.archive_row(barcode, False)
             df = functions.get_main_table(is_archived=True)
+            message = [
+                dict(
+                    title="Wiederhergestellt",
+                    message=f"Der Eintrag {barcode} wurde wiederhergestellt.",
+                    id=str(uuid.uuid4()),
+                    action="show",
+                    icon=DashIconify(
+                        color="black",
+                        height=24,
+                        icon=icons.unarchive,
+                    ),
+                    bg="green.3",
+                    color="green.3",
+                )
+            ]
+
         else:
             functions.archive_row(barcode, True)
             df = functions.get_main_table()
+            message = [
+                dict(
+                    title="Archiviert",
+                    message=f"Der Eintrag {barcode} wurde archiviert.",
+                    id=str(uuid.uuid4()),
+                    action="show",
+                    icon=DashIconify(
+                        color="black",
+                        height=24,
+                        icon=icons.archive,
+                    ),
+                    bg="green.3",
+                    color="green.3",
+                )
+            ]
 
-        return df.to_dict("records")
+        return df.to_dict("records"), message
