@@ -91,9 +91,8 @@ def get_callbacks(app):
         if not rows:  # Wenn nichts ausgewählt ist
             return nothing_selected
         barcode = rows[0].get("Barcode", "")
-
         # Wenn der Barcode nicht in der Tabelle hinterlegt ist, dann zeige den Platzhalter an und setze die anderen Werte zurück
-        if functions.select_value(barcode, "barcode", functions.Inventar) == None:
+        if functions.select_value(barcode, "barcode", functions.Inventar) == "":
             return nothing_selected
 
         # Blende die Sparkline neben der Füllmenge standardmäßig aus
@@ -416,7 +415,7 @@ def get_callbacks(app):
                 raise PreventUpdate
             barcode = event.get("detail").get("scanCode")
 
-            if functions.select_value(barcode, "barcode", functions.Inventar) == None:
+            if functions.select_value(barcode, "barcode", functions.Inventar) == "":
                 return (
                     not opened,
                     True,
