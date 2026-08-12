@@ -13,7 +13,6 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import DeclarativeBase, Session
 from sqlalchemy.engine import Engine
-from sqlalchemy.dialects.sqlite import JSON, DATE
 from sqlalchemy import event, text
 from pathlib import Path
 import shutil
@@ -73,9 +72,10 @@ class Inventar(Base):
     lösungsmittel = Column("Lösungsmittel", String())
     molmasse = Column("Molmasse", Float())
     zuletzt_geprüft = Column("Zuletzt_geprüft", String())
+    archiviert = Column("Archiviert", Integer())
 
     def __repr__(self) -> str:
-        return f"User(barcode={self.barcode!r}, cas-nr={self.cas_nr!r}, name={self.name!r}, summenformel={self.summenformel!r}, raum_id={self.raum_id!r}, lieferant_id={self.lieferant_id!r}, füllmenge={self.füllmenge!r}, mengeneinheit_id={self.mengeneinheit_id!r},kaufdatum={self.kaufdatum!r}, hersteller_id={self.hersteller_id!r}, reinheit={self.reinheit!r}, konzentration={self.konzentration!r}, lösungsmittel={self.lösungsmittel!r}, molmasse={self.molmasse!r}, zuletzt_geprüft={self.zuletzt_geprüft!r})"
+        return f"Inventar(barcode={self.barcode!r}, cas-nr={self.cas_nr!r}, name={self.name!r}, summenformel={self.summenformel!r}, raum_id={self.raum_id!r}, lieferant_id={self.lieferant_id!r}, füllmenge={self.füllmenge!r}, mengeneinheit_id={self.mengeneinheit_id!r},kaufdatum={self.kaufdatum!r}, hersteller_id={self.hersteller_id!r}, reinheit={self.reinheit!r}, konzentration={self.konzentration!r}, lösungsmittel={self.lösungsmittel!r}, molmasse={self.molmasse!r}, zuletzt_geprüft={self.zuletzt_geprüft!r}), archiviert={self.archiviert!r}"
 
 
 class Gebäude(Base):
@@ -223,6 +223,15 @@ def create_row(
     return
 
 
+def archive_row(barcode: str, to_archive: bool):
+    """Toggles if an entry is archived by setting the column 'Archiviert' to 1 or 0"""
+    if to_archive:
+        update_row(barcode, ["archiviert"], [1], Inventar)
+    else:
+        update_row(barcode, ["archiviert"], [0], Inventar)
+    return
+
+
 def generateSelectData(table: Type[Base], columns: list[str]) -> list[dict]:
     """Generiere eine Liste mit den Auswahlmöglichkeiten für die Dropdown-Selektoren"""
     columnClasses = [getattr(table, column) for column in columns]
@@ -351,12 +360,23 @@ def insertStammdaten(selector: str, columns: list[str], values: list[str]):
     return
 
 
-def getMainTable():
-    df = pd.read_sql(
-        "SELECT `CAS-Nr`, Name, Summenformel, Barcode, Raum, Zuletzt_geprüft FROM inventar INNER JOIN räume ON inventar.Raum_ID == räume.Raum_ID",
-        "sqlite:///current.sqlite",
-        dtype_backend="pyarrow",
-    )
+def get_main_table(is_archived: bool = False):
+    def query(is_archived: int):
+        return f"SELECT `CAS-Nr`, Name, Summenformel, Barcode, Raum, Zuletzt_geprüft FROM Inventar INNER JOIN räume ON Inventar.Raum_ID == räume.Raum_ID WHERE Archiviert == {is_archived} "
+
+    if is_archived:
+        df = pd.read_sql(
+            query(1),
+            "sqlite:///current.sqlite",
+            dtype_backend="pyarrow",
+        )
+    else:
+        df = pd.read_sql(
+            query(0),
+            "sqlite:///current.sqlite",
+            dtype_backend="pyarrow",
+        )
+
     return df
 
 

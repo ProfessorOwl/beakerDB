@@ -57,6 +57,18 @@ fensterLinks = html.Div(
                         dmc.Tooltip(
                             dmc.ActionIcon(
                                 DashIconify(
+                                    icon=icons.archive,
+                                    height=24,
+                                ),
+                                size="lg",
+                                id="button_archive",
+                                gradient={"from": "indigo", "to": "teal"},
+                            ),
+                            label="Archiv",
+                        ),
+                        dmc.Tooltip(
+                            dmc.ActionIcon(
+                                DashIconify(
                                     icon=icons.settings,
                                     height=24,
                                 ),
@@ -167,7 +179,6 @@ fensterRechts = [
                 styles={
                     "input": {
                         "fontSize": "2em",
-                        "color": "arsenic",
                         "fontWeight": "bold",
                     }
                 },
@@ -348,26 +359,42 @@ fensterRechts = [
                 legend="Stoffeigenschaften",
             ),
             dmc.Space(h="21px"),
-            dmc.ButtonGroup(
+            dmc.Group(
                 [
-                    dmc.Button(
-                        "Speichern",
-                        id="button-speichern",
-                        color="green",
-                        rightSection=DashIconify(icon=icons.save),
-                        size="lg",
-                        fullWidth=True,
-                        n_clicks=0,
+                    dmc.ButtonGroup(
+                        [
+                            dmc.Button(
+                                "Speichern",
+                                id="button-speichern",
+                                color="green",
+                                rightSection=DashIconify(icon=icons.save),
+                                size="lg",
+                                n_clicks=0,
+                                flex=1,
+                            ),
+                            dmc.Button(
+                                "Archivieren",
+                                id="button_to_archive",
+                                color="dark.7",
+                                rightSection=DashIconify(icon=icons.archive),
+                                size="lg",
+                                flex=1,
+                            ),
+                        ],
+                        flex=1,
                     ),
-                    dmc.Button(
-                        "Löschen",
-                        id="button-löschen",
-                        color="red",
-                        rightSection=DashIconify(icon=icons.delete),
-                        size="lg",
-                        fullWidth=True,
+                    dmc.Tooltip(
+                        dmc.ActionIcon(
+                            DashIconify(icon=icons.delete, color="#fff", height=20),
+                            id="button-löschen",
+                            color="red",
+                            h=50,
+                            w=50,
+                        ),
+                        label="Löschen",
                     ),
                 ],
+                justify="space-between",
             ),
         ],
         style={
@@ -402,7 +429,6 @@ modalNeuerEintragInner = dmc.Stack(
             styles={
                 "input": {
                     "fontSize": "2em",
-                    "color": "arsenic",
                     "fontWeight": "bold",
                 }
             },

@@ -3,6 +3,7 @@ from dash import (
     Input,
     Output,
     State,
+    Patch,
     ctx,
     no_update,
     ClientsideFunction,
@@ -38,7 +39,7 @@ def get_callbacks(app):
         prevent_initial_call=False,
     )
     def init_mainGrid(children):
-        return functions.getMainTable().to_dict("records")
+        return functions.get_main_table().to_dict("records")
 
     # Callback das jedes Feld aktualisiert, sobald man eine neue Zeile in der Tabelle auswählt
     @app.callback(
@@ -87,7 +88,6 @@ def get_callbacks(app):
             True,
             no_update,
         )
-
         if not rows:  # Wenn nichts ausgewählt ist
             return nothing_selected
         barcode = rows[0].get("Barcode", "")
@@ -316,7 +316,7 @@ def get_callbacks(app):
             functions.Inventar,
         )
 
-        df = functions.getMainTable()
+        df = functions.get_main_table()
 
         return (df.to_dict("records"), messages, füllmenge_hidden, füllmenge_data)
 
@@ -332,7 +332,7 @@ def get_callbacks(app):
         barcode = rows[0].get("Barcode", "")
         functions.delete_entry(barcode, functions.Inventar)
         global df  # Greife auf den globalen Dataframe zurück, damit die Tabelle auch nach Pagerefresh oder auf einem anderen Computer geändert ist
-        df = functions.getMainTable()
+        df = functions.get_main_table()
         return (
             df.to_dict("records"),
             [
@@ -631,7 +631,7 @@ def get_callbacks(app):
         )
 
         global df  # Greife auf den globalen Dataframe zurück, damit die Tabelle auch nach Pagerefresh oder auf einem anderen Computer geändert ist
-        df = functions.getMainTable()
+        df = functions.get_main_table()
         return (
             df.to_dict("records"),
             messages,
@@ -1537,7 +1537,7 @@ def get_callbacks(app):
         return (
             False,
             json.dumps(""),
-            functions.getMainTable().to_dict("records"),
+            functions.get_main_table().to_dict("records"),
         )  # Lösche den gespeicherten Cache, um keinen unnötigen Platz zu verbrauchen. Erneuere außerdem die Tabelle, damit direkt der Inhalt der neuen Datenbank angezeigt wird.
 
     # Öffnet das Modal zu den Füllmengen
@@ -1565,6 +1565,7 @@ def get_callbacks(app):
         State("button-open-modal", "n_clicks"),
         State("modal_bestätigung_speichern", "opened"),
         State("speichern_bestätigung_ja", "n_clicks"),
+        State("button-open-modal", "disabled"),
     )
     def execute_shortcut(
         n_events,
@@ -1577,6 +1578,7 @@ def get_callbacks(app):
         neuer_eintrag_n_clicks,
         is_speichern_bestätigung_open,
         speichern_bestätigung_ja_n_clicks,
+        is_neuer_eintrag_disabled,
     ):
         key = event.get("key")
         is_shift = event.get("shiftKey")
@@ -1598,7 +1600,11 @@ def get_callbacks(app):
                 and platform.system() == "Windows"
             ):
                 if key.lower() == "n":
-                    if tag_name != "INPUT" and not is_neuer_eintrag_open:
+                    if (
+                        tag_name != "INPUT"
+                        and not is_neuer_eintrag_open
+                        and not is_neuer_eintrag_disabled
+                    ):
                         set_props(
                             "button-open-modal",
                             {"n_clicks": neuer_eintrag_n_clicks + 1},
@@ -1636,3 +1642,92 @@ def get_callbacks(app):
             pass
 
         return False
+
+    # Control the logic of the archive button
+    @app.callback(
+        Output("input-name", "leftSection"),
+        Output("button_archive", "children"),
+        Output("button_archive", "variant"),
+        Output("button-open-modal", "disabled"),
+        Output("mainGrid", "dashGridOptions"),
+        Output("button_to_archive", "children"),
+        Output("button_to_archive", "rightSection"),
+        Output("mainGrid", "rowData", allow_duplicate=True),
+        Output("mainGrid", "selectedRows", allow_duplicate=True),
+        Input("button_archive", "n_clicks"),
+        State("input-name", "leftSection"),
+    )
+    def open_archive(n_clicks, leftSection):
+        grid_dark = Patch()
+        grid_light = Patch()
+
+        grid_dark["theme"]["function"] = (
+            "themeQuartz.withParams({fontFamily: 'Lexend',"
+            "headerTextColor: '#fff',"
+            "headerBackgroundColor: '#333',"
+            "headerColumnResizeHandleColor: '#777',"
+            "backgroundColor: '#222',"
+            "foregroundColor: '#fff'})"
+        )
+        grid_light["theme"][
+            "function"
+        ] = "themeQuartz.withParams({fontFamily: 'Lexend'})"
+
+        if not leftSection:
+            df = functions.get_main_table(is_archived=True)
+            return (
+                DashIconify(
+                    icon=icons.archive,
+                    height=24,
+                ),
+                DashIconify(
+                    icon=icons.archiveClose,
+                    height=24,
+                ),
+                "gradient",
+                True,
+                grid_dark,
+                "Wiederherstellen",
+                DashIconify(
+                    icon=icons.unarchive,
+                ),
+                df.to_dict("records"),
+                [{"Barcode": ""}],
+            )
+        else:
+            df = functions.get_main_table()
+            return (
+                None,
+                DashIconify(
+                    icon=icons.archive,
+                    height=24,
+                ),
+                "filled",
+                False,
+                grid_light,
+                "Archivieren",
+                DashIconify(
+                    icon=icons.archive,
+                ),
+                df.to_dict("records"),
+                [{"Barcode": ""}],
+            )
+
+    # Control the logic of the to_archive Button
+    @app.callback(
+        Output("mainGrid", "rowData", allow_duplicate=True),
+        Input("button_to_archive", "n_clicks"),
+        State("input-name", "leftSection"),
+        State("mainGrid", "selectedRows"),
+    )
+    def transfer_to_archive(n_clicks, left_section, rows):
+        barcode = rows[0].get("Barcode", "")
+
+        if left_section:
+            functions.archive_row(barcode, False)
+            df = functions.get_main_table(is_archived=True)
+        else:
+            functions.archive_row(barcode, True)
+            df = functions.get_main_table()
+
+        return df.to_dict("records")
