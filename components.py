@@ -8,7 +8,7 @@ import icons
 
 
 class DateInput(dmc.DateInput):
-    """Vorkonfigurierter DateInput mit Button, um das Datum auf Heute zu setzen, von Dash Mantine Components."""
+    """Vorkonfigurierter DateInput mit Button, um das Datum auf Heute zu setzen."""
 
     def __init__(self, id: str, label: str, buttonId: str):
         """
@@ -43,9 +43,7 @@ class DateInput(dmc.DateInput):
 
 
 class NumberInput(dmc.NumberInput):
-    """Vorkonfigurierter NumberInput von Dash Mantine Components.
-    Erlaubt keine negativen Zahlen, blendet Kontrollelemente aus und zeigt immer ein deutsches Komma an.
-    """
+    """Vorkonfigurierter NumberInput. Erlaubt keine negativen Zahlen, blendet Kontrollelemente aus und zeigt immer ein deutsches Komma an."""
 
     def __init__(self, id: str, label: str, **kwargs):
         """Args:
@@ -60,3 +58,10 @@ class NumberInput(dmc.NumberInput):
             hideControls=True,
             **kwargs,
         )
+
+
+class KbdTooltip(dmc.Tooltip):
+    """Vorkonfigurierter Tooltip mit mehr padding-bottom"""
+
+    def __init__(self, **kwargs):
+        super().__init__(pb=10, **kwargs)

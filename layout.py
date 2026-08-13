@@ -616,14 +616,14 @@ modalNeuerEintragInner = dmc.Stack(
                                         fullWidth=True,
                                         n_clicks=0,
                                     ),
-                                    # dmc.Tooltip(
-                                    #     target="#modal-button-speichern",
-                                    #     label=[
-                                    #         dmc.Kbd("Shift"),
-                                    #         " + ",
-                                    #         dmc.Kbd("Enter"),
-                                    #     ],
-                                    # ),
+                                    comp.KbdTooltip(
+                                        target="#modal-button-speichern",
+                                        label=[
+                                            dmc.Kbd("Shift"),
+                                            " + ",
+                                            dmc.Kbd("Enter"),
+                                        ],
+                                    ),
                                     dmc.Button(
                                         "Abbrechen",
                                         id="modal-button-abbrechen",
@@ -1042,11 +1042,11 @@ app.layout = dmc.MantineProvider(
             withCloseButton=False,
             opened=False,
         ),
-        dmc.Tooltip(
+        comp.KbdTooltip(
             target="#button-speichern",
             label=[dmc.Kbd("Shift"), " + ", dmc.Kbd("Enter")],
         ),
-        dmc.Tooltip(
+        comp.KbdTooltip(
             target="#button-open-modal",
             label=[
                 dmc.Kbd("Shift"),
@@ -1060,7 +1060,7 @@ app.layout = dmc.MantineProvider(
     theme={
         "fontFamily": "Lexend",
         "headings": {"fontFamily": "Lexend"},
-        "components": {"Tooltip": {"defaultProps": {"bg": "#050B18A3", "pb": 10}}},
+        "components": {"Tooltip": {"defaultProps": {"bg": "#050B18A3"}}},
     },
 )
 
