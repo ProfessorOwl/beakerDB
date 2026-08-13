@@ -14,6 +14,7 @@ import functions
 import components as comp  # NOTE -  Sorgt dafür, dass die Seite neu lädt, wenn die Website bedient wird und dev_tools_hot_reload=True ist. Entweder verwerfen, Hot Reload ausstellen oder neue Lösung finden. Vielleicht Dateistruktur ändern? SQLite-Datenbank auslagern aus Dateibaum heraus?
 
 DEFAULT_SETTINGS = json.loads(Path("default_settings.json").read_bytes())
+VERSION = "v0.3.0"
 
 # Definiere den Server der Datenbank
 app = Dash(__name__)
@@ -758,7 +759,19 @@ modalStammdatenInner = dmc.Stack(
 
 modalEinstellungenInner = dmc.Stack(
     [
-        dmc.Title("Einstellungen", order=2),
+        dmc.Group(
+            [
+                dmc.Title("Einstellungen", order=2),
+                dmc.Group(
+                    [
+                        comp.Version(VERSION).Text(),
+                        comp.Version(VERSION).Badge(),
+                    ],
+                    gap="xs",
+                ),
+            ],
+            justify="space-between",
+        ),
         dmc.ScrollAreaAutosize(
             dmc.Stack(
                 [

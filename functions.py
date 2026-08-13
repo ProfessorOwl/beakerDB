@@ -20,6 +20,7 @@ import platform
 import datetime as dt
 import json
 import dash_mantine_components as dmc
+from github import Github
 
 engine = create_engine("sqlite:///current.sqlite")
 
@@ -472,3 +473,14 @@ def system_key() -> dmc.Kbd:
         return dmc.Kbd("⌘")
     else:
         return dmc.Kbd("Strg")
+
+
+def get_version_number() -> str:
+    """Returns the version number of the latest release in the beakerDB repository"""
+    g = Github(None)
+    repo = g.get_repo("ProfessorOwl/beakerDB")
+    try:
+        latest = repo.get_latest_release().name
+    except:
+        latest = "No release yet"
+    return latest
