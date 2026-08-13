@@ -58,6 +58,7 @@ def get_callbacks(app):
         Output("input-molmasse", "value"),
         Output("input-lösungsmittel", "value"),
         Output("input-geprüft", "value"),
+        Output("input-zvg", "value"),
         Output("inputContainer", "hidden"),
         Output("inputPlaceholder", "display"),
         Output("füllmenge_sparkline_wrapper", "hidden"),
@@ -78,6 +79,7 @@ def get_callbacks(app):
             "0",
             "0",
             "0",
+            "",
             "",
             "",
             "",
@@ -129,6 +131,7 @@ def get_callbacks(app):
                     "molmasse",
                     "lösungsmittel",
                     "zuletzt_geprüft",
+                    "zvg",
                 ]
             ],
             False,
@@ -159,6 +162,7 @@ def get_callbacks(app):
         State("input-summenformel", "value"),
         State("input-mengeneinheit", "value"),
         State("input-geprüft", "value"),
+        State("input-zvg", "value"),
         State("einstellungenCache", "data"),
     )
     def save_data(
@@ -178,6 +182,7 @@ def get_callbacks(app):
         summenformel,
         mengeneinheitID,
         zuletzt_geprüft,
+        zvg,
         einstellungen_cache,
     ):
         # Falls die Felder leer sind trage 0 ein, was dem leeren Wert in der SQL-Tabelle entspricht
@@ -294,6 +299,7 @@ def get_callbacks(app):
                 "raum_id",
                 "mengeneinheit_id",
                 "zuletzt_geprüft",
+                "zvg",
             ],
             [
                 name,
@@ -311,6 +317,7 @@ def get_callbacks(app):
                 raumID,
                 mengeneinheitID,
                 zuletzt_geprüft,
+                zvg,
             ],
             functions.Inventar,
         )
@@ -500,6 +507,7 @@ def get_callbacks(app):
         State("modal-input-summenformel", "value"),
         State("modal-input-mengeneinheit", "value"),
         State("modal-input-geprüft", "value"),
+        State("modal-input-zvg", "value"),
     )
     def save_new_data(
         n_clicks,
@@ -518,6 +526,7 @@ def get_callbacks(app):
         summenformel,
         mengeneinheitID,
         zuletzt_geprüft,
+        zvg,
     ):
         # Falls die ID-Felder leer sind trage 0 ein, was dem "Nicht ausgewählt" in der SQL-Tabelle entspricht
         if herstellerID == None or "":
@@ -608,6 +617,7 @@ def get_callbacks(app):
                 "raum_id",
                 "mengeneinheit_id",
                 "zuletzt_geprüft",
+                "zvg",
             ],
             [
                 name,
@@ -625,6 +635,7 @@ def get_callbacks(app):
                 raumID,
                 mengeneinheitID,
                 zuletzt_geprüft,
+                zvg,
             ],
             functions.Inventar(),
         )
@@ -1218,7 +1229,8 @@ def get_callbacks(app):
             """Updates the value of ``field`` corresponding to the value of ``key`` in ``data``"""
 
             if i := data.get(key):
-                set_props(modalPrefix + field, {"value": i})
+                if i != "None":
+                    set_props(modalPrefix + field, {"value": i})
 
         setField("cas_nr", "input-cas-nr")
         setField("name", "input-name")
@@ -1232,6 +1244,7 @@ def get_callbacks(app):
         setField("konzentration", "input-konzentration")
         setField("lösungsmittel", "input-lösungsmittel")
         setField("molmasse", "input-molmasse")
+        setField("zvg", "input-zvg")
 
         if (
             ctx.triggered_id == "modal-input-selectFromDatabaseConfirm"
@@ -1762,3 +1775,15 @@ def get_callbacks(app):
             ]
 
         return df.to_dict("records"), message
+
+    @app.callback(
+        Output("button_to_gestis", "disabled"),
+        Output("anchor_to_gestis", "href"),
+        Input("input-zvg", "value"),
+    )
+    def toggle_gestis_button(value: str):
+        if value == "":
+            return True, ""
+        else:
+            value = value.rjust(6, "0")
+            return False, f"https://gestis.dguv.de/data?name={value}"

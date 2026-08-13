@@ -94,6 +94,7 @@ class Inventar(Base):
         Integer(),
         default=0,
     )
+    zvg = Column("ZVG", Integer())
 
     def __repr__(self) -> str:
         return f"Inventar(barcode={self.barcode!r}, cas-nr={self.cas_nr!r}, name={self.name!r}, summenformel={self.summenformel!r}, raum_id={self.raum_id!r}, lieferant_id={self.lieferant_id!r}, füllmenge={self.füllmenge!r}, mengeneinheit_id={self.mengeneinheit_id!r},kaufdatum={self.kaufdatum!r}, hersteller_id={self.hersteller_id!r}, reinheit={self.reinheit!r}, konzentration={self.konzentration!r}, lösungsmittel={self.lösungsmittel!r}, molmasse={self.molmasse!r}, zuletzt_geprüft={self.zuletzt_geprüft!r}), archiviert={self.archiviert!r}"
@@ -112,15 +113,14 @@ class Gebäude(Base):
 class Gestisdaten(Base):
     __tablename__ = "gestisdaten"
 
-    id = Column("ID", Integer(), nullable=False, primary_key=True, autoincrement=True)
-    cas_nr = Column("CAS-Nr", String())
+    zvg = Column("ZVG", Integer(), nullable=False, primary_key=True)
+    cas = Column("CAS", String())
     name = Column("Name", String())
     summenformel = Column("Summenformel", String())
     molmasse = Column("Molmasse", Float)
-    gestis_link = Column("GESTIS-Link", String())
 
     def __repr__(self) -> str:
-        return f"Gestisdaten(id={self.id!r}, cas_nr={self.cas_nr!r}, name={self.name}, summenformel={self.summenformel}, molmasse={self.molmasse}, gestis_link={self.gestis_link})"
+        return f"Gestisdaten(zvg={self.zvg!r}, cas={self.cas!r}, name={self.name}, summenformel={self.summenformel}, molmasse={self.molmasse})"
 
 
 class Hersteller(Base):
@@ -289,7 +289,7 @@ def generateSelectData_Namen() -> list[dict]:
     """Generiere eine Liste mit den Auswahlmöglichkeiten für die Dropdown-Selektoren für die Chemikalien. Diese sind nach dem Inventar und der GESTIS-Liste gruppiert."""
     with Session(engine) as session:
         stmt1 = select(Inventar.barcode, Inventar.name)
-        stmt2 = select(Gestisdaten.id, Gestisdaten.name)
+        stmt2 = select(Gestisdaten.zvg, Gestisdaten.name)
         inventar = session.execute(stmt1).all()
         gestis = session.execute(stmt2).all()
         session.close()
@@ -484,3 +484,43 @@ def get_version_number() -> str:
     except:
         latest = "No release yet"
     return latest
+
+
+def import_gestis(path_to_xlsx):
+    """Replaces all the enties in the table `gestisdaten` to implement new entries"""
+    df = pd.read_excel(path_to_xlsx)
+    df = df.drop(
+        [
+            "verwandte\nCAS-Nr.",
+            "INDEX-Nr.",
+            "EG-Nr.",
+            "verwandte\nEG-Nr.",
+            "Linksyntax",
+            "Hyperlink",
+        ],
+        axis="columns",
+    )
+    df = df.rename(
+        columns={
+            "ZVG-Nr.": "ZVG",
+            "CAS-Nr.": "CAS",
+            "Formel": "Summenformel",
+            "Molmasse\n[g/mol]": "Molmasse",
+        }
+    )
+    df = df.set_index("ZVG")
+
+    for i, value in df["Molmasse"].items():
+        try:
+            df.at[i, "Molmasse"] = float(value)
+        except:
+            df.at[i, "Molmasse"] = None
+
+    df["Molmasse"] = df["Molmasse"].apply(pd.to_numeric)
+
+    df["Summenformel"] = [str(i).replace("\n", ", ") for i in df["Summenformel"]]
+    for i, value in df["Summenformel"].items():
+        if value.strip() == "" or value == "." or value.lower() == "nan":
+            df.at[i, "Summenformel"] = None
+
+    df.to_sql("gestisdaten", engine, if_exists="delete_rows")

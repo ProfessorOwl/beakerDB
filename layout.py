@@ -14,7 +14,7 @@ import functions
 import components as comp  # NOTE -  Sorgt dafür, dass die Seite neu lädt, wenn die Website bedient wird und dev_tools_hot_reload=True ist. Entweder verwerfen, Hot Reload ausstellen oder neue Lösung finden. Vielleicht Dateistruktur ändern? SQLite-Datenbank auslagern aus Dateibaum heraus?
 
 DEFAULT_SETTINGS = json.loads(Path("default_settings.json").read_bytes())
-VERSION = "v0.3.0"
+VERSION = "v0.3.1"
 
 # Definiere den Server der Datenbank
 app = Dash(__name__)
@@ -349,14 +349,48 @@ fensterRechts = [
             ),
             dmc.Space(h="21px"),
             dmc.Fieldset(
-                [
-                    dmc.TextInput(id="input-cas-nr", label="CAS-Nr"),
-                    comp.NumberInput(  # Molmasse
-                        "input-molmasse",
-                        "Molare Masse",
-                    ),
-                    dmc.TextInput(id="input-summenformel", label="Summenformel"),
-                ],
+                dmc.SimpleGrid(
+                    [
+                        dmc.TextInput(id="input-cas-nr", label="CAS-Nr"),
+                        dmc.Group(
+                            [
+                                comp.NumberInput(  # Molmasse
+                                    "input-molmasse",
+                                    "Molare Masse",
+                                ),
+                                dmc.TextInput(
+                                    id="input-summenformel", label="Summenformel"
+                                ),
+                            ],
+                            grow=True,
+                        ),
+                        dmc.Group(
+                            [
+                                dmc.TextInput(
+                                    id="input-zvg", label="ZVG-Nr", disabled=True
+                                ),
+                                dmc.Anchor(
+                                    dmc.Button(
+                                        "In GESTIS öffnen",
+                                        leftSection=DashIconify(
+                                            icon=icons.externalLink
+                                        ),
+                                        disabled=True,
+                                        id="button_to_gestis",
+                                        fullWidth=True,
+                                    ),
+                                    id="anchor_to_gestis",
+                                    href="",
+                                    target="_blank",
+                                    underline="never",
+                                ),
+                            ],
+                            grow=True,
+                            align="end",
+                        ),
+                    ],
+                    cols=1,
+                ),
                 legend="Stoffeigenschaften",
             ),
             dmc.Space(h="21px"),
@@ -602,6 +636,11 @@ modalNeuerEintragInner = dmc.Stack(
                                     dmc.TextInput(
                                         id="modal-input-summenformel",
                                         label="Summenformel",
+                                    ),
+                                    dmc.TextInput(
+                                        id="modal-input-zvg",
+                                        label="ZVG-Nr",
+                                        disabled=True,
                                     ),
                                 ],
                                 legend="Stoffeigenschaften",
