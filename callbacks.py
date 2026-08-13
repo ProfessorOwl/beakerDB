@@ -3,6 +3,7 @@ from dash import (
     Input,
     Output,
     State,
+    Patch,
     ctx,
     no_update,
     ClientsideFunction,
@@ -22,6 +23,7 @@ import icons
 from pathlib import Path
 import shutil
 import dash_mantine_components as dmc
+import platform
 
 DEFAULT_SETTINGS = json.loads(Path("default_settings.json").read_bytes())
 TODAY = dt.date.today().isoformat()
@@ -37,7 +39,7 @@ def get_callbacks(app):
         prevent_initial_call=False,
     )
     def init_mainGrid(children):
-        return functions.getMainTable().to_dict("records")
+        return functions.get_main_table().to_dict("records")
 
     # Callback das jedes Feld aktualisiert, sobald man eine neue Zeile in der Tabelle auswählt
     @app.callback(
@@ -56,8 +58,6 @@ def get_callbacks(app):
         Output("input-molmasse", "value"),
         Output("input-lösungsmittel", "value"),
         Output("input-geprüft", "value"),
-        Output("button-speichern", "disabled"),
-        Output("button-löschen", "disabled"),
         Output("inputContainer", "hidden"),
         Output("inputPlaceholder", "display"),
         Output("füllmenge_sparkline_wrapper", "hidden"),
@@ -65,39 +65,42 @@ def get_callbacks(app):
         Input("mainGrid", "selectedRows"),
     )
     def update_fields(rows):
+
+        # Standardobjekt, wenn nichts angezeigt werden kann oder soll
+        nothing_selected = (
+            "",
+            "",
+            "",
+            "",
+            "",
+            "1",
+            "",
+            "0",
+            "0",
+            "0",
+            "",
+            "",
+            "",
+            "",
+            "",
+            True,  # Blende "inputContainer" aus
+            "flex",  # Blende den Platzhalter ein
+            True,
+            no_update,
+        )
         if not rows:  # Wenn nichts ausgewählt ist
-            return (
-                "",
-                "",
-                "",
-                "",
-                "1",
-                "",
-                "",
-                "0",
-                "0",
-                "0",
-                "",
-                "",
-                "",
-                "",
-                "",
-                True,  # Blende den Speicher-Button aus
-                True,  # Blende den Löschen-Button aus
-                True,  # Blende "inputContainer" aus
-                "flex",  # Blende den Platzhalter ein
-                True,
-                no_update,
-            )
+            return nothing_selected
         barcode = rows[0].get("Barcode", "")
+        # Wenn der Barcode nicht in der Tabelle hinterlegt ist, dann zeige den Platzhalter an und setze die anderen Werte zurück
+        if functions.select_value(barcode, "barcode", functions.Inventar) == "":
+            return nothing_selected
 
         # Blende die Sparkline neben der Füllmenge standardmäßig aus
         füllmenge_hidden = True
-
         füllmenge_data = []
 
         # Extrahiere die letzte Füllmenge aus dem JSON-Array aller gespeicherten Füllmengen
-        füllmenge_raw = functions.selectInInventory(barcode, "füllmenge")
+        füllmenge_raw = functions.select_value(barcode, "füllmenge", functions.Inventar)
         if len(füllmenge_raw or []) != 0 and füllmenge_raw:
             füllmenge = json.loads(füllmenge_raw)
             füllmenge_last_entry = füllmenge[-1][1]
@@ -111,7 +114,7 @@ def get_callbacks(app):
             barcode,
             füllmenge_last_entry,
             *[  # Gebe für jedes Feld den entsprechenden Wert aus der Inventartabelle zurück
-                functions.selectInInventory(barcode, x)
+                functions.select_value(barcode, x, functions.Inventar)
                 for x in [
                     "name",
                     "summenformel",
@@ -128,8 +131,6 @@ def get_callbacks(app):
                     "zuletzt_geprüft",
                 ]
             ],
-            False,
-            False,
             False,
             "None",
             füllmenge_hidden,
@@ -275,7 +276,7 @@ def get_callbacks(app):
             füllmenge_hidden = False
 
         # Trage alle Werte in der Datenbank ein
-        functions.updateInInventory(
+        functions.update_row(
             barcode,
             [
                 "name",
@@ -311,9 +312,10 @@ def get_callbacks(app):
                 mengeneinheitID,
                 zuletzt_geprüft,
             ],
+            functions.Inventar,
         )
 
-        df = functions.getMainTable()
+        df = functions.get_main_table()
 
         return (df.to_dict("records"), messages, füllmenge_hidden, füllmenge_data)
 
@@ -327,9 +329,9 @@ def get_callbacks(app):
     )
     def removeRow(n_clicks, rows):
         barcode = rows[0].get("Barcode", "")
-        functions.deleteInInventory(barcode)
+        functions.delete_entry(barcode, functions.Inventar)
         global df  # Greife auf den globalen Dataframe zurück, damit die Tabelle auch nach Pagerefresh oder auf einem anderen Computer geändert ist
-        df = functions.getMainTable()
+        df = functions.get_main_table()
         return (
             df.to_dict("records"),
             [
@@ -378,9 +380,21 @@ def get_callbacks(app):
         Input("modal-button-speichern", "n_clicks"),
         State("einstellungenCache", "data"),
         State("modalNeuerEintrag", "opened"),
+        Input("scanListener", "n_events"),
+        State("scanListener", "event"),
+        State("modalNeuerEintrag", "opened"),
+        State("modalStammdaten", "opened"),
     )
     def openModalNeuerEintrag(
-        n_clicks1, n_clicks2, n_clicks3, einstellungen_cache, opened
+        n_clicks1,
+        n_clicks2,
+        n_clicks3,
+        einstellungen_cache,
+        opened,
+        n_events,
+        event,
+        isNeuerEintragOpen,
+        isStammdatenOpen,
     ):
         einstellungen_cache = json.loads(einstellungen_cache)
         if (
@@ -390,6 +404,40 @@ def get_callbacks(app):
             input_geprüft = TODAY
         else:
             input_geprüft = ""
+
+        if ctx.triggered_id == "scanListener":
+            if (
+                not event
+                or not event.get("detail")
+                or isNeuerEintragOpen
+                or isStammdatenOpen
+            ):
+                raise PreventUpdate
+            barcode = event.get("detail").get("scanCode")
+
+            if functions.select_value(barcode, "barcode", functions.Inventar) == "":
+                return (
+                    not opened,
+                    True,
+                    None,
+                    "",
+                    barcode,
+                    "",
+                    "",
+                    "1",
+                    "",
+                    "",
+                    "0",
+                    "0",
+                    "0",
+                    "",
+                    "",
+                    "",
+                    "",
+                    input_geprüft,
+                )
+            else:
+                raise PreventUpdate
 
         return (
             not opened,
@@ -424,7 +472,7 @@ def get_callbacks(app):
         State("modal-input-barcode", "value"),
     )
     def is_barcode_used(n_blur, barcode):
-        selected = functions.selectInInventory(barcode, "barcode")
+        selected = functions.select_value(barcode, "barcode", functions.Inventar)
         if "" == barcode:
             return ("Barcode darf nicht leer sein", True)
         elif selected == barcode:
@@ -542,9 +590,8 @@ def get_callbacks(app):
             zuletzt_geprüft,
             füllmenge,
         )
-
         # Trage alle Werte in der Datenbank ein
-        functions.createInInventory(
+        functions.create_row(
             [
                 "name",
                 "barcode",
@@ -579,10 +626,11 @@ def get_callbacks(app):
                 mengeneinheitID,
                 zuletzt_geprüft,
             ],
+            functions.Inventar(),
         )
 
         global df  # Greife auf den globalen Dataframe zurück, damit die Tabelle auch nach Pagerefresh oder auf einem anderen Computer geändert ist
-        df = functions.getMainTable()
+        df = functions.get_main_table()
         return (
             df.to_dict("records"),
             messages,
@@ -870,12 +918,14 @@ def get_callbacks(app):
             values = []
             for c, v in cached.items():
                 if c != "op":
-                    # Die Spalte "Gebäude_ID" bei Gebäuden enthält nicht die ID, sondern einen zusammengesetzten String aus ID und Wert. Extrahiere also vor dem Speichern die ID.
+                    # Die Spalte "Gebäude_ID" bei Räumen enthält nicht die ID, sondern einen zusammengesetzten String aus ID und Wert. Extrahiere also vor dem Speichern die ID.
+                    columns.append(c)
                     if c == "Gebäude_ID":
-                        columns.append(c)
-                        values.append(v.split(":")[0])
+                        try:
+                            values.append(v.split(":")[0])
+                        except:  # Bei den Gebäuden ist die Gebäude_ID eine gewöhnliche ID, also muss sie nicht vorher gesplitted werden.
+                            values.append(v)
                     else:
-                        columns.append(c)
                         values.append(v)
                 if c == "op":
                     op = v
@@ -1044,34 +1094,49 @@ def get_callbacks(app):
         Output("modal-input-lieferant", "data"),
         Output("modal-input-raum", "data"),
         Input("stammdatenButtonSpeichern", "n_clicks"),
+        Input("button-speichern", "n_clicks"),
     )
-    def updateLists(n_clicks):
-        return (
-            functions.generateSelectData_Namen(),
-            functions.generateSelectData(
-                functions.Mengeneinheiten,
-                ["mengeneinheit_id", "mengeneinheit"],
-            ),
-            functions.generateSelectData(
-                functions.Hersteller, ["hersteller_id", "hersteller"]
-            ),
-            functions.generateSelectData(
-                functions.Lieferanten, ["lieferant_id", "lieferant"]
-            ),
-            functions.generateSelectData_Räume(),
-            functions.generateSelectData_Namen(),
-            functions.generateSelectData(
-                functions.Mengeneinheiten,
-                ["mengeneinheit_id", "mengeneinheit"],
-            ),
-            functions.generateSelectData(
-                functions.Hersteller, ["hersteller_id", "hersteller"]
-            ),
-            functions.generateSelectData(
-                functions.Lieferanten, ["lieferant_id", "lieferant"]
-            ),
-            functions.generateSelectData_Räume(),
-        )
+    def updateLists(n_clicks_stammdaten, n_clicks_speichern):
+        if ctx.triggered_id == "stammdatenButtonSpeichern":
+            return (
+                functions.generateSelectData_Namen(),
+                functions.generateSelectData(
+                    functions.Mengeneinheiten,
+                    ["mengeneinheit_id", "mengeneinheit"],
+                ),
+                functions.generateSelectData(
+                    functions.Hersteller, ["hersteller_id", "hersteller"]
+                ),
+                functions.generateSelectData(
+                    functions.Lieferanten, ["lieferant_id", "lieferant"]
+                ),
+                functions.generateSelectData_Räume(),
+                functions.generateSelectData_Namen(),
+                functions.generateSelectData(
+                    functions.Mengeneinheiten,
+                    ["mengeneinheit_id", "mengeneinheit"],
+                ),
+                functions.generateSelectData(
+                    functions.Hersteller, ["hersteller_id", "hersteller"]
+                ),
+                functions.generateSelectData(
+                    functions.Lieferanten, ["lieferant_id", "lieferant"]
+                ),
+                functions.generateSelectData_Räume(),
+            )
+        else:
+            return (
+                functions.generateSelectData_Namen(),
+                no_update,
+                no_update,
+                no_update,
+                no_update,
+                functions.generateSelectData_Namen(),
+                no_update,
+                no_update,
+                no_update,
+                no_update,
+            )
 
     # Initialisiere den Scan-Script, der zwischen normalem Input und gescannten Input unterscheidet. Scanner soll als normale Tastatur funktionieren, wenn Stammdaten- oder "Neuer Eintrag"-Fenster geöffnet ist.
     clientside_callback(
@@ -1395,6 +1460,8 @@ def get_callbacks(app):
             return (
                 dcc.send_file(src_path),
                 no_update,
+                no_update,
+                no_update,
             )  # Gibt die momentan geöffnete Datenbank an die Download-Komponente weiter
 
         if ctx.triggered_id == "einstellung_datenbank_importieren_daten":
@@ -1469,7 +1536,7 @@ def get_callbacks(app):
         return (
             False,
             json.dumps(""),
-            functions.getMainTable().to_dict("records"),
+            functions.get_main_table().to_dict("records"),
         )  # Lösche den gespeicherten Cache, um keinen unnötigen Platz zu verbrauchen. Erneuere außerdem die Tabelle, damit direkt der Inhalt der neuen Datenbank angezeigt wird.
 
     # Öffnet das Modal zu den Füllmengen
@@ -1484,3 +1551,214 @@ def get_callbacks(app):
         barcode = rows[0].get("Barcode", "")
         data = functions.get_füllmenge_data(barcode)
         return True, data
+
+    # Führe Keyboard-Shortcuts aus
+    @app.callback(
+        Input("keyboardListener", "n_events"),
+        Input("keyboardListener", "event"),
+        State("inputContainer", "hidden"),
+        State("modalNeuerEintrag", "opened"),
+        State("button-speichern", "n_clicks"),
+        State("modal-button-speichern", "n_clicks"),
+        State("modal-button-speichern", "disabled"),
+        State("button-open-modal", "n_clicks"),
+        State("modal_bestätigung_speichern", "opened"),
+        State("speichern_bestätigung_ja", "n_clicks"),
+        State("button-open-modal", "disabled"),
+    )
+    def execute_shortcut(
+        n_events,
+        event,
+        is_input_hidden,
+        is_neuer_eintrag_open,
+        eintrag_speichern_n_clicks,
+        neuen_eintrag_speichern_n_clicks,
+        is_modal_speichern_disabled,
+        neuer_eintrag_n_clicks,
+        is_speichern_bestätigung_open,
+        speichern_bestätigung_ja_n_clicks,
+        is_neuer_eintrag_disabled,
+    ):
+        key = event.get("key")
+        is_shift = event.get("shiftKey")
+        is_metaKey = event.get("metaKey")
+        is_ctrlKey = event.get("ctrlKey")
+        tag_name = event.get("target.tagName")
+        if is_shift:
+            if key == "Enter":
+                if not is_input_hidden and not is_neuer_eintrag_open:
+                    set_props("modal_bestätigung_speichern", {"opened": True})
+                    return
+                elif is_neuer_eintrag_open and not is_modal_speichern_disabled:
+                    set_props("modal_bestätigung_speichern", {"opened": True})
+                    return
+            elif (
+                is_metaKey
+                and platform.system() == "Darwin"
+                or is_ctrlKey
+                and platform.system() == "Windows"
+            ):
+                if key.lower() == "n":
+                    if (
+                        tag_name != "INPUT"
+                        and not is_neuer_eintrag_open
+                        and not is_neuer_eintrag_disabled
+                    ):
+                        set_props(
+                            "button-open-modal",
+                            {"n_clicks": neuer_eintrag_n_clicks + 1},
+                        )
+                        return
+
+    # Kontrolliert die Logik hinter dem "Eintrag Speichern" Modal
+    @app.callback(
+        Output("modal_bestätigung_speichern", "opened"),
+        Input("speichern_bestätigung_ja", "n_clicks"),
+        Input("speichern_bestätigung_abbrechen", "n_clicks"),
+        State("button-speichern", "n_clicks"),
+        State("modal-button-speichern", "n_clicks"),
+        State("modalNeuerEintrag", "opened"),
+    )
+    def confirm_save(
+        ja_n_clicks,
+        abbrechen_n_clicks,
+        eintrag_speichern_n_clicks,
+        neuen_eintrag_speichern_n_clicks,
+        is_neuer_eintrag_open,
+    ):
+
+        if ctx.triggered_id == "speichern_bestätigung_ja":
+            if is_neuer_eintrag_open:
+                set_props(
+                    "modal-button-speichern",
+                    {"n_clicks": neuen_eintrag_speichern_n_clicks + 1},
+                )
+            elif not is_neuer_eintrag_open:
+                set_props(
+                    "button-speichern", {"n_clicks": eintrag_speichern_n_clicks + 1}
+                )
+        elif ctx.triggered_id == "speichern_bestätigung_abbrechen":
+            pass
+
+        return False
+
+    # Control the logic of the archive button
+    @app.callback(
+        Output("input-name", "leftSection"),
+        Output("button_archive", "children"),
+        Output("button_archive", "variant"),
+        Output("button-open-modal", "disabled"),
+        Output("mainGrid", "dashGridOptions"),
+        Output("button_to_archive", "children"),
+        Output("button_to_archive", "rightSection"),
+        Output("mainGrid", "rowData", allow_duplicate=True),
+        Output("mainGrid", "selectedRows", allow_duplicate=True),
+        Input("button_archive", "n_clicks"),
+        State("input-name", "leftSection"),
+    )
+    def open_archive(n_clicks, leftSection):
+        grid_dark = Patch()
+        grid_light = Patch()
+
+        grid_dark["theme"]["function"] = (
+            "themeQuartz.withParams({fontFamily: 'Lexend',"
+            "headerTextColor: '#fff',"
+            "headerBackgroundColor: '#333',"
+            "headerColumnResizeHandleColor: '#777',"
+            "backgroundColor: '#222',"
+            "foregroundColor: '#fff'})"
+        )
+        grid_light["theme"][
+            "function"
+        ] = "themeQuartz.withParams({fontFamily: 'Lexend'})"
+
+        if not leftSection:
+            df = functions.get_main_table(is_archived=True)
+            return (
+                DashIconify(
+                    icon=icons.archive,
+                    height=24,
+                ),
+                DashIconify(
+                    icon=icons.archiveClose,
+                    height=24,
+                ),
+                "gradient",
+                True,
+                grid_dark,
+                "Wiederherstellen",
+                DashIconify(
+                    icon=icons.unarchive,
+                ),
+                df.to_dict("records"),
+                [{"Barcode": ""}],
+            )
+        else:
+            df = functions.get_main_table()
+            return (
+                None,
+                DashIconify(
+                    icon=icons.archive,
+                    height=24,
+                ),
+                "filled",
+                False,
+                grid_light,
+                "Archivieren",
+                DashIconify(
+                    icon=icons.archive,
+                ),
+                df.to_dict("records"),
+                [{"Barcode": ""}],
+            )
+
+    # Control the logic of the to_archive Button
+    @app.callback(
+        Output("mainGrid", "rowData", allow_duplicate=True),
+        Output("notification-container", "sendNotifications", allow_duplicate=True),
+        Input("button_to_archive", "n_clicks"),
+        State("input-name", "leftSection"),
+        State("mainGrid", "selectedRows"),
+    )
+    def transfer_to_archive(n_clicks, left_section, rows):
+        barcode = rows[0].get("Barcode", "")
+
+        if left_section:
+            functions.archive_row(barcode, False)
+            df = functions.get_main_table(is_archived=True)
+            message = [
+                dict(
+                    title="Wiederhergestellt",
+                    message=f"Der Eintrag {barcode} wurde wiederhergestellt.",
+                    id=str(uuid.uuid4()),
+                    action="show",
+                    icon=DashIconify(
+                        color="black",
+                        height=24,
+                        icon=icons.unarchive,
+                    ),
+                    bg="green.3",
+                    color="green.3",
+                )
+            ]
+
+        else:
+            functions.archive_row(barcode, True)
+            df = functions.get_main_table()
+            message = [
+                dict(
+                    title="Archiviert",
+                    message=f"Der Eintrag {barcode} wurde archiviert.",
+                    id=str(uuid.uuid4()),
+                    action="show",
+                    icon=DashIconify(
+                        color="black",
+                        height=24,
+                        icon=icons.archive,
+                    ),
+                    bg="green.3",
+                    color="green.3",
+                )
+            ]
+
+        return df.to_dict("records"), message

@@ -13,12 +13,13 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import DeclarativeBase, Session
 from sqlalchemy.engine import Engine
-from sqlalchemy.dialects.sqlite import JSON, DATE
 from sqlalchemy import event, text
 from pathlib import Path
 import shutil
+import platform
 import datetime as dt
 import json
+import dash_mantine_components as dmc
 
 engine = create_engine("sqlite:///current.sqlite")
 
@@ -58,22 +59,43 @@ class Inventar(Base):
     cas_nr = Column("CAS-Nr", String())
     name = Column("Name", String())
     summenformel = Column("Summenformel", String())
-    raum_id = Column("Raum_ID", ForeignKey("räume.Raum_ID"))
-    lieferant_id = Column("Lieferant_ID", ForeignKey("lieferanten.Lieferant_ID"))
+    raum_id = Column(
+        "Raum_ID",
+        ForeignKey("räume.Raum_ID"),
+        default=0,
+    )
+    lieferant_id = Column(
+        "Lieferant_ID",
+        ForeignKey("lieferanten.Lieferant_ID"),
+        default=0,
+    )
     füllmenge = Column("Füllmenge", String())
     mengeneinheit_id = Column(
-        "Mengeneinheit_ID", ForeignKey("mengeneinheiten.Mengeneinheit_ID")
+        "Mengeneinheit_ID",
+        ForeignKey(
+            "mengeneinheiten.Mengeneinheit_ID",
+        ),
+        default=1,
     )
     kaufdatum = Column("Kaufdatum", String())
-    hersteller_id = Column("Hersteller_ID", ForeignKey("hersteller.Hersteller_ID"))
+    hersteller_id = Column(
+        "Hersteller_ID",
+        ForeignKey("hersteller.Hersteller_ID"),
+        default=0,
+    )
     reinheit = Column("Reinheit", String())
     konzentration = Column("Konzentration", String())
     lösungsmittel = Column("Lösungsmittel", String())
     molmasse = Column("Molmasse", Float())
     zuletzt_geprüft = Column("Zuletzt_geprüft", String())
+    archiviert = Column(
+        "Archiviert",
+        Integer(),
+        default=0,
+    )
 
     def __repr__(self) -> str:
-        return f"User(barcode={self.barcode!r}, cas-nr={self.cas_nr!r}, name={self.name!r}, summenformel={self.summenformel!r}, raum_id={self.raum_id!r}, lieferant_id={self.lieferant_id!r}, füllmenge={self.füllmenge!r}, mengeneinheit_id={self.mengeneinheit_id!r},kaufdatum={self.kaufdatum!r}, hersteller_id={self.hersteller_id!r}, reinheit={self.reinheit!r}, konzentration={self.konzentration!r}, lösungsmittel={self.lösungsmittel!r}, molmasse={self.molmasse!r}, zuletzt_geprüft={self.zuletzt_geprüft!r})"
+        return f"Inventar(barcode={self.barcode!r}, cas-nr={self.cas_nr!r}, name={self.name!r}, summenformel={self.summenformel!r}, raum_id={self.raum_id!r}, lieferant_id={self.lieferant_id!r}, füllmenge={self.füllmenge!r}, mengeneinheit_id={self.mengeneinheit_id!r},kaufdatum={self.kaufdatum!r}, hersteller_id={self.hersteller_id!r}, reinheit={self.reinheit!r}, konzentration={self.konzentration!r}, lösungsmittel={self.lösungsmittel!r}, molmasse={self.molmasse!r}, zuletzt_geprüft={self.zuletzt_geprüft!r}), archiviert={self.archiviert!r}"
 
 
 class Gebäude(Base):
@@ -89,7 +111,7 @@ class Gebäude(Base):
 class Gestisdaten(Base):
     __tablename__ = "gestisdaten"
 
-    id = Column("ID", Integer, nullable=False, primary_key=True, autoincrement=True)
+    id = Column("ID", Integer(), nullable=False, primary_key=True, autoincrement=True)
     cas_nr = Column("CAS-Nr", String())
     name = Column("Name", String())
     summenformel = Column("Summenformel", String())
@@ -156,73 +178,77 @@ stammdatenTables = {
 }
 
 
-def selectInInventory(
-    barcode: str,
-    columnSelect: str,
-) -> str | None:
-    """Lese den Wert einer Spalte der Inventartabelle aus, in dessen Zeile der entsprechende Barcode steht."""
+def select_value(barcode: str, columnSelect: str, table) -> str:
+    """Lese den Wert einer Spalte der Tabelle aus, in dessen Zeile der entsprechende Barcode steht."""
     with Session(engine) as session:
-        stmt = select(getattr(Inventar, columnSelect)).where(
-            Inventar.barcode == barcode
-        )
+        stmt = select(getattr(table, columnSelect)).where(table.barcode == barcode)
         item = session.scalars(stmt).one_or_none()
         session.close()
     if item is None:
-        return None
+        return ""
     else:
         return str(item)
 
 
-def deleteInInventory(barcode: str):
+def delete_entry(barcode: str, table):
     """Lösche den Eintrag mit dem enstprechenden Barcode"""
     with Session(engine) as session:
-        entry = session.get(Inventar, barcode)
+        entry = session.get(table, barcode)
         session.delete(entry)
         session.commit()
         session.close()
     return
 
 
-def updateInInventory(
-    barcode,
+def update_row(
+    barcode: str,
     columnsSelect: list[str],
     values: list[None | int | float | str],
+    table,
 ):
-    """Update eine Zeile in der Inventartabelle mit Werten in den entsprechenden Spalten."""
+    """Update eine Zeile in der Tabelle mit Werten in den entsprechenden Spalten."""
     if len(columnsSelect) != len(values):
         raise ValueError(
             "columnsSelect und values müssen die gleiche Anzahl Elemente besitzen"
         )
     dict = {
-        getattr(Inventar, columnsSelect[i]): values[i]
-        for i in range(len(columnsSelect))
+        getattr(table, columnsSelect[i]): values[i] for i in range(len(columnsSelect))
     }
     for k, v in dict.items():
         if v == "":
             dict.update({k: None})
     with Session(engine) as session:
-        session.query(Inventar).filter_by(barcode=barcode).update(dict)
+        session.query(table).filter_by(barcode=barcode).update(dict)
         session.commit()
         session.close()
 
 
-def createInInventory(
+def create_row(
     columnsSelect: list[str],
     values: list[int | float | str | None],
+    table,
 ):
-    """Erstelle eine neue Zeile in der Inventartabelle mit Werten in den entsprechenden Spalten."""
+    """Erstelle eine neue Zeile in der Tabelle mit Werten in den entsprechenden Spalten."""
     if len(columnsSelect) != len(values):
         raise ValueError(
             "columnsSelect und values müssen die gleiche Anzahl Elemente besitzen"
         )
 
     with Session(engine) as session:
-        table = Inventar()
         for i in range(len(columnsSelect)):
             setattr(table, columnsSelect[i], values[i])
         session.add(table)
         session.commit()
         session.close()
+    return
+
+
+def archive_row(barcode: str, to_archive: bool):
+    """Toggles if an entry is archived by setting the column 'Archiviert' to 1 or 0"""
+    if to_archive:
+        update_row(barcode, ["archiviert"], [1], Inventar)
+    else:
+        update_row(barcode, ["archiviert"], [0], Inventar)
     return
 
 
@@ -238,7 +264,7 @@ def generateSelectData(table: Type[Base], columns: list[str]) -> list[dict]:
 
 
 def generateSelectData_Räume() -> list[dict]:
-    """Generiere eine Liste mit den Auswahlmöglichkeiten für die Dropdown-Selektoren für die Räume, die nach den Gebäuden sortiert sein sollen"""
+    """Generiere eine Liste mit den Auswahlmöglichkeiten für die Dropdown-Selektoren für die Räume, die nach den Gebäuden gruppiert sein sollen"""
     with Session(engine) as session:
         stmt1 = select(Räume.raum_id, Räume.raum, Gebäude.gebäude).join(
             Gebäude, Räume.gebäude_id == Gebäude.gebäude_id
@@ -259,7 +285,7 @@ def generateSelectData_Räume() -> list[dict]:
 
 
 def generateSelectData_Namen() -> list[dict]:
-    """Generiere eine Liste mit den Auswahlmöglichkeiten für die Dropdown-Selektoren für die Räume, die nach den Gebäuden sortiert sein sollen"""
+    """Generiere eine Liste mit den Auswahlmöglichkeiten für die Dropdown-Selektoren für die Chemikalien. Diese sind nach dem Inventar und der GESTIS-Liste gruppiert."""
     with Session(engine) as session:
         stmt1 = select(Inventar.barcode, Inventar.name)
         stmt2 = select(Gestisdaten.id, Gestisdaten.name)
@@ -354,12 +380,23 @@ def insertStammdaten(selector: str, columns: list[str], values: list[str]):
     return
 
 
-def getMainTable():
-    df = pd.read_sql(
-        "SELECT `CAS-Nr`, Name, Summenformel, Barcode, Raum, Zuletzt_geprüft FROM inventar INNER JOIN räume ON inventar.Raum_ID == räume.Raum_ID",
-        "sqlite:///current.sqlite",
-        dtype_backend="pyarrow",
-    )
+def get_main_table(is_archived: bool = False):
+    def query(is_archived: int):
+        return f"SELECT `CAS-Nr`, Name, Summenformel, Barcode, Raum, Zuletzt_geprüft FROM Inventar INNER JOIN räume ON Inventar.Raum_ID == räume.Raum_ID WHERE Archiviert == {is_archived} "
+
+    if is_archived:
+        df = pd.read_sql(
+            query(1),
+            "sqlite:///current.sqlite",
+            dtype_backend="pyarrow",
+        )
+    else:
+        df = pd.read_sql(
+            query(0),
+            "sqlite:///current.sqlite",
+            dtype_backend="pyarrow",
+        )
+
     return df
 
 
@@ -395,16 +432,16 @@ def getExistingData(id: str) -> dict[str, str]:
 def backup_db():
     """Kopiere die Datenbank in den Backup-Ordner"""
     src_path = Path("current.sqlite")
-    dest_path = Path("backup") / (
-        dt.datetime.today().isoformat(timespec="seconds") + ".sqlite"
-    )
+    time = dt.datetime.today().isoformat(timespec="seconds")
+    time = time.replace(":", "")
+    dest_path = Path("backup") / (time + ".sqlite")
     Path.mkdir(Path("backup"), exist_ok=True)
     shutil.copy(src_path, dest_path)
 
 
 def save_füllmenge(barcode, date, füllmenge):
     füllmenge_data = []
-    füllmenge_raw = selectInInventory(barcode, "füllmenge")
+    füllmenge_raw = select_value(barcode, "füllmenge", Inventar)
     if len(füllmenge_raw or []) != 0 and füllmenge_raw:
         füllmenge_history = json.loads(füllmenge_raw)
         if [date, füllmenge] != füllmenge_history[-1]:
@@ -426,3 +463,12 @@ def get_füllmenge_data(barcode):
 
         data = [{"datum": i[0], "Füllmenge": i[1]} for i in füllmenge]
         return data
+
+
+# Declare the function key for Windows (ctrl) and Mac (command) depending on the OS for use in keyboard shortcuts
+def system_key() -> dmc.Kbd:
+    """Returns either `dmc.Kbd("⌘")` or `dmc.Kbd("Strg")` depending on the system"""
+    if platform.system() == "Darwin":
+        return dmc.Kbd("⌘")
+    else:
+        return dmc.Kbd("Strg")
