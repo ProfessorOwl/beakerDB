@@ -14,7 +14,7 @@ import functions
 import components as comp  # NOTE -  Sorgt dafür, dass die Seite neu lädt, wenn die Website bedient wird und dev_tools_hot_reload=True ist. Entweder verwerfen, Hot Reload ausstellen oder neue Lösung finden. Vielleicht Dateistruktur ändern? SQLite-Datenbank auslagern aus Dateibaum heraus?
 
 DEFAULT_SETTINGS = json.loads(Path("default_settings.json").read_bytes())
-VERSION = "v0.3.3"
+VERSION = "v0.3.4"
 
 # Definiere den Server der Datenbank
 app = Dash(__name__)
