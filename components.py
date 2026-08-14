@@ -65,7 +65,7 @@ class KbdTooltip(dmc.Tooltip):
     """Vorkonfigurierter Tooltip mit mehr padding-bottom"""
 
     def __init__(self, **kwargs):
-        super().__init__(pb=10, **kwargs)
+        super().__init__(pb=10, position="bottom", **kwargs)
 
 
 class Version:

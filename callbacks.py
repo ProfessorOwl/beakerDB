@@ -59,14 +59,15 @@ def get_callbacks(app):
         Output("input-lösungsmittel", "value"),
         Output("input-geprüft", "value"),
         Output("input-zvg", "value"),
-        Output("inputContainer", "hidden"),
+        Output("inputContainer", "style"),
         Output("inputPlaceholder", "display"),
         Output("füllmenge_sparkline_wrapper", "hidden"),
         Output("füllmenge_sparkline", "data"),
         Input("mainGrid", "selectedRows"),
     )
     def update_fields(rows):
-
+        patched_input = Patch()
+        patched_input["display"] = "None"
         # Standardobjekt, wenn nichts angezeigt werden kann oder soll
         nothing_selected = (
             "",
@@ -85,7 +86,7 @@ def get_callbacks(app):
             "",
             "",
             "",
-            True,  # Blende "inputContainer" aus
+            patched_input,  # Blende "inputContainer" aus
             "flex",  # Blende den Platzhalter ein
             True,
             no_update,
@@ -112,6 +113,7 @@ def get_callbacks(app):
         else:
             füllmenge_last_entry = füllmenge_raw
 
+        patched_input["display"] = "flex"
         return (
             barcode,
             füllmenge_last_entry,
@@ -134,7 +136,7 @@ def get_callbacks(app):
                     "zvg",
                 ]
             ],
-            False,
+            patched_input,
             "None",
             füllmenge_hidden,
             füllmenge_data,
@@ -1663,6 +1665,7 @@ def get_callbacks(app):
         Output("button-open-modal", "disabled"),
         Output("mainGrid", "dashGridOptions"),
         Output("button_to_archive", "children"),
+        Output("button_to_archive_tooltip", "label"),
         Output("button_to_archive", "rightSection"),
         Output("mainGrid", "rowData", allow_duplicate=True),
         Output("mainGrid", "selectedRows", allow_duplicate=True),
@@ -1699,6 +1702,7 @@ def get_callbacks(app):
                 "gradient",
                 True,
                 grid_dark,
+                dmc.Text("Wiederherstellen", visibleFrom="xl"),
                 "Wiederherstellen",
                 DashIconify(
                     icon=icons.unarchive,
@@ -1717,6 +1721,7 @@ def get_callbacks(app):
                 "filled",
                 False,
                 grid_light,
+                dmc.Text("Archivieren", visibleFrom="xl"),
                 "Archivieren",
                 DashIconify(
                     icon=icons.archive,

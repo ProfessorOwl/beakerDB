@@ -35,3 +35,82 @@
 #füllmenge_sparkline_wrapper .recharts-surface :hover {
     filter: initial;
 }
+
+.mantine-Button-label > .mantine-Text-root {
+    font-weight: 600;
+    font-size: inherit;
+    font-family: Lexend;
+}
+
+.mantine-Tooltip-tooltip {
+    background: #172A54A1;
+}
+
+/* Mantine Breakpoint xxl */
+@media (max-width: 104em) { 
+    #button-filter-reset {
+        padding: 0px 7px 0px 7px;
+    }
+
+    #button-filter-reset .mantine-Button-section {
+        margin: 0px;
+    }
+}
+
+/* Mantine Breakpoint xl */
+@media (max-width: 90em) {
+    #button-stammdaten, 
+    #button_to_gestis, 
+    #button_to_archive,
+    #modal-button-speichern,
+    #modal-button-abbrechen {
+        padding: 0px 7px 0px 7px;
+    }
+
+    #button-speichern {
+        flex: 3 !important
+    }
+
+    #button-stammdaten .mantine-Button-section,
+    #button_to_gestis .mantine-Button-section,
+    #button_to_archive .mantine-Button-section,
+    #modal-button-speichern .mantine-Button-section,
+    #modal-button-abbrechen .mantine-Button-section {
+        margin: 0px;
+    }
+}
+
+/* Mantine Breakpoint lg */
+@media (max-width: 74em) {
+    #button-open-modal {
+        padding: 0px 5px 0px 5px;
+    }
+
+    #button-open-modal .mantine-Button-section {
+        margin: 0px;
+    }
+}
+
+/* Mantine Breakpoint md */
+@media (max-width: 64em) {
+    #button-speichern {
+        padding: 0px 5px 0px 5px;
+        flex: 1 !important
+    }
+
+    #button-speichern .mantine-Button-section {
+        margin: 0px;
+    }
+
+    #button_wrapper {
+        gap: var(--mantine-spacing-sm)
+    }
+}
+
+/* Mantine Breakpoint sm */
+@media (max-width: 48em) {
+        #button_wrapper {
+        gap: 0.5rem
+    }
+
+}
