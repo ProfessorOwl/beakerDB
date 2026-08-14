@@ -5,6 +5,7 @@ from dash_extensions import EventListener
 from dash_iconify import DashIconify
 from datetime import datetime, timedelta
 import icons
+import functions
 
 
 class DateInput(dmc.DateInput):
@@ -64,4 +65,27 @@ class KbdTooltip(dmc.Tooltip):
     """Vorkonfigurierter Tooltip mit mehr padding-bottom"""
 
     def __init__(self, **kwargs):
-        super().__init__(pb=10, **kwargs)
+        super().__init__(pb=10, position="bottom", **kwargs)
+
+
+class Version:
+    """Component that checks for a new version when initializing"""
+
+    latest_version = functions.get_version_number()
+    color = "gray.6"
+    badge_children = "Aktuell"
+
+    def __init__(self, version):
+        self.current_version = version.removeprefix("Version ")
+
+        if self.latest_version[0] != "v":
+            pass
+        elif self.latest_version != self.current_version:
+            self.color = "green.3"
+            self.badge_children = "Update verfügbar"
+
+    def Badge(self):
+        return dmc.Badge(self.badge_children, color=self.color)
+
+    def Text(self):
+        return dmc.Text("Version " + self.current_version, c=self.color)

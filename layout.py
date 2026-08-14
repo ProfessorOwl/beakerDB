@@ -14,11 +14,12 @@ import functions
 import components as comp  # NOTE -  Sorgt dafür, dass die Seite neu lädt, wenn die Website bedient wird und dev_tools_hot_reload=True ist. Entweder verwerfen, Hot Reload ausstellen oder neue Lösung finden. Vielleicht Dateistruktur ändern? SQLite-Datenbank auslagern aus Dateibaum heraus?
 
 DEFAULT_SETTINGS = json.loads(Path("default_settings.json").read_bytes())
+VERSION = "v0.3.3"
 
 # Definiere den Server der Datenbank
 app = Dash(__name__)
-app.title = "beakerDB"
 app.__init__(prevent_initial_callbacks=True)
+app.title = "beakerDB"
 
 # Überprüfe, ob überhaupt beim Serverstart überhaupt eine Datenbank vorhanden ist. Wenn nicht, dann benutzte die Vorlage "blank.sqlite" um eine leere Datenbank zu erstellen.
 src_path = Path("blank.sqlite")
@@ -31,11 +32,11 @@ fensterLinks = html.Div(
     [
         dmc.Group(
             [
-                dmc.Image(src="assets/Logo.svg", w=330),
+                dmc.Image(src="assets/Logo.svg", w=330, maw="50%"),
                 dmc.Group(
                     [
                         dmc.Button(
-                            "Filter zurücksetzen",
+                            dmc.Text("Filter zurücksetzen", visibleFrom="xxl"),
                             id="button-filter-reset",
                             rightSection=DashIconify(
                                 icon=icons.filterOff,
@@ -43,16 +44,41 @@ fensterLinks = html.Div(
                             ),
                             disabled=True,
                         ),
+                        dmc.Tooltip(
+                            label="Filter zurücksetzen",
+                            target="#button-filter-reset",
+                            hiddenFrom="xxl",
+                        ),
                         dmc.Button(
-                            "Stammdaten bearbeiten",
+                            dmc.Text("Stammdaten bearbeiten", visibleFrom="xl"),
                             id="button-stammdaten",
                             rightSection=DashIconify(icon=icons.edit, height=20),
                         ),
+                        dmc.Tooltip(
+                            label="Stammdaten bearbeiten",
+                            target="#button-stammdaten",
+                            hiddenFrom="xl",
+                        ),
                         dmc.Button(
-                            "Neuer Eintrag",
+                            dmc.Text("Neuer Eintrag", visibleFrom="lg"),
                             id="button-open-modal",
                             rightSection=DashIconify(icon=icons.add, height=24),
                             n_clicks=0,
+                        ),
+                        comp.KbdTooltip(
+                            target="#button-open-modal",
+                            label=[
+                                dmc.Kbd("Shift"),
+                                " + ",
+                                functions.system_key(),
+                                " + ",
+                                dmc.Kbd("N"),
+                            ],
+                        ),
+                        dmc.Tooltip(
+                            target="#button-open-modal",
+                            label="Neuer Eintrag",
+                            hiddenFrom="lg",
                         ),
                         dmc.Tooltip(
                             dmc.ActionIcon(
@@ -60,7 +86,8 @@ fensterLinks = html.Div(
                                     icon=icons.archive,
                                     height=24,
                                 ),
-                                size="lg",
+                                h=36,
+                                w=36,
                                 id="button_archive",
                                 gradient={"from": "indigo", "to": "teal"},
                             ),
@@ -72,12 +99,14 @@ fensterLinks = html.Div(
                                     icon=icons.settings,
                                     height=24,
                                 ),
-                                size="lg",
+                                h=36,
+                                w=36,
                                 id="button-einstellungen",
                             ),
                             label="Einstellungen",
                         ),
                     ],
+                    id="button_wrapper",
                     justify="flex-end",
                 ),
             ],
@@ -90,10 +119,6 @@ fensterLinks = html.Div(
             getRowId="params.data.Barcode",
             columnDefs=[
                 {"field": "Barcode", "sortable": True, "sort": "asc"},
-                {
-                    "field": "CAS-Nr",
-                    "sortable": True,
-                },
                 {"field": "Name", "sortable": True},
                 {
                     "field": "Summenformel",
@@ -101,14 +126,18 @@ fensterLinks = html.Div(
                     "sortable": True,
                 },
                 {
-                    "field": "Raum",
-                    "sortable": True,
-                },
-                {
                     "field": "Zuletzt_geprüft",
                     "headerName": "Prüfdatum",
                     "sortable": True,
                     "filter": "agTextColumnFilter",
+                },
+                {
+                    "field": "Raum",
+                    "sortable": True,
+                },
+                {
+                    "field": "CAS-Nr",
+                    "sortable": True,
                 },
             ],
             defaultColDef={
@@ -170,201 +199,310 @@ fensterLinks = html.Div(
     style={"padding": "20px 5px 20px 20px"},
 )
 
+stoffeigenschaften = (
+    dmc.Fieldset(
+        dmc.SimpleGrid(
+            [
+                dmc.TextInput(id="input-cas-nr", label="CAS-Nr"),
+                dmc.Group(
+                    [
+                        comp.NumberInput(  # Molmasse
+                            "input-molmasse",
+                            "Molare Masse",
+                        ),
+                        dmc.TextInput(
+                            id="input-summenformel",
+                            label="Summenformel",
+                        ),
+                    ],
+                    grow=True,
+                ),
+                dmc.Group(
+                    [
+                        dmc.TextInput(
+                            id="input-zvg",
+                            label="ZVG-Nr",
+                            disabled=True,
+                        ),
+                        dmc.Anchor(
+                            dmc.Button(
+                                "In GESTIS öffnen",
+                                leftSection=DashIconify(
+                                    icon=icons.externalLink,
+                                ),
+                                disabled=True,
+                                id="button_to_gestis",
+                                fullWidth=True,
+                            ),
+                            id="anchor_to_gestis",
+                            href="",
+                            target="_blank",
+                            underline="never",
+                        ),
+                    ],
+                    grow=True,
+                    align="end",
+                ),
+            ],
+            cols=1,
+        ),
+        legend="Stoffeigenschaften",
+    ),
+)
 # Das rechte untere Hauptfenster mit den Informationen zu dem entsprechenden Stoff
 fensterRechts = [
     html.Div(
         [
-            dmc.TextInput(
-                id="input-name",
-                styles={
-                    "input": {
-                        "fontSize": "2em",
-                        "fontWeight": "bold",
-                    }
-                },
-                size="xl",
-                rightSection=dmc.Popover(
-                    [
-                        dmc.PopoverTarget(
-                            dmc.Tooltip(
-                                dmc.ActionIcon(
-                                    DashIconify(
-                                        icon=icons.databaseSearch,
-                                        height=24,
-                                    ),
-                                    variant="light",
-                                    size="xl",
-                                ),
-                                label="Datenbank durchsuchen",
-                            ),
-                        ),
-                        dmc.PopoverDropdown(
-                            dmc.Grid(
-                                [
-                                    dmc.GridCol(
-                                        dmc.Select(
-                                            id="input-selectFromDatabase",
-                                            comboboxProps={"withinPortal": False},
-                                            searchable=True,
-                                            data=functions.generateSelectData_Namen(),
-                                            limit=20,
-                                            withCheckIcon=False,
-                                        ),
-                                        span="auto",
-                                    ),
-                                    dmc.GridCol(
-                                        dmc.Tooltip(
-                                            dmc.ActionIcon(
-                                                DashIconify(
-                                                    icon=icons.download,
-                                                    height=24,
-                                                ),
-                                                id="input-selectFromDatabaseConfirm",
-                                                size="lg",
-                                            ),
-                                            label="Eintrag übernehmen",
-                                        ),
-                                        span="content",
-                                    ),
-                                ],
-                                align="center",
-                            )
-                        ),
-                    ],
-                    id="input-popover",
-                    width="27%",
-                    position="left",
-                    trapFocus=True,
-                    withOverlay=True,
-                    overlayProps={"blur": "2px"},
-                    keepMounted=True,
-                ),
-            ),
-            dmc.Space(h="21px"),
-            dmc.Fieldset(
-                dmc.SimpleGrid(
-                    [
-                        dmc.TextInput(  # Barcode
-                            id="input-barcode", label="Barcode", disabled=True
-                        ),
-                        dmc.Group(
+            dmc.ScrollAreaAutosize(
+                [
+                    dmc.TextInput(
+                        id="input-name",
+                        styles={
+                            "input": {
+                                "fontSize": "2em",
+                                "fontWeight": "bold",
+                            }
+                        },
+                        size="xl",
+                        rightSection=dmc.Popover(
                             [
-                                comp.NumberInput(  # Füllmenge
-                                    "input-füllmenge",
-                                    "Füllmenge",
-                                    w="100%",
-                                    rightSection=dmc.Select(
-                                        id="input-mengeneinheit",
-                                        value="1",
-                                        allowDeselect=False,
-                                        data=functions.generateSelectData(
-                                            functions.Mengeneinheiten,
-                                            ["mengeneinheit_id", "mengeneinheit"],
+                                dmc.PopoverTarget(
+                                    dmc.Tooltip(
+                                        dmc.ActionIcon(
+                                            DashIconify(
+                                                icon=icons.databaseSearch,
+                                                height=24,
+                                            ),
+                                            variant="light",
+                                            size="xl",
                                         ),
-                                        w=60,
-                                        variant="unstyled",
+                                        label="Datenbank durchsuchen",
                                     ),
-                                    className="mengeneinheit-NumberInput",
                                 ),
-                                html.Button(
-                                    dmc.Sparkline(
-                                        id="füllmenge_sparkline",
-                                        curveType="linear",
-                                        data=[],
-                                        fillOpacity=0.5,
-                                        withGradient=True,
-                                        h=36,
-                                        w="100%",
-                                        display=None,
-                                        flex="1 0 auto",
-                                    ),
-                                    id="füllmenge_sparkline_wrapper",
-                                    style={
-                                        "width": "40%",
-                                        "height": "auto",
-                                        "flex": "1 0 auto",
-                                        "padding": "0",
-                                        "background": "None",
-                                        "border": "None",
-                                        "cursor": "help",
-                                    },
-                                    hidden=True,
+                                dmc.PopoverDropdown(
+                                    dmc.Grid(
+                                        [
+                                            dmc.GridCol(
+                                                dmc.Select(
+                                                    id="input-selectFromDatabase",
+                                                    comboboxProps={
+                                                        "withinPortal": False
+                                                    },
+                                                    searchable=True,
+                                                    data=functions.generateSelectData_Namen(),
+                                                    limit=20,
+                                                    withCheckIcon=False,
+                                                ),
+                                                span="auto",
+                                            ),
+                                            dmc.GridCol(
+                                                dmc.Tooltip(
+                                                    dmc.ActionIcon(
+                                                        DashIconify(
+                                                            icon=icons.download,
+                                                            height=24,
+                                                        ),
+                                                        id="input-selectFromDatabaseConfirm",
+                                                        size="lg",
+                                                    ),
+                                                    label="Eintrag übernehmen",
+                                                ),
+                                                span="content",
+                                            ),
+                                        ],
+                                        align="center",
+                                    )
                                 ),
                             ],
-                            justify="space-between",
-                            align="end",
-                            wrap="nowrap",
-                            gap="xs",
-                            grow=True,
-                            preventGrowOverflow=False,
+                            id="input-popover",
+                            width="27%",
+                            position="left",
+                            trapFocus=True,
+                            withOverlay=True,
+                            overlayProps={"blur": "2px"},
+                            keepMounted=True,
                         ),
-                        comp.DateInput(
-                            "input-kaufdatum", "Kaufdatum", "input-kaufdatum-heute"
-                        ),  # Kaufdatum
-                        dmc.Select(  # Hersteller
-                            id="input-hersteller",
-                            value="0",
-                            label="Hersteller",
-                            searchable=True,
-                            allowDeselect=False,
-                            data=functions.generateSelectData(
-                                functions.Hersteller, ["hersteller_id", "hersteller"]
-                            ),
-                        ),
-                        dmc.Select(  # Lieferant
-                            id="input-lieferant",
-                            value="0",
-                            label="Lieferant",
-                            searchable=True,
-                            allowDeselect=False,
-                            data=functions.generateSelectData(
-                                functions.Lieferanten, ["lieferant_id", "lieferant"]
-                            ),
-                        ),
-                        dmc.Select(  # Raum
-                            id="input-raum",
-                            value="0",
-                            label="Raum",
-                            searchable=True,
-                            allowDeselect=False,
-                            data=functions.generateSelectData_Räume(),
-                        ),
-                        dmc.TextInput(  # Reinheit
-                            id="input-reinheit", label="Reinheit"
-                        ),
-                        dmc.TextInput(  # Konzentration
-                            id="input-konzentration", label="Konzentration"
-                        ),
-                        dmc.TextInput(  # Lösungsmittel
-                            id="input-lösungsmittel", label="Lösungsmittel"
-                        ),
-                        comp.DateInput(  # Zuletzt geprüft
-                            "input-geprüft", "Zuletzt geprüft", "input-geprüft-heute"
-                        ),
-                    ],
-                    cols=2,
-                ),
-                legend="Inventar",
-            ),
-            dmc.Space(h="21px"),
-            dmc.Fieldset(
-                [
-                    dmc.TextInput(id="input-cas-nr", label="CAS-Nr"),
-                    comp.NumberInput(  # Molmasse
-                        "input-molmasse",
-                        "Molare Masse",
                     ),
-                    dmc.TextInput(id="input-summenformel", label="Summenformel"),
+                    dmc.Space(h={"base": 0, "lg": 7.5, "xl": 14.5}),
+                    dmc.Fieldset(
+                        dmc.SimpleGrid(
+                            [
+                                dmc.TextInput(  # Barcode
+                                    id="input-barcode", label="Barcode", disabled=True
+                                ),
+                                dmc.Group(
+                                    [
+                                        comp.NumberInput(  # Füllmenge
+                                            "input-füllmenge",
+                                            "Füllmenge",
+                                            w="100%",
+                                            rightSection=dmc.Select(
+                                                id="input-mengeneinheit",
+                                                value="1",
+                                                allowDeselect=False,
+                                                data=functions.generateSelectData(
+                                                    functions.Mengeneinheiten,
+                                                    [
+                                                        "mengeneinheit_id",
+                                                        "mengeneinheit",
+                                                    ],
+                                                ),
+                                                w=60,
+                                                variant="unstyled",
+                                            ),
+                                            className="mengeneinheit-NumberInput",
+                                        ),
+                                        html.Button(
+                                            dmc.Sparkline(
+                                                id="füllmenge_sparkline",
+                                                curveType="linear",
+                                                data=[],
+                                                fillOpacity=0.5,
+                                                withGradient=True,
+                                                h=36,
+                                                w="100%",
+                                                display=None,
+                                                flex="1 0 auto",
+                                            ),
+                                            id="füllmenge_sparkline_wrapper",
+                                            style={
+                                                "width": "40%",
+                                                "height": "auto",
+                                                "flex": "1 0 auto",
+                                                "padding": "0",
+                                                "background": "None",
+                                                "border": "None",
+                                                "cursor": "help",
+                                            },
+                                            hidden=True,
+                                        ),
+                                    ],
+                                    justify="space-between",
+                                    align="end",
+                                    wrap="nowrap",
+                                    gap="xs",
+                                    grow=True,
+                                    preventGrowOverflow=False,
+                                ),
+                                comp.DateInput(
+                                    "input-kaufdatum",
+                                    "Kaufdatum",
+                                    "input-kaufdatum-heute",
+                                ),  # Kaufdatum
+                                dmc.Select(  # Hersteller
+                                    id="input-hersteller",
+                                    value="0",
+                                    label="Hersteller",
+                                    searchable=True,
+                                    allowDeselect=False,
+                                    data=functions.generateSelectData(
+                                        functions.Hersteller,
+                                        ["hersteller_id", "hersteller"],
+                                    ),
+                                ),
+                                dmc.Select(  # Lieferant
+                                    id="input-lieferant",
+                                    value="0",
+                                    label="Lieferant",
+                                    searchable=True,
+                                    allowDeselect=False,
+                                    data=functions.generateSelectData(
+                                        functions.Lieferanten,
+                                        ["lieferant_id", "lieferant"],
+                                    ),
+                                ),
+                                dmc.Select(  # Raum
+                                    id="input-raum",
+                                    value="0",
+                                    label="Raum",
+                                    searchable=True,
+                                    allowDeselect=False,
+                                    data=functions.generateSelectData_Räume(),
+                                ),
+                                dmc.TextInput(  # Reinheit
+                                    id="input-reinheit", label="Reinheit"
+                                ),
+                                dmc.TextInput(  # Konzentration
+                                    id="input-konzentration", label="Konzentration"
+                                ),
+                                dmc.TextInput(  # Lösungsmittel
+                                    id="input-lösungsmittel", label="Lösungsmittel"
+                                ),
+                                comp.DateInput(  # Zuletzt geprüft
+                                    "input-geprüft",
+                                    "Zuletzt geprüft",
+                                    "input-geprüft-heute",
+                                ),
+                            ],
+                            cols=2,
+                        ),
+                        legend="Inventar",
+                    ),
+                    dmc.Space(h={"base": 0, "lg": 10, "xl": 21}),
+                    dmc.Fieldset(
+                        dmc.SimpleGrid(
+                            [
+                                dmc.TextInput(id="input-cas-nr", label="CAS-Nr"),
+                                dmc.Group(
+                                    [
+                                        comp.NumberInput(  # Molmasse
+                                            "input-molmasse",
+                                            "Molare Masse",
+                                        ),
+                                        dmc.TextInput(
+                                            id="input-summenformel",
+                                            label="Summenformel",
+                                        ),
+                                    ],
+                                    grow=True,
+                                ),
+                                dmc.Group(
+                                    [
+                                        dmc.TextInput(
+                                            id="input-zvg",
+                                            label="ZVG-Nr",
+                                            disabled=True,
+                                        ),
+                                        dmc.Anchor(
+                                            dmc.Button(
+                                                dmc.Text(
+                                                    "In GESTIS öffnen", visibleFrom="xl"
+                                                ),
+                                                leftSection=DashIconify(
+                                                    icon=icons.externalLink, height=20
+                                                ),
+                                                disabled=True,
+                                                id="button_to_gestis",
+                                                fullWidth=True,
+                                            ),
+                                            id="anchor_to_gestis",
+                                            href="",
+                                            target="_blank",
+                                            underline="never",
+                                        ),
+                                    ],
+                                    grow=True,
+                                    align="end",
+                                ),
+                                dmc.Tooltip(
+                                    label="In GESTIS öffnen",
+                                    target="#button_to_gestis",
+                                    hiddenFrom="xl",
+                                ),
+                            ],
+                            cols=1,
+                        ),
+                        legend="Stoffeigenschaften",
+                    ),
                 ],
-                legend="Stoffeigenschaften",
+                mah="calc(100vh - 150px)",
             ),
-            dmc.Space(h="21px"),
             dmc.Group(
                 [
                     dmc.ButtonGroup(
                         [
                             dmc.Button(
-                                "Speichern",
+                                dmc.Text("Speichern", visibleFrom="md"),
                                 id="button-speichern",
                                 color="green",
                                 rightSection=DashIconify(icon=icons.save),
@@ -372,13 +510,31 @@ fensterRechts = [
                                 n_clicks=0,
                                 flex=1,
                             ),
+                            dmc.Tooltip(
+                                label="Speichern",
+                                target="#button-speichern",
+                                hiddenFrom="md",
+                            ),
+                            comp.KbdTooltip(
+                                target="#button-speichern",
+                                label=[dmc.Kbd("Shift"), " + ", dmc.Kbd("Enter")],
+                            ),
                             dmc.Button(
-                                "Archivieren",
+                                dmc.Text(
+                                    "Archivieren",
+                                    visibleFrom="xl",
+                                ),
                                 id="button_to_archive",
                                 color="dark.7",
                                 rightSection=DashIconify(icon=icons.archive),
                                 size="lg",
                                 flex=1,
+                            ),
+                            dmc.Tooltip(
+                                label="Archivieren",
+                                target="#button_to_archive",
+                                hiddenFrom="xl",
+                                id="button_to_archive_tooltip",
                             ),
                         ],
                         flex=1,
@@ -398,12 +554,13 @@ fensterRechts = [
             ),
         ],
         style={
-            "align": "stretch",
-            "justify": "space-between",
+            "display": "None",
+            "flexDirection": "column",
+            "justifyContent": "space-between",
             "padding": "20px 20px 20px 5px",
+            "height": "100%",
         },
         id="inputContainer",
-        hidden=True,
     ),
     dmc.Stack(
         [
@@ -602,19 +759,29 @@ modalNeuerEintragInner = dmc.Stack(
                                         id="modal-input-summenformel",
                                         label="Summenformel",
                                     ),
+                                    dmc.TextInput(
+                                        id="modal-input-zvg",
+                                        label="ZVG-Nr",
+                                        disabled=True,
+                                    ),
                                 ],
                                 legend="Stoffeigenschaften",
                             ),
                             dmc.ButtonGroup(
                                 [
                                     dmc.Button(
-                                        "Speichern",
+                                        dmc.Text("Speichern", visibleFrom="xl"),
                                         id="modal-button-speichern",
                                         color="green",
                                         rightSection=DashIconify(icon=icons.save),
                                         size="lg",
                                         fullWidth=True,
                                         n_clicks=0,
+                                    ),
+                                    dmc.Tooltip(
+                                        label="Speichern",
+                                        target="#modal-button-speichern",
+                                        hiddenFrom="xl",
                                     ),
                                     comp.KbdTooltip(
                                         target="#modal-button-speichern",
@@ -625,12 +792,17 @@ modalNeuerEintragInner = dmc.Stack(
                                         ],
                                     ),
                                     dmc.Button(
-                                        "Abbrechen",
+                                        dmc.Text("Abbrechen", visibleFrom="xl"),
                                         id="modal-button-abbrechen",
                                         color="red",
                                         rightSection=DashIconify(icon=icons.close),
                                         size="lg",
                                         fullWidth=True,
+                                    ),
+                                    dmc.Tooltip(
+                                        label="Abbrechen",
+                                        target="#modal-button-abbrechen",
+                                        hiddenFrom="xl",
                                     ),
                                 ]
                             ),
@@ -758,7 +930,19 @@ modalStammdatenInner = dmc.Stack(
 
 modalEinstellungenInner = dmc.Stack(
     [
-        dmc.Title("Einstellungen", order=2),
+        dmc.Group(
+            [
+                dmc.Title("Einstellungen", order=2),
+                dmc.Group(
+                    [
+                        comp.Version(VERSION).Text(),
+                        comp.Version(VERSION).Badge(),
+                    ],
+                    gap="xs",
+                ),
+            ],
+            justify="space-between",
+        ),
         dmc.ScrollAreaAutosize(
             dmc.Stack(
                 [
@@ -995,6 +1179,7 @@ app.layout = dmc.MantineProvider(
                 dmc.GridCol(fensterRechts, span=4),
             ],
             id="mainWrapper",
+            gutter=0,
         ),
         dmc.Modal(
             modalNeuerEintragInner,
@@ -1042,25 +1227,18 @@ app.layout = dmc.MantineProvider(
             withCloseButton=False,
             opened=False,
         ),
-        comp.KbdTooltip(
-            target="#button-speichern",
-            label=[dmc.Kbd("Shift"), " + ", dmc.Kbd("Enter")],
-        ),
-        comp.KbdTooltip(
-            target="#button-open-modal",
-            label=[
-                dmc.Kbd("Shift"),
-                " + ",
-                functions.system_key(),
-                " + ",
-                dmc.Kbd("N"),
-            ],
-        ),
     ],
     theme={
         "fontFamily": "Lexend",
         "headings": {"fontFamily": "Lexend"},
-        "components": {"Tooltip": {"defaultProps": {"bg": "#050B18A3"}}},
+        "breakpoints": {
+            "xs": "30em",
+            "sm": "48em",
+            "md": "64em",
+            "lg": "74em",
+            "xl": "90em",
+            "xxl": "104em",
+        },
     },
 )
 

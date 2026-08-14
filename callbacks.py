@@ -58,14 +58,16 @@ def get_callbacks(app):
         Output("input-molmasse", "value"),
         Output("input-lösungsmittel", "value"),
         Output("input-geprüft", "value"),
-        Output("inputContainer", "hidden"),
+        Output("input-zvg", "value"),
+        Output("inputContainer", "style"),
         Output("inputPlaceholder", "display"),
         Output("füllmenge_sparkline_wrapper", "hidden"),
         Output("füllmenge_sparkline", "data"),
         Input("mainGrid", "selectedRows"),
     )
     def update_fields(rows):
-
+        patched_input = Patch()
+        patched_input["display"] = "None"
         # Standardobjekt, wenn nichts angezeigt werden kann oder soll
         nothing_selected = (
             "",
@@ -83,7 +85,8 @@ def get_callbacks(app):
             "",
             "",
             "",
-            True,  # Blende "inputContainer" aus
+            "",
+            patched_input,  # Blende "inputContainer" aus
             "flex",  # Blende den Platzhalter ein
             True,
             no_update,
@@ -110,6 +113,7 @@ def get_callbacks(app):
         else:
             füllmenge_last_entry = füllmenge_raw
 
+        patched_input["display"] = "flex"
         return (
             barcode,
             füllmenge_last_entry,
@@ -129,9 +133,10 @@ def get_callbacks(app):
                     "molmasse",
                     "lösungsmittel",
                     "zuletzt_geprüft",
+                    "zvg",
                 ]
             ],
-            False,
+            patched_input,
             "None",
             füllmenge_hidden,
             füllmenge_data,
@@ -159,6 +164,7 @@ def get_callbacks(app):
         State("input-summenformel", "value"),
         State("input-mengeneinheit", "value"),
         State("input-geprüft", "value"),
+        State("input-zvg", "value"),
         State("einstellungenCache", "data"),
     )
     def save_data(
@@ -178,6 +184,7 @@ def get_callbacks(app):
         summenformel,
         mengeneinheitID,
         zuletzt_geprüft,
+        zvg,
         einstellungen_cache,
     ):
         # Falls die Felder leer sind trage 0 ein, was dem leeren Wert in der SQL-Tabelle entspricht
@@ -294,6 +301,7 @@ def get_callbacks(app):
                 "raum_id",
                 "mengeneinheit_id",
                 "zuletzt_geprüft",
+                "zvg",
             ],
             [
                 name,
@@ -311,6 +319,7 @@ def get_callbacks(app):
                 raumID,
                 mengeneinheitID,
                 zuletzt_geprüft,
+                zvg,
             ],
             functions.Inventar,
         )
@@ -500,6 +509,7 @@ def get_callbacks(app):
         State("modal-input-summenformel", "value"),
         State("modal-input-mengeneinheit", "value"),
         State("modal-input-geprüft", "value"),
+        State("modal-input-zvg", "value"),
     )
     def save_new_data(
         n_clicks,
@@ -518,6 +528,7 @@ def get_callbacks(app):
         summenformel,
         mengeneinheitID,
         zuletzt_geprüft,
+        zvg,
     ):
         # Falls die ID-Felder leer sind trage 0 ein, was dem "Nicht ausgewählt" in der SQL-Tabelle entspricht
         if herstellerID == None or "":
@@ -608,6 +619,7 @@ def get_callbacks(app):
                 "raum_id",
                 "mengeneinheit_id",
                 "zuletzt_geprüft",
+                "zvg",
             ],
             [
                 name,
@@ -625,6 +637,7 @@ def get_callbacks(app):
                 raumID,
                 mengeneinheitID,
                 zuletzt_geprüft,
+                zvg,
             ],
             functions.Inventar(),
         )
@@ -1218,7 +1231,8 @@ def get_callbacks(app):
             """Updates the value of ``field`` corresponding to the value of ``key`` in ``data``"""
 
             if i := data.get(key):
-                set_props(modalPrefix + field, {"value": i})
+                if i != "None":
+                    set_props(modalPrefix + field, {"value": i})
 
         setField("cas_nr", "input-cas-nr")
         setField("name", "input-name")
@@ -1232,6 +1246,7 @@ def get_callbacks(app):
         setField("konzentration", "input-konzentration")
         setField("lösungsmittel", "input-lösungsmittel")
         setField("molmasse", "input-molmasse")
+        setField("zvg", "input-zvg")
 
         if (
             ctx.triggered_id == "modal-input-selectFromDatabaseConfirm"
@@ -1650,6 +1665,7 @@ def get_callbacks(app):
         Output("button-open-modal", "disabled"),
         Output("mainGrid", "dashGridOptions"),
         Output("button_to_archive", "children"),
+        Output("button_to_archive_tooltip", "label"),
         Output("button_to_archive", "rightSection"),
         Output("mainGrid", "rowData", allow_duplicate=True),
         Output("mainGrid", "selectedRows", allow_duplicate=True),
@@ -1686,6 +1702,7 @@ def get_callbacks(app):
                 "gradient",
                 True,
                 grid_dark,
+                dmc.Text("Wiederherstellen", visibleFrom="xl"),
                 "Wiederherstellen",
                 DashIconify(
                     icon=icons.unarchive,
@@ -1704,6 +1721,7 @@ def get_callbacks(app):
                 "filled",
                 False,
                 grid_light,
+                dmc.Text("Archivieren", visibleFrom="xl"),
                 "Archivieren",
                 DashIconify(
                     icon=icons.archive,
@@ -1762,3 +1780,15 @@ def get_callbacks(app):
             ]
 
         return df.to_dict("records"), message
+
+    @app.callback(
+        Output("button_to_gestis", "disabled"),
+        Output("anchor_to_gestis", "href"),
+        Input("input-zvg", "value"),
+    )
+    def toggle_gestis_button(value: str):
+        if value == "":
+            return True, ""
+        else:
+            value = value.rjust(6, "0")
+            return False, f"https://gestis.dguv.de/data?name={value}"
