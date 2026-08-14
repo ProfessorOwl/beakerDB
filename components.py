@@ -77,12 +77,12 @@ class Version:
 
     def __init__(self, version):
         self.current_version = version.removeprefix("Version ")
-
-        if self.latest_version[0] != "v":
-            pass
-        elif self.latest_version != self.current_version:
-            self.color = "green.3"
-            self.badge_children = "Update verfügbar"
+        if self.latest_version:
+            if self.latest_version[0] != "v":
+                pass
+            elif self.latest_version != self.current_version:
+                self.color = "green.3"
+                self.badge_children = "Update verfügbar"
 
     def Badge(self):
         return dmc.Badge(self.badge_children, color=self.color)

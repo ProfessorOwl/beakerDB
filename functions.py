@@ -475,14 +475,17 @@ def system_key() -> dmc.Kbd:
         return dmc.Kbd("Strg")
 
 
-def get_version_number() -> str:
+def get_version_number() -> str | None:
     """Returns the version number of the latest release in the beakerDB repository"""
     g = Github(None)
-    repo = g.get_repo("ProfessorOwl/beakerDB")
+    if g.get_rate_limit().rate.remaining > 0:
+        repo = g.get_repo("ProfessorOwl/beakerDB")
+    else:
+        return None
     try:
         latest = repo.get_latest_release().name
     except:
-        latest = "No release yet"
+        latest = None
     return latest
 
 
