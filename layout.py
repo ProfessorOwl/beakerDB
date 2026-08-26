@@ -11,10 +11,12 @@ import shutil
 import icons
 from callbacks import get_callbacks
 import functions
-import components as comp  # NOTE -  Sorgt dafür, dass die Seite neu lädt, wenn die Website bedient wird und dev_tools_hot_reload=True ist. Entweder verwerfen, Hot Reload ausstellen oder neue Lösung finden. Vielleicht Dateistruktur ändern? SQLite-Datenbank auslagern aus Dateibaum heraus?
+import components as comp
 
+# Konstanten
 DEFAULT_SETTINGS = json.loads(Path("default_settings.json").read_bytes())
-VERSION = "v0.3.4"
+VERSION = "v0.3.5"
+IS_DEBUG = False
 
 # Definiere den Server der Datenbank
 app = Dash(__name__)
@@ -1245,4 +1247,4 @@ app.layout = dmc.MantineProvider(
 # Starte den Server
 if __name__ == "__main__":
     get_callbacks(app)
-    app.run(debug=True, port=8050, dev_tools_hot_reload=False)
+    app.run(debug=IS_DEBUG, port=8050, dev_tools_hot_reload=False)
