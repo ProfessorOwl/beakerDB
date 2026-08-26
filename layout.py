@@ -15,7 +15,7 @@ import components as comp
 
 # Konstanten
 DEFAULT_SETTINGS = json.loads(Path("default_settings.json").read_bytes())
-VERSION = "v0.3.5"
+VERSION = "v0.3.6"
 IS_DEBUG = False
 
 # Definiere den Server der Datenbank

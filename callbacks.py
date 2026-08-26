@@ -1158,7 +1158,7 @@ def get_callbacks(app):
         Input("scanListener", "id"),
         Input("modalNeuerEintrag", "opened"),
         Input("modalStammdaten", "opened"),
-        prevent_initial_call=False,
+        prevent_initial_call=False  # fmt: skip
     )
 
     # Search for the string that the scanListener returns after firing and select the first available entry
