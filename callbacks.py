@@ -384,6 +384,7 @@ def get_callbacks(app):
         Output("modal-input-molmasse", "value"),
         Output("modal-input-lösungsmittel", "value"),
         Output("modal-input-geprüft", "value"),
+        Output("modal-input-barcode", "n_blur"),
         Input("button-open-modal", "n_clicks"),
         Input("modal-button-abbrechen", "n_clicks"),
         Input("modal-button-speichern", "n_clicks"),
@@ -406,6 +407,8 @@ def get_callbacks(app):
         isStammdatenOpen,
     ):
         einstellungen_cache = json.loads(einstellungen_cache)
+        patched_n_blur = no_update
+
         if (
             einstellungen_cache.get("datumsänderung") == "create"
             or einstellungen_cache.get("datumsänderung") == "createchange"
@@ -423,6 +426,8 @@ def get_callbacks(app):
             ):
                 raise PreventUpdate
             barcode = event.get("detail").get("scanCode")
+            patched_n_blur = Patch()
+            patched_n_blur += 1
 
             if functions.select_value(barcode, "barcode", functions.Inventar) == "":
                 return (
@@ -444,6 +449,7 @@ def get_callbacks(app):
                     "",
                     "",
                     input_geprüft,
+                    patched_n_blur,
                 )
             else:
                 raise PreventUpdate
@@ -467,6 +473,7 @@ def get_callbacks(app):
             "",
             "",
             input_geprüft,
+            patched_n_blur,
         )
 
     # Gebe einen Fehler zurück, wenn der Barcode bereits vergeben ist

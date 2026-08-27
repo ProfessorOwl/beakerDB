@@ -15,8 +15,8 @@ import components as comp
 
 # Konstanten
 DEFAULT_SETTINGS = json.loads(Path("default_settings.json").read_bytes())
-VERSION = "v0.3.7"
-IS_DEBUG = False
+VERSION = "v0.3.8"
+IS_DEBUG = True
 
 # Definiere den Server der Datenbank
 app = Dash(__name__)
@@ -661,6 +661,7 @@ modalNeuerEintragInner = dmc.Stack(
                                         id="modal-input-barcode",
                                         label="Barcode",
                                         required=True,
+                                        n_blur=0,
                                     ),
                                     dmc.Group(
                                         [
