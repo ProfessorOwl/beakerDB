@@ -122,7 +122,7 @@ def get_callbacks(app):
                 for x in [
                     "name",
                     "summenformel",
-                    "cas_nr",
+                    "cas",
                     "mengeneinheit_id",
                     "kaufdatum",
                     "lieferant_id",
@@ -293,7 +293,7 @@ def get_callbacks(app):
                 "reinheit",
                 "konzentration",
                 "lösungsmittel",
-                "cas_nr",
+                "cas",
                 "molmasse",
                 "summenformel",
                 "hersteller_id",
@@ -611,7 +611,7 @@ def get_callbacks(app):
                 "reinheit",
                 "konzentration",
                 "lösungsmittel",
-                "cas_nr",
+                "cas",
                 "molmasse",
                 "summenformel",
                 "hersteller_id",
@@ -1234,7 +1234,7 @@ def get_callbacks(app):
                 if i != "None":
                     set_props(modalPrefix + field, {"value": i})
 
-        setField("cas_nr", "input-cas-nr")
+        setField("cas", "input-cas-nr")
         setField("name", "input-name")
         setField("summenformel", "input-summenformel")
         setField("raum_id", "input-raum")

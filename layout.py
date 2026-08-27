@@ -15,7 +15,7 @@ import components as comp
 
 # Konstanten
 DEFAULT_SETTINGS = json.loads(Path("default_settings.json").read_bytes())
-VERSION = "v0.3.6"
+VERSION = "v0.3.7"
 IS_DEBUG = False
 
 # Definiere den Server der Datenbank
@@ -138,7 +138,8 @@ fensterLinks = html.Div(
                     "sortable": True,
                 },
                 {
-                    "field": "CAS-Nr",
+                    "field": "CAS",
+                    "headerName": "CAS-Nr",
                     "sortable": True,
                 },
             ],

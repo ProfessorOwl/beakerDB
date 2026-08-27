@@ -10,10 +10,10 @@ from sqlalchemy import (
     Column,
     update,
     inspect,
+    event,
 )
 from sqlalchemy.orm import DeclarativeBase, Session
 from sqlalchemy.engine import Engine
-from sqlalchemy import event, text
 from pathlib import Path
 import shutil
 import platform
@@ -57,7 +57,7 @@ class Inventar(Base):
     __tablename__ = "inventar"
 
     barcode = Column("Barcode", String(), primary_key=True)
-    cas_nr = Column("CAS-Nr", String())
+    cas = Column("CAS", String())
     name = Column("Name", String())
     summenformel = Column("Summenformel", String())
     raum_id = Column(
@@ -97,7 +97,7 @@ class Inventar(Base):
     zvg = Column("ZVG", Integer())
 
     def __repr__(self) -> str:
-        return f"Inventar(barcode={self.barcode!r}, cas-nr={self.cas_nr!r}, name={self.name!r}, summenformel={self.summenformel!r}, raum_id={self.raum_id!r}, lieferant_id={self.lieferant_id!r}, füllmenge={self.füllmenge!r}, mengeneinheit_id={self.mengeneinheit_id!r},kaufdatum={self.kaufdatum!r}, hersteller_id={self.hersteller_id!r}, reinheit={self.reinheit!r}, konzentration={self.konzentration!r}, lösungsmittel={self.lösungsmittel!r}, molmasse={self.molmasse!r}, zuletzt_geprüft={self.zuletzt_geprüft!r}), archiviert={self.archiviert!r}"
+        return f"Inventar(barcode={self.barcode!r}, cas={self.cas!r}, name={self.name!r}, summenformel={self.summenformel!r}, raum_id={self.raum_id!r}, lieferant_id={self.lieferant_id!r}, füllmenge={self.füllmenge!r}, mengeneinheit_id={self.mengeneinheit_id!r},kaufdatum={self.kaufdatum!r}, hersteller_id={self.hersteller_id!r}, reinheit={self.reinheit!r}, konzentration={self.konzentration!r}, lösungsmittel={self.lösungsmittel!r}, molmasse={self.molmasse!r}, zuletzt_geprüft={self.zuletzt_geprüft!r}), archiviert={self.archiviert!r}"
 
 
 class Gebäude(Base):
@@ -383,7 +383,7 @@ def insertStammdaten(selector: str, columns: list[str], values: list[str]):
 
 def get_main_table(is_archived: bool = False):
     def query(is_archived: int):
-        return f"SELECT `CAS-Nr`, Name, Summenformel, Barcode, Raum, Zuletzt_geprüft FROM Inventar INNER JOIN räume ON Inventar.Raum_ID == räume.Raum_ID WHERE Archiviert == {is_archived} "
+        return f"SELECT CAS, Name, Summenformel, Barcode, Raum, Zuletzt_geprüft FROM Inventar INNER JOIN räume ON Inventar.Raum_ID == räume.Raum_ID WHERE Archiviert == {is_archived} "
 
     if is_archived:
         df = pd.read_sql(
