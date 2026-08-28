@@ -7,16 +7,45 @@ from dash_iconify import DashIconify
 import json
 from pathlib import Path
 import shutil
+import waitress
+import argparse
 
 import icons
 from callbacks import get_callbacks
 import functions
 import components as comp
 
+VERSION = "v0.3.12"
+
+# Command Line Interface
+parser = argparse.ArgumentParser(
+    "beakerDB", "Startet eine Chemikaliendatenbank als lokalen Server"
+)
+parser.add_argument(
+    "-v",
+    "--version",
+    action="version",
+    version=VERSION,
+    help="Zeige die Versionsnummer von beakerDB",
+)
+parser.add_argument(
+    "-d", "--debug", action="store_true", help="Starte den Server im Debug-Modus."
+)
+parser.add_argument(
+    "--host",
+    default="127.0.0.1",
+    help="Definiere die IP-Adresse, auf der der Server gehostet wird. (Standard: %(default)s)",
+)
+parser.add_argument(
+    "-p",
+    "--port",
+    default=8050,
+    help="Definiere den Port des Servers. (Standard %(default)i)",
+)
+args = parser.parse_args()
+
 # Konstanten
 DEFAULT_SETTINGS = json.loads(Path("default_settings.json").read_bytes())
-VERSION = "v0.3.11"
-IS_DEBUG = False
 
 # Definiere den Server der Datenbank
 app = Dash(__name__)
@@ -29,6 +58,8 @@ dest_path = Path("current.sqlite")
 if not Path.exists(dest_path):
     shutil.copy(src_path, dest_path)
 
+
+# Definiere das Layout
 # Das linke untere, welches die Tabelle enthält
 fensterLinks = html.Div(
     [
@@ -1279,4 +1310,12 @@ app.layout = dmc.MantineProvider(
 # Starte den Server
 if __name__ == "__main__":
     get_callbacks(app)
-    app.run(debug=IS_DEBUG, port=8050, dev_tools_hot_reload=False)
+    if args.debug:
+        app.run(
+            debug=args.debug, host=args.host, port=args.port, dev_tools_hot_reload=False
+        )
+    else:
+        print(
+            f"Flask launched on http://{args.host}:{args.port}{" or http://localhost:"+str(args.port) if args.host == "127.0.0.1" else ""}. Debug mode is {"on" if args.debug else "off"}."
+        )
+        waitress.serve(app.server, host=args.host, port=args.port, threads=8)
