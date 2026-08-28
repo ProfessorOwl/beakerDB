@@ -328,37 +328,51 @@ def get_callbacks(app):
 
         return (df.to_dict("records"), messages, füllmenge_hidden, füllmenge_data)
 
-    # Sobald der "Löschen"-Button gedrückt wird, soll die Zeile sowohl aus der sichtbaren Tabelle, wie auch der SQL-Datenbank gelöscht werden
+    # Kontrolliert die Logik des "Eintrag Löschen" Modals
     @app.callback(
         Output("mainGrid", "rowData", allow_duplicate=True),
         Output("notification-container", "sendNotifications", allow_duplicate=True),
         Output("mainGrid", "selectedRows", allow_duplicate=True),
+        Output("modal_bestätigung_löschen", "opened"),
         Input("button-löschen", "n_clicks"),
+        Input("löschen_bestätigung_abbrechen", "n_clicks"),
+        Input("löschen_bestätigung_ja", "n_clicks"),
         State("mainGrid", "selectedRows"),
     )
-    def removeRow(n_clicks, rows):
-        barcode = rows[0].get("Barcode", "")
-        functions.delete_entry(barcode, functions.Inventar)
-        global df  # Greife auf den globalen Dataframe zurück, damit die Tabelle auch nach Pagerefresh oder auf einem anderen Computer geändert ist
-        df = functions.get_main_table()
-        return (
-            df.to_dict("records"),
-            [
-                dict(  # ...und gebe eine Notifikation heraus
-                    title="Eintrag gelöscht!",
-                    id=str(uuid.uuid4()),
-                    action="show",
-                    icon=DashIconify(
-                        color="black",
-                        height=24,
-                        icon=icons.delete,
-                    ),
-                    bg="red.3",
-                    color="red.3",
-                )
-            ],
-            [],
-        )
+    def remove_row(
+        n_clicks_löschen,
+        n_clicks_abbrechen,
+        n_clicks_ja,
+        rows,
+    ):
+        if ctx.triggered_id == "button-löschen":
+            return no_update, no_update, no_update, True
+        elif ctx.triggered_id == "löschen_bestätigung_abbrechen":
+            return no_update, no_update, no_update, False
+        elif ctx.triggered_id == "löschen_bestätigung_ja":
+            barcode = rows[0].get("Barcode", "")
+            functions.delete_entry(barcode, functions.Inventar)
+            global df  # Greife auf den globalen Dataframe zurück, damit die Tabelle auch nach Pagerefresh oder auf einem anderen Computer geändert ist
+            df = functions.get_main_table()
+            return (
+                df.to_dict("records"),
+                [
+                    dict(  # ...und gebe eine Notifikation heraus
+                        title="Eintrag gelöscht!",
+                        id=str(uuid.uuid4()),
+                        action="show",
+                        icon=DashIconify(
+                            color="black",
+                            height=24,
+                            icon=icons.delete,
+                        ),
+                        bg="red.3",
+                        color="red.3",
+                    )
+                ],
+                [],
+                False,
+            )
 
     # Öffne bzw. schließe das Fenster, in dem ein neuer Eintrag hinzugefügt werden kann und setze alle Felder zurück
     @app.callback(

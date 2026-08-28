@@ -15,7 +15,7 @@ import components as comp
 
 # Konstanten
 DEFAULT_SETTINGS = json.loads(Path("default_settings.json").read_bytes())
-VERSION = "v0.3.9"
+VERSION = "v0.3.10"
 IS_DEBUG = True
 
 # Definiere den Server der Datenbank
@@ -1151,6 +1151,29 @@ modal_bestätigung_speichern = dmc.Stack(
     ]
 )
 
+modal_bestätigung_löschen = dmc.Stack(
+    [
+        dmc.Title("Eintrag löschen?", order=2),
+        dmc.Group(
+            [
+                dmc.Button("Ja", id="löschen_bestätigung_ja"),
+                dmc.Button(
+                    "Abbrechen",
+                    id="löschen_bestätigung_abbrechen",
+                    variant="outline",
+                    color="grey",
+                ),
+            ],
+            grow=True,
+            preventGrowOverflow=False,
+        ),
+        dmc.Tooltip(
+            target="#löschen_bestätigung_ja",
+            label=dmc.Kbd("Enter"),
+        ),
+    ]
+)
+
 app.layout = dmc.MantineProvider(
     [
         dcc.Store(id="stammdatenCache"),
@@ -1227,6 +1250,13 @@ app.layout = dmc.MantineProvider(
         dmc.Modal(
             modal_bestätigung_speichern,
             id="modal_bestätigung_speichern",
+            centered=True,
+            withCloseButton=False,
+            opened=False,
+        ),
+        dmc.Modal(
+            modal_bestätigung_löschen,
+            id="modal_bestätigung_löschen",
             centered=True,
             withCloseButton=False,
             opened=False,
