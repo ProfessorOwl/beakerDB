@@ -1634,7 +1634,7 @@ def get_callbacks(app):
                 or is_ctrlKey
                 and platform.system() == "Windows"
             ):
-                if key.lower() == "n":
+                if key.lower() == "e":
                     if (
                         tag_name != "INPUT"
                         and not is_neuer_eintrag_open

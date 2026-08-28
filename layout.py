@@ -15,8 +15,8 @@ import components as comp
 
 # Konstanten
 DEFAULT_SETTINGS = json.loads(Path("default_settings.json").read_bytes())
-VERSION = "v0.3.10"
-IS_DEBUG = True
+VERSION = "v0.3.11"
+IS_DEBUG = False
 
 # Definiere den Server der Datenbank
 app = Dash(__name__)
@@ -74,7 +74,7 @@ fensterLinks = html.Div(
                                 " + ",
                                 functions.system_key(),
                                 " + ",
-                                dmc.Kbd("N"),
+                                dmc.Kbd("E"),
                             ],
                         ),
                         dmc.Tooltip(
