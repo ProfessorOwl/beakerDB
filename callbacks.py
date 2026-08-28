@@ -122,7 +122,7 @@ def get_callbacks(app):
                 for x in [
                     "name",
                     "summenformel",
-                    "cas_nr",
+                    "cas",
                     "mengeneinheit_id",
                     "kaufdatum",
                     "lieferant_id",
@@ -293,7 +293,7 @@ def get_callbacks(app):
                 "reinheit",
                 "konzentration",
                 "lösungsmittel",
-                "cas_nr",
+                "cas",
                 "molmasse",
                 "summenformel",
                 "hersteller_id",
@@ -328,37 +328,51 @@ def get_callbacks(app):
 
         return (df.to_dict("records"), messages, füllmenge_hidden, füllmenge_data)
 
-    # Sobald der "Löschen"-Button gedrückt wird, soll die Zeile sowohl aus der sichtbaren Tabelle, wie auch der SQL-Datenbank gelöscht werden
+    # Kontrolliert die Logik des "Eintrag Löschen" Modals
     @app.callback(
         Output("mainGrid", "rowData", allow_duplicate=True),
         Output("notification-container", "sendNotifications", allow_duplicate=True),
         Output("mainGrid", "selectedRows", allow_duplicate=True),
+        Output("modal_bestätigung_löschen", "opened"),
         Input("button-löschen", "n_clicks"),
+        Input("löschen_bestätigung_abbrechen", "n_clicks"),
+        Input("löschen_bestätigung_ja", "n_clicks"),
         State("mainGrid", "selectedRows"),
     )
-    def removeRow(n_clicks, rows):
-        barcode = rows[0].get("Barcode", "")
-        functions.delete_entry(barcode, functions.Inventar)
-        global df  # Greife auf den globalen Dataframe zurück, damit die Tabelle auch nach Pagerefresh oder auf einem anderen Computer geändert ist
-        df = functions.get_main_table()
-        return (
-            df.to_dict("records"),
-            [
-                dict(  # ...und gebe eine Notifikation heraus
-                    title="Eintrag gelöscht!",
-                    id=str(uuid.uuid4()),
-                    action="show",
-                    icon=DashIconify(
-                        color="black",
-                        height=24,
-                        icon=icons.delete,
-                    ),
-                    bg="red.3",
-                    color="red.3",
-                )
-            ],
-            [],
-        )
+    def remove_row(
+        n_clicks_löschen,
+        n_clicks_abbrechen,
+        n_clicks_ja,
+        rows,
+    ):
+        if ctx.triggered_id == "button-löschen":
+            return no_update, no_update, no_update, True
+        elif ctx.triggered_id == "löschen_bestätigung_abbrechen":
+            return no_update, no_update, no_update, False
+        elif ctx.triggered_id == "löschen_bestätigung_ja":
+            barcode = rows[0].get("Barcode", "")
+            functions.delete_entry(barcode, functions.Inventar)
+            global df  # Greife auf den globalen Dataframe zurück, damit die Tabelle auch nach Pagerefresh oder auf einem anderen Computer geändert ist
+            df = functions.get_main_table()
+            return (
+                df.to_dict("records"),
+                [
+                    dict(  # ...und gebe eine Notifikation heraus
+                        title="Eintrag gelöscht!",
+                        id=str(uuid.uuid4()),
+                        action="show",
+                        icon=DashIconify(
+                            color="black",
+                            height=24,
+                            icon=icons.delete,
+                        ),
+                        bg="red.3",
+                        color="red.3",
+                    )
+                ],
+                [],
+                False,
+            )
 
     # Öffne bzw. schließe das Fenster, in dem ein neuer Eintrag hinzugefügt werden kann und setze alle Felder zurück
     @app.callback(
@@ -384,6 +398,7 @@ def get_callbacks(app):
         Output("modal-input-molmasse", "value"),
         Output("modal-input-lösungsmittel", "value"),
         Output("modal-input-geprüft", "value"),
+        Output("modal-input-barcode", "n_blur"),
         Input("button-open-modal", "n_clicks"),
         Input("modal-button-abbrechen", "n_clicks"),
         Input("modal-button-speichern", "n_clicks"),
@@ -406,6 +421,8 @@ def get_callbacks(app):
         isStammdatenOpen,
     ):
         einstellungen_cache = json.loads(einstellungen_cache)
+        patched_n_blur = no_update
+
         if (
             einstellungen_cache.get("datumsänderung") == "create"
             or einstellungen_cache.get("datumsänderung") == "createchange"
@@ -423,6 +440,8 @@ def get_callbacks(app):
             ):
                 raise PreventUpdate
             barcode = event.get("detail").get("scanCode")
+            patched_n_blur = Patch()
+            patched_n_blur += 1
 
             if functions.select_value(barcode, "barcode", functions.Inventar) == "":
                 return (
@@ -444,6 +463,7 @@ def get_callbacks(app):
                     "",
                     "",
                     input_geprüft,
+                    patched_n_blur,
                 )
             else:
                 raise PreventUpdate
@@ -467,6 +487,7 @@ def get_callbacks(app):
             "",
             "",
             input_geprüft,
+            patched_n_blur,
         )
 
     # Gebe einen Fehler zurück, wenn der Barcode bereits vergeben ist
@@ -611,7 +632,7 @@ def get_callbacks(app):
                 "reinheit",
                 "konzentration",
                 "lösungsmittel",
-                "cas_nr",
+                "cas",
                 "molmasse",
                 "summenformel",
                 "hersteller_id",
@@ -1158,7 +1179,7 @@ def get_callbacks(app):
         Input("scanListener", "id"),
         Input("modalNeuerEintrag", "opened"),
         Input("modalStammdaten", "opened"),
-        prevent_initial_call=False,
+        prevent_initial_call=False  # fmt: skip
     )
 
     # Search for the string that the scanListener returns after firing and select the first available entry
@@ -1234,7 +1255,7 @@ def get_callbacks(app):
                 if i != "None":
                     set_props(modalPrefix + field, {"value": i})
 
-        setField("cas_nr", "input-cas-nr")
+        setField("cas", "input-cas-nr")
         setField("name", "input-name")
         setField("summenformel", "input-summenformel")
         setField("raum_id", "input-raum")
@@ -1613,7 +1634,7 @@ def get_callbacks(app):
                 or is_ctrlKey
                 and platform.system() == "Windows"
             ):
-                if key.lower() == "n":
+                if key.lower() == "e":
                     if (
                         tag_name != "INPUT"
                         and not is_neuer_eintrag_open
