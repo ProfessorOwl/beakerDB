@@ -8,5 +8,6 @@ Chemikaliendatenbank.code-workspace
 Gestis Liste.xlsx
 Gestis-Liste.csv
 Testdaten/
-current.sqlite
+current*.sqlite
 assets/Logo.af*
+gestis*.xlsx

@@ -15,7 +15,7 @@ from callbacks import get_callbacks
 import functions
 import components as comp
 
-VERSION = "v0.3.12"
+VERSION = "v0.4.0"
 
 # Command Line Interface
 parser = argparse.ArgumentParser(
@@ -44,19 +44,16 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
-# Konstanten
+# Constants
 DEFAULT_SETTINGS = json.loads(Path("default_settings.json").read_bytes())
+LANG = "de"
 
 # Definiere den Server der Datenbank
 app = Dash(__name__)
 app.__init__(prevent_initial_callbacks=True)
 app.title = "beakerDB"
 
-# Überprüfe, ob überhaupt beim Serverstart überhaupt eine Datenbank vorhanden ist. Wenn nicht, dann benutzte die Vorlage "blank.sqlite" um eine leere Datenbank zu erstellen.
-src_path = Path("blank.sqlite")
-dest_path = Path("current.sqlite")
-if not Path.exists(dest_path):
-    shutil.copy(src_path, dest_path)
+functions.init_app(LANG)
 
 
 # Definiere das Layout
