@@ -46,6 +46,21 @@ def convertErrorToMessage(error: Exception):
     return text
 
 
+class Fmt:
+    """Some string identifiers to format printed text."""
+
+    BOLD_START = "\033[1m"
+    END = "\033[0m"
+    UNDERLINE = "\033[4m"
+    PURPLE = "\033[95m"
+    CYAN = "\033[96m"
+    DARKCYAN = "\033[36m"
+    BLUE = "\033[94m"
+    GREEN = "\033[92m"
+    YELLOW = "\033[93m"
+    RED = "\033[91m"
+
+
 # Sorgt dafür, dass Foreign Keys aktiviert sind, sodass verknüpfte Stammdaten nicht fälschlicherweise gelöscht werden können
 @event.listens_for(Engine, "connect")
 def set_sqlite_pragma(dbapi_connection, connection_record):
@@ -537,7 +552,6 @@ def import_gestis(path_to_xlsx: str | PathLike, lang: str):
         if value.strip() == "" or value == "." or value.lower() == "nan":
             df.at[i, "Summenformel"] = None
 
-    print(df)
     df.to_sql("gestisdaten", engine, if_exists="delete_rows")
 
 
@@ -577,19 +591,29 @@ def init_app(lang: str):
         "en": "https://www.dguv.de/medien/ifa/en/gestis/stoffdb/links/zvg-cast-list-e.xlsx",
     }
 
-    for k, v in gestis_links.items():
+    filename = "gestis_" + lang + ".xlsx"
+    try:
         content = requests.get(
-            v,
+            gestis_links[lang],
             verify=certifi.where(),
         ).content
+    except:
+        if Path.exists(Path(filename)):
+            print(
+                f"{Fmt.BOLD_START}{Fmt.YELLOW}Warning:{Fmt.END} Cannot connect to {gestis_links[lang]} to update the existing GESTIS database."
+            )
+            return
+        else:
+            raise ConnectionError(
+                f"Cannot connect to {gestis_links[lang]}. No existing GESTIS database found. Either download the missing database from {gestis_links[lang]} and rename it to {filename} or set up the server with a working internet connection."
+            )
+    try:
+        file = open(filename, "xb")
+    except FileExistsError:
+        file = open(filename, "wb")
 
-        try:
-            file = open("gestis_" + k + ".xlsx", "xb")
-        except FileExistsError:
-            file = open("gestis_" + k + ".xlsx", "wb")
-
-        file.write(content)
-        file.close()
+    file.write(content)
+    file.close()
 
     import_gestis("gestis_de.xlsx" if lang == "de" else "gestis_en.xlsx", lang)
     # --- END

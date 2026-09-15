@@ -15,7 +15,7 @@ from callbacks import get_callbacks
 import functions
 import components as comp
 
-VERSION = "v0.4.0"
+VERSION = "v0.4.1"
 
 # Command Line Interface
 parser = argparse.ArgumentParser(
