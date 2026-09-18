@@ -1,3 +1,4 @@
+altgraph==0.17.5
 annotated-types==0.8.0
 blinker==1.9.0
 cachelib==0.14.0
@@ -24,6 +25,7 @@ itsdangerous==2.2.0
 janus==2.0.0
 Jinja2==3.1.6
 jsbeautifier==2.0.3
+macholib==1.16.4
 MarkupSafe==3.0.3
 more-itertools==11.1.0
 narwhals==2.24.0
@@ -38,6 +40,7 @@ pycparser==3.0
 pydantic==2.13.4
 pydantic_core==2.46.4
 PyGithub==2.9.1
+pyinstaller-hooks-contrib==2026.7
 PyJWT==2.13.0
 PyNaCl==1.6.2
 pyserial==3.5
@@ -50,5 +53,6 @@ SQLAlchemy==2.0.51
 typing-inspection==0.4.2
 typing_extensions==4.16.0
 urllib3==2.7.0
+waitress==3.0.2
 Werkzeug==3.1.8
 zipp==4.1.0
