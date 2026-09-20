@@ -3,8 +3,6 @@ from typing import Type
 from sqlalchemy import (
     create_engine,
     ForeignKey,
-    String,
-    Float,
     Integer,
     select,
     Column,
