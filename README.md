@@ -42,11 +42,11 @@ Die Datenbank kommt in Form einer Pythonanwendung, die einen lokalen Webserver u
         ```
 4.  Der lokale Server kann nun gestartet werden mit 
     ```bash
-    python layout.py
+    python init.py
     ```
     Es können mehrere **Startoptionen** hinzugefügt werden, um z.B. die IP-Adresse oder den Port der Datenbank anzupassen. Für eine Übersicht einfach 
     ```bash
-    python layout.py -h
+    python init.py -h
     ```
      eingeben.
 5. Anschließend kann die App im Browser unter `http://localhost:8050` geöffnet werden.
