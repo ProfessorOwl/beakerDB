@@ -3,24 +3,28 @@ from typing import Type
 from sqlalchemy import (
     create_engine,
     ForeignKey,
-    String,
-    Float,
     Integer,
     select,
     Column,
     update,
     inspect,
     event,
+    Text,
+    REAL,
 )
 from sqlalchemy.orm import DeclarativeBase, Session
 from sqlalchemy.engine import Engine
 from pathlib import Path
+from os import PathLike
+
 import shutil
 import platform
 import datetime as dt
 import json
 import dash_mantine_components as dmc
 from github import Github
+import requests
+import certifi
 
 engine = create_engine("sqlite:///current.sqlite")
 
@@ -40,6 +44,21 @@ def convertErrorToMessage(error: Exception):
     return text
 
 
+class Fmt:
+    """Some string identifiers to format printed text."""
+
+    BOLD_START = "\033[1m"
+    END = "\033[0m"
+    UNDERLINE = "\033[4m"
+    PURPLE = "\033[95m"
+    CYAN = "\033[96m"
+    DARKCYAN = "\033[36m"
+    BLUE = "\033[94m"
+    GREEN = "\033[92m"
+    YELLOW = "\033[93m"
+    RED = "\033[91m"
+
+
 # Sorgt dafür, dass Foreign Keys aktiviert sind, sodass verknüpfte Stammdaten nicht fälschlicherweise gelöscht werden können
 @event.listens_for(Engine, "connect")
 def set_sqlite_pragma(dbapi_connection, connection_record):
@@ -56,10 +75,10 @@ class Base(DeclarativeBase):
 class Inventar(Base):
     __tablename__ = "inventar"
 
-    barcode = Column("Barcode", String(), primary_key=True)
-    cas = Column("CAS", String())
-    name = Column("Name", String())
-    summenformel = Column("Summenformel", String())
+    barcode = Column("Barcode", Text(), primary_key=True)
+    cas = Column("CAS", Text())
+    name = Column("Name", Text())
+    summenformel = Column("Summenformel", Text())
     raum_id = Column(
         "Raum_ID",
         ForeignKey("räume.Raum_ID"),
@@ -70,7 +89,7 @@ class Inventar(Base):
         ForeignKey("lieferanten.Lieferant_ID"),
         default=0,
     )
-    füllmenge = Column("Füllmenge", String())
+    füllmenge = Column("Füllmenge", Text())
     mengeneinheit_id = Column(
         "Mengeneinheit_ID",
         ForeignKey(
@@ -78,17 +97,17 @@ class Inventar(Base):
         ),
         default=1,
     )
-    kaufdatum = Column("Kaufdatum", String())
+    kaufdatum = Column("Kaufdatum", Text())
     hersteller_id = Column(
         "Hersteller_ID",
         ForeignKey("hersteller.Hersteller_ID"),
         default=0,
     )
-    reinheit = Column("Reinheit", String())
-    konzentration = Column("Konzentration", String())
-    lösungsmittel = Column("Lösungsmittel", String())
-    molmasse = Column("Molmasse", Float())
-    zuletzt_geprüft = Column("Zuletzt_geprüft", String())
+    reinheit = Column("Reinheit", Text())
+    konzentration = Column("Konzentration", Text())
+    lösungsmittel = Column("Lösungsmittel", Text())
+    molmasse = Column("Molmasse", REAL())
+    zuletzt_geprüft = Column("Zuletzt_geprüft", Text())
     archiviert = Column(
         "Archiviert",
         Integer(),
@@ -103,8 +122,8 @@ class Inventar(Base):
 class Gebäude(Base):
     __tablename__ = "gebäude"
 
-    gebäude_id = Column("Gebäude_ID", Integer, autoincrement=True, primary_key=True)
-    gebäude = Column("Gebäude", String())
+    gebäude_id = Column("Gebäude_ID", Integer, primary_key=True, nullable=True)
+    gebäude = Column("Gebäude", Text())
 
     def __repr__(self) -> str:
         return f"Gebäude(gebäude_id={self.gebäude_id!r}, gebäude={self.gebäude!r})"
@@ -114,10 +133,10 @@ class Gestisdaten(Base):
     __tablename__ = "gestisdaten"
 
     zvg = Column("ZVG", Integer(), nullable=False, primary_key=True)
-    cas = Column("CAS", String())
-    name = Column("Name", String())
-    summenformel = Column("Summenformel", String())
-    molmasse = Column("Molmasse", Float)
+    cas = Column("CAS", Text())
+    name = Column("Name", Text())
+    summenformel = Column("Summenformel", Text())
+    molmasse = Column("Molmasse", REAL())
 
     def __repr__(self) -> str:
         return f"Gestisdaten(zvg={self.zvg!r}, cas={self.cas!r}, name={self.name}, summenformel={self.summenformel}, molmasse={self.molmasse})"
@@ -126,10 +145,8 @@ class Gestisdaten(Base):
 class Hersteller(Base):
     __tablename__ = "hersteller"
 
-    hersteller_id = Column(
-        "Hersteller_ID", Integer, autoincrement=True, primary_key=True
-    )
-    hersteller = Column("Hersteller", String())
+    hersteller_id = Column("Hersteller_ID", Integer, primary_key=True, nullable=True)
+    hersteller = Column("Hersteller", Text())
 
     def __repr__(self) -> str:
         return f"Hersteller(hersteller_id={self.hersteller_id!r}, hersteller={self.hersteller!r})"
@@ -138,8 +155,8 @@ class Hersteller(Base):
 class Lieferanten(Base):
     __tablename__ = "lieferanten"
 
-    lieferant_id = Column("Lieferant_ID", Integer, autoincrement=True, primary_key=True)
-    lieferant = Column("Lieferant", String())
+    lieferant_id = Column("Lieferant_ID", Integer, primary_key=True, nullable=True)
+    lieferant = Column("Lieferant", Text())
 
     def __repr__(self) -> str:
         return f"Lieferanten(lieferant_id={self.lieferant_id!r}, lieferant={self.lieferant!r})"
@@ -148,9 +165,9 @@ class Lieferanten(Base):
 class Mengeneinheiten(Base):
     __tablename__ = "mengeneinheiten"
     mengeneinheit_id = Column(
-        "Mengeneinheit_ID", Integer, autoincrement=True, primary_key=True
+        "Mengeneinheit_ID", Integer, primary_key=True, nullable=True
     )
-    mengeneinheit = Column("Mengeneinheit", String())
+    mengeneinheit = Column("Mengeneinheit", Text())
 
     def __repr__(self) -> str:
         return f"Mengeneinheiten(mengeneinheit_id={self.mengeneinheit_id!r}, mengeneinheit={self.mengeneinheit!r})"
@@ -159,9 +176,9 @@ class Mengeneinheiten(Base):
 class Räume(Base):
     __tablename__ = "räume"
 
-    raum_id = Column("Raum_ID", Integer, autoincrement=True, primary_key=True)
+    raum_id = Column("Raum_ID", Integer, primary_key=True, nullable=True)
     gebäude_id = Column("Gebäude_ID", ForeignKey("gebäude.Gebäude_ID"))
-    raum = Column("Raum", String())
+    raum = Column("Raum", Text())
 
     def __repr__(self) -> str:
         return f"Räume(raum_id={self.raum_id!r}, gebäude_id={self.gebäude_id!r}, raum={self.raum})"
@@ -253,7 +270,7 @@ def archive_row(barcode: str, to_archive: bool):
     return
 
 
-def generateSelectData(table: Type[Base], columns: list[str]) -> list[dict]:
+def generateSelectData(table: type[Base], columns: list[str]) -> list[dict]:
     """Generiere eine Liste mit den Auswahlmöglichkeiten für die Dropdown-Selektoren"""
     columnClasses = [getattr(table, column) for column in columns]
     with Session(engine) as session:
@@ -364,15 +381,17 @@ def deleteStammdaten(selector: str, values: list[str]):
     return
 
 
-def insertStammdaten(selector: str, columns: list[str], values: list[str]):
+def insertStammdaten(selector: str | type[Base], columns: list[str], values: list[str]):
     if len(columns) == 0:
         raise ValueError("columns mustn't be empty")
     if len(values) == 0:
         raise ValueError("values mustn't be empty")
 
-    table = stammdatenTables[selector]
-    with Session(engine) as session:
+    if isinstance(selector, str):
         table = stammdatenTables[selector]()
+    else:
+        table = selector()
+    with Session(engine) as session:
         for i in range(len(columns)):
             setattr(table, columns[i].lower(), values[i])
         session.add(table)
@@ -487,26 +506,33 @@ def get_version_number() -> str | None:
     return latest
 
 
-def import_gestis(path_to_xlsx):
-    """Replaces all the enties in the table `gestisdaten` to implement new entries"""
+def import_gestis(path_to_xlsx: str | PathLike, lang: str):
+    """Replaces all the enties in the table ``gestisdaten`` with entries from the imported ``.xlsx``
+
+    Args:
+        path_to_xlsx (str | PathLike): Path to the ``.xlsx`` file that can be downloaded on the GESTIS website
+        lang (str): Either "de" for the german or "en" for the english table
+    """
     df = pd.read_excel(path_to_xlsx)
+
+    # Drop rows "related CAS No", "INDEX No", "EC No", "related EC No", "Linksyntax", "Hyperlink"
     df = df.drop(
         [
-            "verwandte\nCAS-Nr.",
-            "INDEX-Nr.",
-            "EG-Nr.",
-            "verwandte\nEG-Nr.",
-            "Linksyntax",
-            "Hyperlink",
+            df.columns[2],
+            df.columns[3],
+            df.columns[4],
+            df.columns[5],
+            df.columns[9],
+            df.columns[10],
         ],
         axis="columns",
     )
     df = df.rename(
         columns={
-            "ZVG-Nr.": "ZVG",
-            "CAS-Nr.": "CAS",
-            "Formel": "Summenformel",
-            "Molmasse\n[g/mol]": "Molmasse",
+            df.columns[0]: "ZVG",
+            df.columns[1]: "CAS",
+            df.columns[3]: "Summenformel",
+            df.columns[4]: "Molmasse",
         }
     )
     df = df.set_index("ZVG")
@@ -525,3 +551,71 @@ def import_gestis(path_to_xlsx):
             df.at[i, "Summenformel"] = None
 
     df.to_sql("gestisdaten", engine, if_exists="delete_rows")
+
+
+def init_app(lang: str):
+    """Create an empty database and import data from GESTIS
+
+    Args:
+        lang (str): Accepts either "de" or "en" for defining the language of the imported GESTIS-table
+    """
+
+    if not Path.exists(Path("current.sqlite")):
+        # Create an empty table
+        Base.metadata.create_all(engine)
+
+        # --- BEGIN Insert basic master data ---
+        insertStammdaten(Gebäude, ["Gebäude_ID", "Gebäude"], ["0", "Ohne"])
+        insertStammdaten(
+            Hersteller, ["Hersteller_ID", "Hersteller"], ["0", "Nichts ausgewählt"]
+        )
+        insertStammdaten(
+            Lieferanten, ["Lieferant_ID", "Lieferant"], ["0", "Nichts ausgewählt"]
+        )
+        insertStammdaten(
+            Räume, ["Raum_ID", "Gebäude_ID", "Raum"], ["0", "0", "Nichts ausgewählt"]
+        )
+        insertStammdaten(
+            Mengeneinheiten, ["Mengeneinheit_ID", "Mengeneinheit"], ["1", "g"]
+        )
+        insertStammdaten(
+            Mengeneinheiten, ["Mengeneinheit_ID", "Mengeneinheit"], ["2", "mL"]
+        )
+        # --- END ---
+
+    # --- BEGIN Retrieve GESTIS tables and add one of them to the master data according to lang ---
+    gestis_links = {
+        "de": "https://www.dguv.de/medien/ifa/de/gestis/stoffdb/links/zvg-cas-list-d.xlsx",
+        "en": "https://www.dguv.de/medien/ifa/en/gestis/stoffdb/links/zvg-cast-list-e.xlsx",
+    }
+
+    filename = "gestis_" + lang + ".xlsx"
+    try:
+        content = requests.get(
+            gestis_links[lang],
+            verify=certifi.where(),
+        ).content
+    except:
+        if Path.exists(Path(filename)):
+            print(
+                f"{Fmt.BOLD_START}{Fmt.YELLOW}Warning:{Fmt.END} Cannot connect to {gestis_links[lang]} to update the existing GESTIS database."
+            )
+            return
+        else:
+            raise ConnectionError(
+                f"Cannot connect to {gestis_links[lang]}. No existing GESTIS database found. Either download the missing database from {gestis_links[lang]} and rename it to {filename} or set up the server with a working internet connection."
+            )
+    try:
+        file = open(filename, "xb")
+    except FileExistsError:
+        file = open(filename, "wb")
+
+    file.write(content)
+    file.close()
+
+    import_gestis("gestis_de.xlsx" if lang == "de" else "gestis_en.xlsx", lang)
+    # --- END
+
+
+if __name__ == "__main__":
+    init_app("de")
