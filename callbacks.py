@@ -24,8 +24,8 @@ from pathlib import Path
 import shutil
 import dash_mantine_components as dmc
 import platform
+from default_values import DEFAULT_SETTINGS
 
-DEFAULT_SETTINGS = json.loads(Path("default_settings.json").read_bytes())
 TODAY = dt.date.today().isoformat()
 
 
@@ -1342,8 +1342,8 @@ def get_callbacks(app):
         State("einstellungenCache", "data"),
         prevent_initial_call=False,
     )
-    def init_settings(einstellungen_cache):
-        if einstellungen_cache == None:
+    def init_settings(settings_cache):
+        if settings_cache == None:
             return json.dumps(DEFAULT_SETTINGS)
         else:
             return no_update
@@ -1353,40 +1353,45 @@ def get_callbacks(app):
         Output("einstellungenCache", "data", allow_duplicate=True),
         Output("modalEinstellungen", "opened", allow_duplicate=True),
         Output("notification-container", "sendNotifications", allow_duplicate=True),
-        Input("einstellungenButtonSpeichern", "n_clicks"),
-        Input("einstellungenButtonZurücksetzen", "n_clicks"),
-        State("einstellungenCache", "data"),
-        State("einstellung_datumsänderung", "value"),
-        State("einstellung_backup_häufigkeit", "value"),
-        State("einstellung_backup_häufigkeit_minuten", "value"),
+        inputs=dict(
+            n_clicks_speichern=Input("einstellungenButtonSpeichern", "n_clicks"),
+            n_clicks_reset=Input("einstellungenButtonZurücksetzen", "n_clicks"),
+            settings_cache=State("einstellungenCache", "data"),
+            settings=dict(
+                datumsänderung=State("einstellung_datumsänderung", "value"),
+                backup_häufigkeit=State("einstellung_backup_häufigkeit", "value"),
+                backup_häufigkeit_minuten=State(
+                    "einstellung_backup_häufigkeit_minuten", "value"
+                ),
+            ),
+        ),
     )
     def saveSettings(
         n_clicks_speichern,
-        n_clicks_zurücksetzen,
-        cache,
-        datumsänderung,
-        backup_häufigkeit,
-        backup_häufigkeit_minuten,
+        n_clicks_reset,
+        settings_cache,
+        settings,
     ):
-        cache = json.loads(cache)
+        settings_cache = json.loads(settings_cache)
 
-        settings = {  # Jede Einstellung muss hier explizit aufgeführt werden
-            "datumsänderung": datumsänderung,
-            "backup_häufigkeit": backup_häufigkeit,
-            "backup_häufigkeit_minuten": backup_häufigkeit_minuten,
-        }
+        # Create settings dict by looking at the callback inputs
+        if isinstance(ctx.args_grouping, dict):
+            settings = {
+                i["id"].removeprefix("einstellung_"): i["value"]
+                for i in ctx.args_grouping["settings"].values()
+            }
 
         # Wenn auf "Zurücksetzen" gedrückt wird, gehe durch jede Änderung durch und setze jede Einstellung auf ihren vorigen Wert bzw. den Standardwert zurück
         if ctx.triggered_id == "einstellungenButtonZurücksetzen":
             for key in settings.keys():
                 set_props(
                     "einstellung_" + key,
-                    {"value": cache.get(key, DEFAULT_SETTINGS[key])},
+                    {"value": settings_cache.get(key, DEFAULT_SETTINGS[key])},
                 )
-            raise PreventUpdate
+            return no_update, no_update, no_update
 
         # Aktualisiere das Cache mit den vorgenommenen Einstellungen
-        cache.update(settings)
+        settings_cache.update(settings)
 
         messages = [
             dict(
@@ -1403,7 +1408,7 @@ def get_callbacks(app):
             )
         ]
 
-        return json.dumps(cache), False, messages
+        return json.dumps(settings_cache), False, messages
 
     # Setze ein Feld ein zur manuellen Eingabe von Zeiten, wie oft ein Backup durchgeführt werden soll, wenn die entsprechende Option ausgewählt wird
     @app.callback(
@@ -1472,9 +1477,9 @@ def get_callbacks(app):
         else:
             raise PreventUpdate
 
-        häufigkeit_ms = cache.get("backup_häufigkeit_minuten") * 60 * 1000
+        frequency_ms = cache.get("backup_häufigkeit_minuten") * 60 * 1000
         if cache.get("backup_häufigkeit") == "interval":
-            return False, häufigkeit_ms
+            return False, frequency_ms
         else:
             return True, no_update
 

@@ -501,6 +501,8 @@ def get_version_number() -> str | None:
         if g.get_rate_limit().rate.remaining > 0:
             repo = g.get_repo("ProfessorOwl/beakerDB")
             latest = repo.get_latest_release().name
+        else:
+            latest = None
     except:
         latest = None
     return latest
@@ -557,7 +559,7 @@ def init_app(lang: str):
     """Create an empty database and import data from GESTIS
 
     Args:
-        lang (str): Accepts either "de" or "en" for defining the language of the imported GESTIS-table
+        lang (str): Accepts either "de" or "en" for defining the language of the app and the imported GESTIS-table
     """
 
     if not Path.exists(Path("current.sqlite")):
@@ -615,7 +617,3 @@ def init_app(lang: str):
 
     import_gestis("gestis_de.xlsx" if lang == "de" else "gestis_en.xlsx", lang)
     # --- END
-
-
-if __name__ == "__main__":
-    init_app("de")

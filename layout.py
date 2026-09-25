@@ -9,6 +9,12 @@ import icons
 import functions
 import components as comp
 from default_values import VERSION, DEFAULT_SETTINGS
+from i18n_modern import I18nModern
+from cli import args
+
+i18n = I18nModern(args.language)
+i18n.load_from_file("locales/en.yaml", "en")
+i18n.load_from_file("locales/de.yaml", "de")
 
 # Definiere das Layout
 # Das linke untere, welches die Tabelle enthält
@@ -20,7 +26,7 @@ fensterLinks = html.Div(
                 dmc.Group(
                     [
                         dmc.Button(
-                            dmc.Text("Filter zurücksetzen", visibleFrom="xxl"),
+                            dmc.Text(i18n.get("reset_filter"), visibleFrom="xxl"),
                             id="button-filter-reset",
                             rightSection=DashIconify(
                                 icon=icons.filterOff,
@@ -29,22 +35,24 @@ fensterLinks = html.Div(
                             disabled=True,
                         ),
                         dmc.Tooltip(
-                            label="Filter zurücksetzen",
+                            id="button-filter-reset-tooltip",
+                            label=i18n.get("reset_filter"),
                             target="#button-filter-reset",
                             hiddenFrom="xxl",
                         ),
                         dmc.Button(
-                            dmc.Text("Stammdaten bearbeiten", visibleFrom="xl"),
+                            dmc.Text(i18n.get("edit_masterdata"), visibleFrom="xl"),
                             id="button-stammdaten",
                             rightSection=DashIconify(icon=icons.edit, height=20),
                         ),
                         dmc.Tooltip(
-                            label="Stammdaten bearbeiten",
+                            id="button-stammdaten-tooltip",
+                            label=i18n.get("edit_masterdata"),
                             target="#button-stammdaten",
                             hiddenFrom="xl",
                         ),
                         dmc.Button(
-                            dmc.Text("Neuer Eintrag", visibleFrom="lg"),
+                            dmc.Text(i18n.get("create_new_entry"), visibleFrom="lg"),
                             id="button-open-modal",
                             rightSection=DashIconify(icon=icons.add, height=24),
                             n_clicks=0,
@@ -60,8 +68,9 @@ fensterLinks = html.Div(
                             ],
                         ),
                         dmc.Tooltip(
+                            id="button-open-modal-tooltip",
                             target="#button-open-modal",
-                            label="Neuer Eintrag",
+                            label=i18n.get("create_new_entry"),
                             hiddenFrom="lg",
                         ),
                         dmc.Tooltip(
