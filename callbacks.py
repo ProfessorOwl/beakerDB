@@ -15,6 +15,7 @@ from dash.exceptions import PreventUpdate
 import json
 import pandas as pd
 import functions
+from layout import i18n
 
 import uuid
 import base64
@@ -24,9 +25,7 @@ from pathlib import Path
 import shutil
 import dash_mantine_components as dmc
 import platform
-from default_values import DEFAULT_SETTINGS
-
-TODAY = dt.date.today().isoformat()
+from default_values import DEFAULT_SETTINGS, TODAY
 
 
 def get_callbacks(app):
@@ -199,7 +198,7 @@ def get_callbacks(app):
 
         messages = [
             dict(  # ...und gebe eine Notifikation heraus
-                title="Gespeichert!",
+                title=i18n.get("saved"),
                 id=str(uuid.uuid4()),
                 action="show",
                 icon=DashIconify(
@@ -215,8 +214,8 @@ def get_callbacks(app):
             füllmenge = füllmenge.replace(",", ".")
             messages.append(
                 dict(  # ...und gebe eine Notifikation heraus
-                    title="Achtung!",
-                    message='"," in Füllmenge wurde durch "." ersetzt.',
+                    title=i18n.get("warning"),
+                    message=i18n.get("fill_amount_comma_replaced"),
                     id=str(uuid.uuid4()),
                     action="show",
                     icon=DashIconify(
@@ -232,8 +231,8 @@ def get_callbacks(app):
             molmasse = molmasse.replace(",", ".")
             messages.append(
                 dict(  # ...und gebe eine Notifikation heraus
-                    title="Achtung!",
-                    message='"," in molarer Masse wurde durch "." ersetzt.',
+                    title=i18n.get("warning"),
+                    message=i18n.get("molar_mass_comma_replaced"),
                     id=str(uuid.uuid4()),
                     action="show",
                     icon=DashIconify(
@@ -358,7 +357,7 @@ def get_callbacks(app):
                 df.to_dict("records"),
                 [
                     dict(  # ...und gebe eine Notifikation heraus
-                        title="Eintrag gelöscht!",
+                        title=i18n.get("entry_deleted"),
                         id=str(uuid.uuid4()),
                         action="show",
                         icon=DashIconify(
@@ -968,8 +967,8 @@ def get_callbacks(app):
             if len(columns) == 0:
                 messages.append(
                     dict(  # ...und gebe eine Notifikation heraus
-                        title="Zeilen dürfen keine leeren Einträge besitzen!",
-                        message=f"Die Zeile mit ID {id} wurde nicht gespeichert. Ändere den Inhalt der Zeile, sonst wird sie verworfen.",
+                        title=i18n.get("empty_row_title"),
+                        message=i18n.get("empty_row_message").format(id=id),
                         id=str(uuid.uuid4()),
                         action="show",
                         icon=DashIconify(
@@ -991,7 +990,7 @@ def get_callbacks(app):
                 except Exception as e:
                     messages.append(
                         dict(  # ...und gebe eine Notifikation heraus
-                            title=f"Fehler beim Aktualisieren des Eintrages mit ID {id}",
+                            title=i18n.get("error_updating_entry").format(id=id),
                             message=functions.convertErrorToMessage(e),
                             id=str(uuid.uuid4()),
                             action="show",
@@ -1013,7 +1012,7 @@ def get_callbacks(app):
                 except Exception as e:
                     messages.append(
                         dict(  # ...und gebe eine Notifikation heraus
-                            title=f"Fehler beim Löschen des Eintrages mit ID {id}",
+                            title=i18n.get("error_deleting_entry").format(id=id),
                             message=functions.convertErrorToMessage(e),
                             id=str(uuid.uuid4()),
                             action="show",
@@ -1035,7 +1034,7 @@ def get_callbacks(app):
                 except Exception as e:
                     messages.append(
                         dict(  # ...und gebe eine Notifikation heraus
-                            title=f"Fehler beim Einfügen des Eintrages mit ID {id}",
+                            title=i18n.get("error_inserting_entry").format(id=id),
                             message=functions.convertErrorToMessage(e),
                             id=str(uuid.uuid4()),
                             action="show",
@@ -1052,8 +1051,8 @@ def get_callbacks(app):
             else:
                 messages.append(
                     dict(  # ...und gebe eine Notifikation heraus
-                        title="Fehler",
-                        message=f'Die Operation "{op}" konnte für ID {id} nicht gefunden werden.',
+                        title=i18n.get("error"),
+                        message=i18n.get("operation_not_found").format(op=op, id=id),
                         id=str(uuid.uuid4()),
                         action="show",
                         icon=DashIconify(
@@ -1366,7 +1365,7 @@ def get_callbacks(app):
             ),
         ),
     )
-    def saveSettings(
+    def save_settings(
         n_clicks_speichern,
         n_clicks_reset,
         settings_cache,
@@ -1728,8 +1727,8 @@ def get_callbacks(app):
                 "gradient",
                 True,
                 grid_dark,
-                dmc.Text("Wiederherstellen", visibleFrom="xl"),
-                "Wiederherstellen",
+                dmc.Text(i18n.get("restore"), visibleFrom="xl"),
+                i18n.get("restore"),
                 DashIconify(
                     icon=icons.unarchive,
                 ),
@@ -1747,8 +1746,8 @@ def get_callbacks(app):
                 "filled",
                 False,
                 grid_light,
-                dmc.Text("Archivieren", visibleFrom="xl"),
-                "Archivieren",
+                dmc.Text(i18n.get("archive_button"), visibleFrom="xl"),
+                i18n.get("archive_button"),
                 DashIconify(
                     icon=icons.archive,
                 ),
@@ -1772,8 +1771,8 @@ def get_callbacks(app):
             df = functions.get_main_table(is_archived=True)
             message = [
                 dict(
-                    title="Wiederhergestellt",
-                    message=f"Der Eintrag {barcode} wurde wiederhergestellt.",
+                    title=i18n.get("restored"),
+                    message=i18n.get("entry_restored").format(barcode=barcode),
                     id=str(uuid.uuid4()),
                     action="show",
                     icon=DashIconify(
@@ -1791,8 +1790,8 @@ def get_callbacks(app):
             df = functions.get_main_table()
             message = [
                 dict(
-                    title="Archiviert",
-                    message=f"Der Eintrag {barcode} wurde archiviert.",
+                    title=i18n.get("archived"),
+                    message=i18n.get("entry_archived").format(barcode=barcode),
                     id=str(uuid.uuid4()),
                     action="show",
                     icon=DashIconify(
