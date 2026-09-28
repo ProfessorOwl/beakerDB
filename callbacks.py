@@ -18,15 +18,13 @@ import functions
 
 import uuid
 import base64
-import datetime as dt
-import icons
 from pathlib import Path
-import shutil
 import dash_mantine_components as dmc
 import platform
 
-DEFAULT_SETTINGS = json.loads(Path("default_settings.json").read_bytes())
-TODAY = dt.date.today().isoformat()
+import icons
+from layout import i18n
+from default_values import DEFAULT_SETTINGS, TODAY, LANG
 
 
 def get_callbacks(app):
@@ -199,7 +197,7 @@ def get_callbacks(app):
 
         messages = [
             dict(  # ...und gebe eine Notifikation heraus
-                title="Gespeichert!",
+                title=i18n.get("Saved!"),
                 id=str(uuid.uuid4()),
                 action="show",
                 icon=DashIconify(
@@ -215,8 +213,8 @@ def get_callbacks(app):
             füllmenge = füllmenge.replace(",", ".")
             messages.append(
                 dict(  # ...und gebe eine Notifikation heraus
-                    title="Achtung!",
-                    message='"," in Füllmenge wurde durch "." ersetzt.',
+                    title=i18n.get("Warning!"),
+                    message=i18n.get('"," in capacity was replaced with ".".'),
                     id=str(uuid.uuid4()),
                     action="show",
                     icon=DashIconify(
@@ -232,8 +230,8 @@ def get_callbacks(app):
             molmasse = molmasse.replace(",", ".")
             messages.append(
                 dict(  # ...und gebe eine Notifikation heraus
-                    title="Achtung!",
-                    message='"," in molarer Masse wurde durch "." ersetzt.',
+                    title=i18n.get("Warning!"),
+                    message=i18n.get('"," in molar mass was replaced with ".".'),
                     id=str(uuid.uuid4()),
                     action="show",
                     icon=DashIconify(
@@ -358,7 +356,7 @@ def get_callbacks(app):
                 df.to_dict("records"),
                 [
                     dict(  # ...und gebe eine Notifikation heraus
-                        title="Eintrag gelöscht!",
+                        title=i18n.get("Entry deleted!"),
                         id=str(uuid.uuid4()),
                         action="show",
                         icon=DashIconify(
@@ -968,8 +966,11 @@ def get_callbacks(app):
             if len(columns) == 0:
                 messages.append(
                     dict(  # ...und gebe eine Notifikation heraus
-                        title="Zeilen dürfen keine leeren Einträge besitzen!",
-                        message=f"Die Zeile mit ID {id} wurde nicht gespeichert. Ändere den Inhalt der Zeile, sonst wird sie verworfen.",
+                        title=i18n.get("Rows must not contain empty entries!"),
+                        message=i18n.get(
+                            "The row with ID ${id} was not saved. Edit the row content or it will be discarded.",
+                            values={"id": id},
+                        ),
                         id=str(uuid.uuid4()),
                         action="show",
                         icon=DashIconify(
@@ -991,7 +992,9 @@ def get_callbacks(app):
                 except Exception as e:
                     messages.append(
                         dict(  # ...und gebe eine Notifikation heraus
-                            title=f"Fehler beim Aktualisieren des Eintrages mit ID {id}",
+                            title=i18n.get(
+                                "Error updating entry with ID ${id}", values={"id": id}
+                            ),
                             message=functions.convertErrorToMessage(e),
                             id=str(uuid.uuid4()),
                             action="show",
@@ -1013,7 +1016,9 @@ def get_callbacks(app):
                 except Exception as e:
                     messages.append(
                         dict(  # ...und gebe eine Notifikation heraus
-                            title=f"Fehler beim Löschen des Eintrages mit ID {id}",
+                            title=i18n.get(
+                                "Error deleting entry with ID ${id}", values={"id": id}
+                            ),
                             message=functions.convertErrorToMessage(e),
                             id=str(uuid.uuid4()),
                             action="show",
@@ -1035,7 +1040,9 @@ def get_callbacks(app):
                 except Exception as e:
                     messages.append(
                         dict(  # ...und gebe eine Notifikation heraus
-                            title=f"Fehler beim Einfügen des Eintrages mit ID {id}",
+                            title=i18n.get(
+                                "Error inserting entry with ID ${id}", values={"id": id}
+                            ),
                             message=functions.convertErrorToMessage(e),
                             id=str(uuid.uuid4()),
                             action="show",
@@ -1052,8 +1059,11 @@ def get_callbacks(app):
             else:
                 messages.append(
                     dict(  # ...und gebe eine Notifikation heraus
-                        title="Fehler",
-                        message=f'Die Operation "{op}" konnte für ID {id} nicht gefunden werden.',
+                        title=i18n.get("Error"),
+                        message=i18n.get(
+                            'The operation "${op}" could not be found for ID ${id}.',
+                            values={"op": op, "id": id},
+                        ),
                         id=str(uuid.uuid4()),
                         action="show",
                         icon=DashIconify(
@@ -1342,8 +1352,8 @@ def get_callbacks(app):
         State("einstellungenCache", "data"),
         prevent_initial_call=False,
     )
-    def init_settings(einstellungen_cache):
-        if einstellungen_cache == None:
+    def init_settings(settings_cache):
+        if settings_cache == None:
             return json.dumps(DEFAULT_SETTINGS)
         else:
             return no_update
@@ -1353,40 +1363,45 @@ def get_callbacks(app):
         Output("einstellungenCache", "data", allow_duplicate=True),
         Output("modalEinstellungen", "opened", allow_duplicate=True),
         Output("notification-container", "sendNotifications", allow_duplicate=True),
-        Input("einstellungenButtonSpeichern", "n_clicks"),
-        Input("einstellungenButtonZurücksetzen", "n_clicks"),
-        State("einstellungenCache", "data"),
-        State("einstellung_datumsänderung", "value"),
-        State("einstellung_backup_häufigkeit", "value"),
-        State("einstellung_backup_häufigkeit_minuten", "value"),
+        inputs=dict(
+            n_clicks_speichern=Input("einstellungenButtonSpeichern", "n_clicks"),
+            n_clicks_reset=Input("einstellungenButtonZurücksetzen", "n_clicks"),
+            settings_cache=State("einstellungenCache", "data"),
+            settings=dict(
+                datumsänderung=State("einstellung_datumsänderung", "value"),
+                backup_häufigkeit=State("einstellung_backup_häufigkeit", "value"),
+                backup_häufigkeit_minuten=State(
+                    "einstellung_backup_häufigkeit_minuten", "value"
+                ),
+            ),
+        ),
     )
-    def saveSettings(
+    def save_settings(
         n_clicks_speichern,
-        n_clicks_zurücksetzen,
-        cache,
-        datumsänderung,
-        backup_häufigkeit,
-        backup_häufigkeit_minuten,
+        n_clicks_reset,
+        settings_cache,
+        settings,
     ):
-        cache = json.loads(cache)
+        settings_cache = json.loads(settings_cache)
 
-        settings = {  # Jede Einstellung muss hier explizit aufgeführt werden
-            "datumsänderung": datumsänderung,
-            "backup_häufigkeit": backup_häufigkeit,
-            "backup_häufigkeit_minuten": backup_häufigkeit_minuten,
-        }
+        # Create settings dict by looking at the callback inputs
+        if isinstance(ctx.args_grouping, dict):
+            settings = {
+                i["id"].removeprefix("einstellung_"): i["value"]
+                for i in ctx.args_grouping["settings"].values()
+            }
 
         # Wenn auf "Zurücksetzen" gedrückt wird, gehe durch jede Änderung durch und setze jede Einstellung auf ihren vorigen Wert bzw. den Standardwert zurück
         if ctx.triggered_id == "einstellungenButtonZurücksetzen":
             for key in settings.keys():
                 set_props(
                     "einstellung_" + key,
-                    {"value": cache.get(key, DEFAULT_SETTINGS[key])},
+                    {"value": settings_cache.get(key, DEFAULT_SETTINGS[key])},
                 )
-            raise PreventUpdate
+            return no_update, no_update, no_update
 
         # Aktualisiere das Cache mit den vorgenommenen Einstellungen
-        cache.update(settings)
+        settings_cache.update(settings)
 
         messages = [
             dict(
@@ -1403,7 +1418,7 @@ def get_callbacks(app):
             )
         ]
 
-        return json.dumps(cache), False, messages
+        return json.dumps(settings_cache), False, messages
 
     # Setze ein Feld ein zur manuellen Eingabe von Zeiten, wie oft ein Backup durchgeführt werden soll, wenn die entsprechende Option ausgewählt wird
     @app.callback(
@@ -1472,13 +1487,13 @@ def get_callbacks(app):
         else:
             raise PreventUpdate
 
-        häufigkeit_ms = cache.get("backup_häufigkeit_minuten") * 60 * 1000
+        frequency_ms = cache.get("backup_häufigkeit_minuten") * 60 * 1000
         if cache.get("backup_häufigkeit") == "interval":
-            return False, häufigkeit_ms
+            return False, frequency_ms
         else:
             return True, no_update
 
-    # Kontrolliert die Buttons im Einstellungsmenü für das Importieren, Exportieren und erstellen einer Datenbank
+    # Controls the buttons in the settings for importing, exporting and creating a database
     @app.callback(
         Output("einstellung_datenbank_exportieren_download", "data"),
         Output("modalBestätigungImport", "opened"),
@@ -1489,59 +1504,70 @@ def get_callbacks(app):
         Input("einstellung_datenbank_importieren_daten", "contents"),
     )
     def database_tools(export_n_clicks, neu_n_clicks, import_data):
-        dest_path = Path(f"current.sqlite")
-        if ctx.triggered_id == "einstellung_datenbank_exportieren":
-            src_path = Path("current.sqlite")
+        db = Path(f"current.sqlite")
 
+        if ctx.triggered_id == "einstellung_datenbank_exportieren":
+            # Returns the currently opened database to the download component
             return (
-                dcc.send_file(src_path),
+                dcc.send_file(db),
                 no_update,
                 no_update,
                 no_update,
-            )  # Gibt die momentan geöffnete Datenbank an die Download-Komponente weiter
+            )
 
         if ctx.triggered_id == "einstellung_datenbank_importieren_daten":
+            # Cut of the type description when importing the table.
             type, content = import_data.split(",")
-            content_decoded = base64.b64decode(
-                content
-            )  # Der von der Upload-Komponente bereitgestellte Inhalt ist immer Base64-verschlüsselt, daher muss er erst entschlküsselt werden.
 
-            try:  # Falls keine Datenbank vorhanden ist, so wird eine leere current.sqlite-Datei erstellt.
-                Path.touch(dest_path, exist_ok=False)
-            except:  # Ansonsten wird ein Modal geöffnet, um die geöffnete Datenbank noch zu archivieren oder zu überschreiben.
-                return no_update, True, json.dumps(content), None
+            # If a database is currently loaded, open a modal to let the use confirm the import and put the current database into the cache
+            if db.exists():
+                return (
+                    no_update,
+                    True,
+                    json.dumps(
+                        {
+                            "mode": "import",
+                            "content": content,
+                        }
+                    ),
+                    None,
+                )
+            # Otherwise create a new one and write the imported file directly to it
+            else:
+                Path.touch(db, exist_ok=False)
 
-            dest_path.write_bytes(
-                content_decoded
+            # The content is encoded in base64, so it needs to be decoded
+            db.write_bytes(
+                base64.b64decode(content)
             )  # Schreibe den hochgeladenen Inhalt in die Datei
 
+            # The last "None" is important for resetting the upload component
             return (
                 no_update,
                 no_update,
                 no_update,
                 None,
-            )  # Das letzte "None" ist wichtig, da ansonsten die Upload-Komponente nicht mehr richtig funktioniert.
+            )
 
         if ctx.triggered_id == "einstellung_datenbank_neu":
-            src_path = Path("blank.sqlite")  # Der Pfad zu einer leeren Datenbank
-            blank = src_path.open(mode="rb")  # Öffne sie im Binärmodus
-
-            if Path.exists(
-                dest_path
-            ):  # Falls bereits eine Datenbank existiert, so öffne auch hier den Dialog, um zu bestimmen, was mit der geöffneten Datenbank passieren soll.
+            if Path.exists(db):
                 return (
                     no_update,
                     True,
                     json.dumps(
-                        base64.b64encode(blank.read()).decode()
-                    ),  # Das Cache kann nur JSON-Dateien entgegennehmen. Daher muss der Dateiinhalt in Base64 verschlüsselt werde und in einen String dekodiert werden.
+                        {
+                            "mode": "new",
+                            "content": None,
+                        }
+                    ),
                     None,
                 )
             else:
-                shutil.copy(src_path, dest_path)
+                functions.init_app(LANG)
+
             return no_update, no_update, no_update, None
 
-    # Kontrolliert die Buttons des Modals, was beim Import oder Erstellen einer Datenbank die vorhandene Datenbank backupen lässt
+    # Controls the buttons of the modal, which backups the database when importing an existing or creating a new one
     @app.callback(
         Output("modalBestätigungImport", "opened", allow_duplicate=True),
         Output("current_db_cache", "data", allow_duplicate=True),
@@ -1554,26 +1580,41 @@ def get_callbacks(app):
     def backup_db_on_import(
         ja_n_clicks, nein_n_clicks, abbrechen_n_clicks, import_data
     ):
-        content_encoded = json.loads(import_data)
-        content = base64.b64decode(content_encoded)
+        import_data = json.loads(import_data)
+        mode = import_data.get("mode")
+
+        content_encoded = import_data.get("content")
+        if mode == "import":
+            content = base64.b64decode(content_encoded)
+        else:
+            content = None
+
+        db = Path(f"current.sqlite")
 
         if ctx.triggered_id == "einstellung_datenbank_modal_ja":
             functions.backup_db()
-            new_db = Path(f"current.sqlite")
-            new_db.write_bytes(content)
+            db.unlink()
+            functions.init_app(LANG)
+
+            if mode == "import" and content != None:
+                db.write_bytes(content)
 
         elif ctx.triggered_id == "einstellung_datenbank_modal_nein":
-            new_db = Path(f"current.sqlite")
-            new_db.write_bytes(content)
+            db.unlink()
+            functions.init_app(LANG)
+
+            if mode == "import" and content != None:
+                db.write_bytes(content)
 
         elif ctx.triggered_id == "einstellung_datenbank_modal_abbrechen":
             pass
 
+        # Delete the saved cache to not use unnecessary space. Also renew the table, so that the new content is shown instantly.
         return (
             False,
             json.dumps(""),
             functions.get_main_table().to_dict("records"),
-        )  # Lösche den gespeicherten Cache, um keinen unnötigen Platz zu verbrauchen. Erneuere außerdem die Tabelle, damit direkt der Inhalt der neuen Datenbank angezeigt wird.
+        )
 
     # Öffnet das Modal zu den Füllmengen
     @app.callback(
@@ -1723,8 +1764,8 @@ def get_callbacks(app):
                 "gradient",
                 True,
                 grid_dark,
-                dmc.Text("Wiederherstellen", visibleFrom="xl"),
-                "Wiederherstellen",
+                dmc.Text(i18n.get("Restore"), visibleFrom="xl"),
+                i18n.get("Restore"),
                 DashIconify(
                     icon=icons.unarchive,
                 ),
@@ -1742,8 +1783,8 @@ def get_callbacks(app):
                 "filled",
                 False,
                 grid_light,
-                dmc.Text("Archivieren", visibleFrom="xl"),
-                "Archivieren",
+                dmc.Text(i18n.get("Archive"), visibleFrom="xl"),
+                i18n.get("Archive"),
                 DashIconify(
                     icon=icons.archive,
                 ),
@@ -1767,8 +1808,11 @@ def get_callbacks(app):
             df = functions.get_main_table(is_archived=True)
             message = [
                 dict(
-                    title="Wiederhergestellt",
-                    message=f"Der Eintrag {barcode} wurde wiederhergestellt.",
+                    title=i18n.get("Restored"),
+                    message=i18n.get(
+                        "The entry ${barcode} was restored.",
+                        values={"barcode": barcode},
+                    ),
                     id=str(uuid.uuid4()),
                     action="show",
                     icon=DashIconify(
@@ -1786,8 +1830,11 @@ def get_callbacks(app):
             df = functions.get_main_table()
             message = [
                 dict(
-                    title="Archiviert",
-                    message=f"Der Eintrag {barcode} wurde archiviert.",
+                    title=i18n.get("Archived"),
+                    message=i18n.get(
+                        "The entry ${barcode} was archived.",
+                        values={"barcode": barcode},
+                    ),
                     id=str(uuid.uuid4()),
                     action="show",
                     icon=DashIconify(

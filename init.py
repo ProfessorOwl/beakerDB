@@ -1,48 +1,21 @@
 from dash import Dash
 
-import json
-from pathlib import Path
 import waitress
-import argparse
 
-from callbacks import get_callbacks
 import functions
+from cli import args
+
+functions.init_app(args.language)
+
+# Construct the server of the database. Cannot import from layout before the app is not safely initialized
 from layout import MantineProvider
-from default_values import VERSION, LANG
 
-# Command Line Interface
-parser = argparse.ArgumentParser(
-    "beakerDB", "Startet eine Chemikaliendatenbank als lokalen Server"
-)
-parser.add_argument(
-    "-v",
-    "--version",
-    action="version",
-    version=VERSION,
-    help="Zeige die Versionsnummer von beakerDB",
-)
-parser.add_argument(
-    "-d", "--debug", action="store_true", help="Starte den Server im Debug-Modus."
-)
-parser.add_argument(
-    "--host",
-    default="127.0.0.1",
-    help="Definiere die IP-Adresse, auf der der Server gehostet wird. (Standard: %(default)s)",
-)
-parser.add_argument(
-    "-p",
-    "--port",
-    default=8050,
-    help="Definiere den Port des Servers. (Standard %(default)i)",
-)
-args = parser.parse_args()
-
-# Definiere den Server der Datenbank
 app = Dash(__name__)
 app.__init__(prevent_initial_callbacks=True)
 app.title = "beakerDB"
 app.layout = MantineProvider
-functions.init_app(LANG)
+
+from callbacks import get_callbacks
 
 if __name__ == "__main__":
 

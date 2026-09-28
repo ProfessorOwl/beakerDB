@@ -9,6 +9,12 @@ import icons
 import functions
 import components as comp
 from default_values import VERSION, DEFAULT_SETTINGS
+from i18n_modern import I18nModern
+from cli import args
+
+i18n = I18nModern(args.language)
+i18n.load_from_file("locales/en.yaml", "en")
+i18n.load_from_file("locales/de.yaml", "de")
 
 # Definiere das Layout
 # Das linke untere, welches die Tabelle enthält
@@ -20,7 +26,7 @@ fensterLinks = html.Div(
                 dmc.Group(
                     [
                         dmc.Button(
-                            dmc.Text("Filter zurücksetzen", visibleFrom="xxl"),
+                            dmc.Text(i18n.get("Reset Filter"), visibleFrom="xxl"),
                             id="button-filter-reset",
                             rightSection=DashIconify(
                                 icon=icons.filterOff,
@@ -29,22 +35,24 @@ fensterLinks = html.Div(
                             disabled=True,
                         ),
                         dmc.Tooltip(
-                            label="Filter zurücksetzen",
+                            id="button-filter-reset-tooltip",
+                            label=i18n.get("Reset Filter"),
                             target="#button-filter-reset",
                             hiddenFrom="xxl",
                         ),
                         dmc.Button(
-                            dmc.Text("Stammdaten bearbeiten", visibleFrom="xl"),
+                            dmc.Text(i18n.get("Edit Master Data"), visibleFrom="xl"),
                             id="button-stammdaten",
                             rightSection=DashIconify(icon=icons.edit, height=20),
                         ),
                         dmc.Tooltip(
-                            label="Stammdaten bearbeiten",
+                            id="button-stammdaten-tooltip",
+                            label=i18n.get("Edit Master Data"),
                             target="#button-stammdaten",
                             hiddenFrom="xl",
                         ),
                         dmc.Button(
-                            dmc.Text("Neuer Eintrag", visibleFrom="lg"),
+                            dmc.Text(i18n.get("New Entry"), visibleFrom="lg"),
                             id="button-open-modal",
                             rightSection=DashIconify(icon=icons.add, height=24),
                             n_clicks=0,
@@ -60,8 +68,9 @@ fensterLinks = html.Div(
                             ],
                         ),
                         dmc.Tooltip(
+                            id="button-open-modal-tooltip",
                             target="#button-open-modal",
-                            label="Neuer Eintrag",
+                            label=i18n.get("New Entry"),
                             hiddenFrom="lg",
                         ),
                         dmc.Tooltip(
@@ -75,7 +84,7 @@ fensterLinks = html.Div(
                                 id="button_archive",
                                 gradient={"from": "indigo", "to": "teal"},
                             ),
-                            label="Archiv",
+                            label=i18n.get("Archive"),
                         ),
                         dmc.Tooltip(
                             dmc.ActionIcon(
@@ -87,7 +96,7 @@ fensterLinks = html.Div(
                                 w=36,
                                 id="button-einstellungen",
                             ),
-                            label="Einstellungen",
+                            label=i18n.get("Settings"),
                         ),
                     ],
                     id="button_wrapper",
@@ -102,26 +111,37 @@ fensterLinks = html.Div(
             id="mainGrid",
             getRowId="params.data.Barcode",
             columnDefs=[
-                {"field": "Barcode", "sortable": True, "sort": "asc"},
-                {"field": "Name", "sortable": True},
+                {
+                    "field": "Barcode",
+                    "sortable": True,
+                    "sort": "asc",
+                    "headerName": i18n.get("Barcode"),
+                },
+                {
+                    "field": "Name",
+                    "sortable": True,
+                    "headerName": i18n.get("Name"),
+                },
                 {
                     "field": "Summenformel",
                     "cellRenderer": "SummenformelRenderer",
                     "sortable": True,
+                    "headerName": i18n.get("Molecular formular"),
                 },
                 {
                     "field": "Zuletzt_geprüft",
-                    "headerName": "Prüfdatum",
+                    "headerName": i18n.get("Last checked"),
                     "sortable": True,
                     "filter": "agTextColumnFilter",
                 },
                 {
                     "field": "Raum",
                     "sortable": True,
+                    "headerName": i18n.get("Room"),
                 },
                 {
                     "field": "CAS",
-                    "headerName": "CAS-Nr",
+                    "headerName": i18n.get("CAS no."),
                     "sortable": True,
                 },
             ],
@@ -147,36 +167,15 @@ fensterLinks = html.Div(
                     "checkboxes": False,
                 },
                 "overlayComponentParams": {
-                    "loading": {"overlayText": "Lädt..."},
-                    "noRows": {"overlayText": "Keine Einträge vorhanden"},
+                    "loading": {"overlayText": i18n.get("Loading...")},
+                    "noRows": {"overlayText": i18n.get("No entries available")},
                     "noMatchingRows": {
-                        "overlayText": "Keine passenden Einträge gefunden"
+                        "overlayText": i18n.get("No matching entries found")
                     },
                 },
                 "icons": {  # Vertausche die Richtung der Pfeile für das Sortieren, damit der Pfeil runterzeigt, wenn von A->Z sortiert wird
                     "sortAscending": "\u2193",  # ↓
                     "sortDescending": "\u2191",  # ↑
-                },
-                "localeText": {
-                    "filterOoo": "Filter...",
-                    "applyFilter": "Filter anwenden",
-                    "resetFilter": "Filter zurücksetzen",
-                    "clearFilter": "Filter löschen",
-                    "contains": "enthält",
-                    "notContains": "enthält nicht",
-                    "startsWith": "beginnt mit",
-                    "endsWith": "endet mit",
-                    "equals": "gleich",
-                    "notEqual": "ungleich",
-                    "blank": "leer",
-                    "notBlank": "nicht leer",
-                    "inRange": "im Bereich",
-                    "lessThan": "kleiner als",
-                    "greaterThan": "größer als",
-                    "lessThanOrEqual": "kleiner oder gleich",
-                    "greaterThanOrEqual": "größer oder gleich",
-                    "andCondition": "UND",
-                    "orCondition": "ODER",
                 },
             },
         ),
@@ -188,16 +187,16 @@ stoffeigenschaften = (
     dmc.Fieldset(
         dmc.SimpleGrid(
             [
-                dmc.TextInput(id="input-cas-nr", label="CAS-Nr"),
+                dmc.TextInput(id="input-cas-nr", label=i18n.get("CAS no.")),
                 dmc.Group(
                     [
                         comp.NumberInput(  # Molmasse
                             "input-molmasse",
-                            "Molare Masse",
+                            i18n.get("Molar mass"),
                         ),
                         dmc.TextInput(
                             id="input-summenformel",
-                            label="Summenformel",
+                            label=i18n.get("Molecular formular"),
                         ),
                     ],
                     grow=True,
@@ -206,12 +205,12 @@ stoffeigenschaften = (
                     [
                         dmc.TextInput(
                             id="input-zvg",
-                            label="ZVG-Nr",
+                            label=i18n.get("ZVG no."),
                             disabled=True,
                         ),
                         dmc.Anchor(
                             dmc.Button(
-                                "In GESTIS öffnen",
+                                i18n.get("Open in GESTIS"),
                                 leftSection=DashIconify(
                                     icon=icons.externalLink,
                                 ),
@@ -231,7 +230,7 @@ stoffeigenschaften = (
             ],
             cols=1,
         ),
-        legend="Stoffeigenschaften",
+        legend=i18n.get("Chemical properties"),
     ),
 )
 # Das rechte untere Hauptfenster mit den Informationen zu dem entsprechenden Stoff
@@ -261,7 +260,7 @@ fensterRechts = [
                                             variant="light",
                                             size="xl",
                                         ),
-                                        label="Datenbank durchsuchen",
+                                        label=i18n.get("Search database"),
                                     ),
                                 ),
                                 dmc.PopoverDropdown(
@@ -290,7 +289,7 @@ fensterRechts = [
                                                         id="input-selectFromDatabaseConfirm",
                                                         size="lg",
                                                     ),
-                                                    label="Eintrag übernehmen",
+                                                    label=i18n.get("Inherit entry"),
                                                 ),
                                                 span="content",
                                             ),
@@ -312,14 +311,16 @@ fensterRechts = [
                     dmc.Fieldset(
                         dmc.SimpleGrid(
                             [
-                                dmc.TextInput(  # Barcode
-                                    id="input-barcode", label="Barcode", disabled=True
+                                dmc.TextInput(
+                                    id="input-barcode",
+                                    label=i18n.get("Barcode"),
+                                    disabled=True,
                                 ),
                                 dmc.Group(
                                     [
                                         comp.NumberInput(  # Füllmenge
                                             "input-füllmenge",
-                                            "Füllmenge",
+                                            i18n.get("Amount"),
                                             w="100%",
                                             rightSection=dmc.Select(
                                                 id="input-mengeneinheit",
@@ -371,13 +372,13 @@ fensterRechts = [
                                 ),
                                 comp.DateInput(
                                     "input-kaufdatum",
-                                    "Kaufdatum",
+                                    i18n.get("Purchase date"),
                                     "input-kaufdatum-heute",
                                 ),  # Kaufdatum
                                 dmc.Select(  # Hersteller
                                     id="input-hersteller",
                                     value="0",
-                                    label="Hersteller",
+                                    label=i18n.get("Manufacturer"),
                                     searchable=True,
                                     allowDeselect=False,
                                     data=functions.generateSelectData(
@@ -388,7 +389,7 @@ fensterRechts = [
                                 dmc.Select(  # Lieferant
                                     id="input-lieferant",
                                     value="0",
-                                    label="Lieferant",
+                                    label=i18n.get("Supplier"),
                                     searchable=True,
                                     allowDeselect=False,
                                     data=functions.generateSelectData(
@@ -399,44 +400,50 @@ fensterRechts = [
                                 dmc.Select(  # Raum
                                     id="input-raum",
                                     value="0",
-                                    label="Raum",
+                                    label=i18n.get("Room"),
                                     searchable=True,
                                     allowDeselect=False,
                                     data=functions.generateSelectData_Räume(),
                                 ),
                                 dmc.TextInput(  # Reinheit
-                                    id="input-reinheit", label="Reinheit"
+                                    id="input-reinheit",
+                                    label=i18n.get("Purity"),
                                 ),
                                 dmc.TextInput(  # Konzentration
-                                    id="input-konzentration", label="Konzentration"
+                                    id="input-konzentration",
+                                    label=i18n.get("Concentration"),
                                 ),
                                 dmc.TextInput(  # Lösungsmittel
-                                    id="input-lösungsmittel", label="Lösungsmittel"
+                                    id="input-lösungsmittel",
+                                    label=i18n.get("Solvent"),
                                 ),
                                 comp.DateInput(  # Zuletzt geprüft
                                     "input-geprüft",
-                                    "Zuletzt geprüft",
+                                    i18n.get("Last checked"),
                                     "input-geprüft-heute",
                                 ),
                             ],
                             cols=2,
                         ),
-                        legend="Inventar",
+                        legend=i18n.get("inventory"),
                     ),
                     dmc.Space(h={"base": 0, "lg": 10, "xl": 21}),
                     dmc.Fieldset(
                         dmc.SimpleGrid(
                             [
-                                dmc.TextInput(id="input-cas-nr", label="CAS-Nr"),
+                                dmc.TextInput(
+                                    id="input-cas-nr",
+                                    label=i18n.get("CAS no."),
+                                ),
                                 dmc.Group(
                                     [
                                         comp.NumberInput(  # Molmasse
                                             "input-molmasse",
-                                            "Molare Masse",
+                                            i18n.get("Molar mass"),
                                         ),
                                         dmc.TextInput(
                                             id="input-summenformel",
-                                            label="Summenformel",
+                                            label=i18n.get("Molecular formular"),
                                         ),
                                     ],
                                     grow=True,
@@ -445,13 +452,14 @@ fensterRechts = [
                                     [
                                         dmc.TextInput(
                                             id="input-zvg",
-                                            label="ZVG-Nr",
+                                            label=i18n.get("ZVG no."),
                                             disabled=True,
                                         ),
                                         dmc.Anchor(
                                             dmc.Button(
                                                 dmc.Text(
-                                                    "In GESTIS öffnen", visibleFrom="xl"
+                                                    i18n.get("Open in GESTIS"),
+                                                    visibleFrom="xl",
                                                 ),
                                                 leftSection=DashIconify(
                                                     icon=icons.externalLink, height=20
@@ -470,14 +478,14 @@ fensterRechts = [
                                     align="end",
                                 ),
                                 dmc.Tooltip(
-                                    label="In GESTIS öffnen",
+                                    label=i18n.get("Open in GESTIS"),
                                     target="#button_to_gestis",
                                     hiddenFrom="xl",
                                 ),
                             ],
                             cols=1,
                         ),
-                        legend="Stoffeigenschaften",
+                        legend=i18n.get("Chemical properties"),
                     ),
                 ],
                 mah="calc(100vh - 150px)",
@@ -487,7 +495,7 @@ fensterRechts = [
                     dmc.ButtonGroup(
                         [
                             dmc.Button(
-                                dmc.Text("Speichern", visibleFrom="md"),
+                                dmc.Text(i18n.get("Save"), visibleFrom="md"),
                                 id="button-speichern",
                                 color="green",
                                 rightSection=DashIconify(icon=icons.save),
@@ -496,7 +504,7 @@ fensterRechts = [
                                 flex=1,
                             ),
                             dmc.Tooltip(
-                                label="Speichern",
+                                label=i18n.get("Save"),
                                 target="#button-speichern",
                                 hiddenFrom="md",
                             ),
@@ -506,7 +514,7 @@ fensterRechts = [
                             ),
                             dmc.Button(
                                 dmc.Text(
-                                    "Archivieren",
+                                    i18n.get("Put in Archive"),
                                     visibleFrom="xl",
                                 ),
                                 id="button_to_archive",
@@ -516,7 +524,7 @@ fensterRechts = [
                                 flex=1,
                             ),
                             dmc.Tooltip(
-                                label="Archivieren",
+                                label=i18n.get("Put in Archive"),
                                 target="#button_to_archive",
                                 hiddenFrom="xl",
                                 id="button_to_archive_tooltip",
@@ -532,7 +540,7 @@ fensterRechts = [
                             h=50,
                             w=50,
                         ),
-                        label="Löschen",
+                        label=i18n.get("Delete"),
                     ),
                 ],
                 justify="space-between",
@@ -551,8 +559,8 @@ fensterRechts = [
         [
             dmc.Image(src="assets/empty.svg", fit="contain", w=200),
             dmc.Space(h=10),
-            dmc.Title("Nichts ausgewählt!", fw=700, order=2),
-            dmc.Text("Wähle links einen Eintrag aus"),
+            dmc.Title(i18n.get("Nothing selected!"), fw=700, order=2),
+            dmc.Text(i18n.get("Select an entry on the left")),
         ],
         id="inputPlaceholder",
         justify="center",
@@ -567,7 +575,7 @@ modalNeuerEintragInner = dmc.Stack(
     [
         dmc.TextInput(
             id="modal-input-name",
-            placeholder="Neue Chemikalie",
+            placeholder=i18n.get("New chemical"),
             styles={
                 "input": {
                     "fontSize": "2em",
@@ -587,7 +595,7 @@ modalNeuerEintragInner = dmc.Stack(
                                 variant="light",
                                 size="xl",
                             ),
-                            label="Datenbank durchsuchen",
+                            label=i18n.get("Search database"),
                         ),
                     ),
                     dmc.PopoverDropdown(
@@ -614,7 +622,7 @@ modalNeuerEintragInner = dmc.Stack(
                                             id="modal-input-selectFromDatabaseConfirm",
                                             size="lg",
                                         ),
-                                        label="Eintrag übernehmen",
+                                        label=i18n.get("Inherit entry"),
                                     ),
                                     span="content",
                                 ),
@@ -639,9 +647,9 @@ modalNeuerEintragInner = dmc.Stack(
                         dmc.Fieldset(
                             dmc.SimpleGrid(
                                 [
-                                    dmc.TextInput(  # Barcode
+                                    dmc.TextInput(
                                         id="modal-input-barcode",
-                                        label="Barcode",
+                                        label=i18n.get("Barcode"),
                                         required=True,
                                         n_blur=0,
                                     ),
@@ -649,7 +657,7 @@ modalNeuerEintragInner = dmc.Stack(
                                         [
                                             comp.NumberInput(  # Füllmenge
                                                 "modal-input-füllmenge",
-                                                "Füllmenge",
+                                                i18n.get("Amount"),
                                                 w="100%",
                                                 rightSection=dmc.Select(  #  Mengeneinheit
                                                     id="modal-input-mengeneinheit",
@@ -673,12 +681,12 @@ modalNeuerEintragInner = dmc.Stack(
                                     ),
                                     comp.DateInput(  # Kaufdatum
                                         "modal-input-kaufdatum",
-                                        "Kaufdatum",
+                                        i18n.get("Purchase date"),
                                         "modal-input-kaufdatum-heute",
                                     ),
                                     dmc.Select(  # Hersteller
                                         id="modal-input-hersteller",
-                                        label="Hersteller",
+                                        label=i18n.get("Manufacturer"),
                                         searchable=True,
                                         allowDeselect=False,
                                         value="0",
@@ -689,7 +697,7 @@ modalNeuerEintragInner = dmc.Stack(
                                     ),
                                     dmc.Select(  # Lieferant
                                         id="modal-input-lieferant",
-                                        label="Lieferant",
+                                        label=i18n.get("Supplier"),
                                         searchable=True,
                                         allowDeselect=False,
                                         value="0",
@@ -700,32 +708,33 @@ modalNeuerEintragInner = dmc.Stack(
                                     ),
                                     dmc.Select(  # Raum
                                         id="modal-input-raum",
-                                        label="Raum",
+                                        label=i18n.get("Room"),
                                         searchable=True,
                                         allowDeselect=False,
                                         value="0",
                                         data=functions.generateSelectData_Räume(),
                                     ),
                                     dmc.TextInput(  # Reinheit
-                                        id="modal-input-reinheit", label="Reinheit"
+                                        id="modal-input-reinheit",
+                                        label=i18n.get("Purity"),
                                     ),
                                     dmc.TextInput(  # Konzentration
                                         id="modal-input-konzentration",
-                                        label="Konzentration",
+                                        label=i18n.get("Concentration"),
                                     ),
                                     dmc.TextInput(  # Lösungsmittel
                                         id="modal-input-lösungsmittel",
-                                        label="Lösungsmittel",
+                                        label=i18n.get("Solvent"),
                                     ),
                                     comp.DateInput(  # Zuletzt geprüft
                                         "modal-input-geprüft",
-                                        "Zuletzt geprüft",
+                                        i18n.get("Last checked"),
                                         "modal-input-geprüft-heute",
                                     ),
                                 ],
                                 cols=2,
                             ),
-                            legend="Inventar",
+                            legend=i18n.get("inventory"),
                         ),
                     ],
                     span=8,
@@ -735,28 +744,30 @@ modalNeuerEintragInner = dmc.Stack(
                         [
                             dmc.Fieldset(
                                 [
-                                    dmc.TextInput(  # CAS-Nr.
-                                        id="modal-input-cas-nr", label="CAS-Nr"
+                                    dmc.TextInput(
+                                        id="modal-input-cas-nr",
+                                        label=i18n.get("CAS no."),
                                     ),
-                                    comp.NumberInput(  # Molmasse
-                                        "modal-input-molmasse", "Molare Masse"
+                                    comp.NumberInput(
+                                        "modal-input-molmasse",
+                                        i18n.get("Molar mass"),
                                     ),
                                     dmc.TextInput(
                                         id="modal-input-summenformel",
-                                        label="Summenformel",
+                                        label=i18n.get("Molecular formular"),
                                     ),
                                     dmc.TextInput(
                                         id="modal-input-zvg",
-                                        label="ZVG-Nr",
+                                        label=i18n.get("ZVG no."),
                                         disabled=True,
                                     ),
                                 ],
-                                legend="Stoffeigenschaften",
+                                legend=i18n.get("Chemical properties"),
                             ),
                             dmc.ButtonGroup(
                                 [
                                     dmc.Button(
-                                        dmc.Text("Speichern", visibleFrom="xl"),
+                                        dmc.Text(i18n.get("Save"), visibleFrom="xl"),
                                         id="modal-button-speichern",
                                         color="green",
                                         rightSection=DashIconify(icon=icons.save),
@@ -765,7 +776,7 @@ modalNeuerEintragInner = dmc.Stack(
                                         n_clicks=0,
                                     ),
                                     dmc.Tooltip(
-                                        label="Speichern",
+                                        label=i18n.get("Save"),
                                         target="#modal-button-speichern",
                                         hiddenFrom="xl",
                                     ),
@@ -778,7 +789,7 @@ modalNeuerEintragInner = dmc.Stack(
                                         ],
                                     ),
                                     dmc.Button(
-                                        dmc.Text("Abbrechen", visibleFrom="xl"),
+                                        dmc.Text(i18n.get("Cancel"), visibleFrom="xl"),
                                         id="modal-button-abbrechen",
                                         color="red",
                                         rightSection=DashIconify(icon=icons.close),
@@ -786,7 +797,7 @@ modalNeuerEintragInner = dmc.Stack(
                                         fullWidth=True,
                                     ),
                                     dmc.Tooltip(
-                                        label="Abbrechen",
+                                        label=i18n.get("Cancel"),
                                         target="#modal-button-abbrechen",
                                         hiddenFrom="xl",
                                     ),
@@ -810,12 +821,12 @@ modalStammdatenInner = dmc.Stack(
                 dmc.Select(
                     value="hersteller",
                     data=[
-                        {"value": "hersteller", "label": "Hersteller"},
-                        {"value": "lieferanten", "label": "Lieferanten"},
-                        {"value": "gebäude", "label": "Gebäude"},
-                        {"value": "räume", "label": "Räume"},
-                        {"value": "gestisdaten", "label": "Gestisdaten"},
-                        {"value": "mengeneinheiten", "label": "Mengeneinheiten"},
+                        {"value": "hersteller", "label": i18n.get("Manufacturer")},
+                        {"value": "lieferanten", "label": i18n.get("suppliers")},
+                        {"value": "gebäude", "label": i18n.get("Buildings")},
+                        {"value": "räume", "label": i18n.get("Rooms")},
+                        {"value": "gestisdaten", "label": i18n.get("Gestis data")},
+                        {"value": "mengeneinheiten", "label": i18n.get("Units")},
                     ],
                     id="selectStammdaten",
                     allowDeselect=False,
@@ -824,13 +835,13 @@ modalStammdatenInner = dmc.Stack(
                 dmc.Group(
                     [
                         dmc.Button(
-                            "Zeile löschen",
+                            i18n.get("Delete row"),
                             id="stammdatenButtonZeileLöschen",
                             rightSection=DashIconify(icon=icons.delete, height=20),
                             color="red",
                         ),
                         dmc.Button(
-                            "Zeile hinzufügen",
+                            i18n.get("Add row"),
                             id="stammdatenButtonZeileHinzufügen",
                             rightSection=DashIconify(icon=icons.add, height=24),
                         ),
@@ -859,27 +870,6 @@ modalStammdatenInner = dmc.Stack(
                     "enableClickSelection": True,
                     "checkboxes": False,
                 },
-                "localeText": {
-                    "filterOoo": "Filter...",
-                    "applyFilter": "Filter anwenden",
-                    "resetFilter": "Filter zurücksetzen",
-                    "clearFilter": "Filter löschen",
-                    "contains": "enthält",
-                    "notContains": "enthält nicht",
-                    "startsWith": "beginnt mit",
-                    "endsWith": "endet mit",
-                    "equals": "gleich",
-                    "notEqual": "ungleich",
-                    "blank": "leer",
-                    "notBlank": "nicht leer",
-                    "inRange": "im Bereich",
-                    "lessThan": "kleiner als",
-                    "greaterThan": "größer als",
-                    "lessThanOrEqual": "kleiner oder gleich",
-                    "greaterThanOrEqual": "größer oder gleich",
-                    "andCondition": "UND",
-                    "orCondition": "ODER",
-                },
             },
         ),
         dmc.Group(
@@ -887,20 +877,20 @@ modalStammdatenInner = dmc.Stack(
                 dmc.Group(
                     [
                         dmc.Button(
-                            "Abbrechen",
+                            i18n.get("Cancel"),
                             color="red",
                             rightSection=DashIconify(icon=icons.close, height=24),
                             id="stammdatenButtonAbbrechen",
                         ),
                         dmc.Button(
-                            "Änderungen zurücksetzen",
+                            i18n.get("Reset changes"),
                             color="grey",
                             rightSection=DashIconify(icon=icons.refresh, height=24),
                             id="stammdatenButtonZurücksetzen",
                             disabled=True,
                         ),
                         dmc.Button(
-                            "Änderungen speichern",
+                            i18n.get("Save changes"),
                             rightSection=DashIconify(icon=icons.save, height=20),
                             color="green",
                             id="stammdatenButtonSpeichern",
@@ -918,7 +908,7 @@ modalEinstellungenInner = dmc.Stack(
     [
         dmc.Group(
             [
-                dmc.Title("Einstellungen", order=2),
+                dmc.Title(i18n.get("Settings"), order=2),
                 dmc.Group(
                     [
                         comp.Version(VERSION).Text(),
@@ -934,14 +924,16 @@ modalEinstellungenInner = dmc.Stack(
                 [
                     dmc.Stack(
                         [
-                            dmc.Title("Datenbank verwalten", order=4),
+                            dmc.Title(i18n.get("Manage database"), order=4),
                             dmc.Text(
-                                "Importiere eine vorhandene Datenbank, exportiere die momentan genutzte oder erstelle eine neue."
+                                i18n.get(
+                                    "Import an existing database, export the currently used one, or create a new one"
+                                )
                             ),
                             dmc.Group(
                                 [
                                     dmc.Button(
-                                        "Exportieren",
+                                        i18n.get("Export"),
                                         id="einstellung_datenbank_exportieren",
                                     ),
                                     dcc.Download(
@@ -949,13 +941,13 @@ modalEinstellungenInner = dmc.Stack(
                                     ),
                                     dcc.Upload(
                                         dmc.Button(
-                                            "Importieren",
+                                            i18n.get("Import"),
                                         ),
                                         id="einstellung_datenbank_importieren_daten",
                                         accept=".sqlite",
                                     ),
                                     dmc.Button(
-                                        "Neue Datenbank erstellen",
+                                        i18n.get("Create new database"),
                                         id="einstellung_datenbank_neu",
                                     ),
                                 ]
@@ -966,25 +958,29 @@ modalEinstellungenInner = dmc.Stack(
                     dmc.Divider(),
                     dmc.Stack(
                         [
-                            dmc.Title("Datumsänderung", order=4),
+                            dmc.Title(i18n.get("Date change"), order=4),
                             dmc.Text(
-                                'Bestimmt, ob das Feld "Zuletzt geprüft" beim Erstellen oder Ändern von Einträgen automatisch auf den heutigen Tag gesetzt wird.'
+                                i18n.get(
+                                    'Determines whether the "Last checked" field is automatically set to today when creating or editing entries.'
+                                )
                             ),
                             dmc.Select(
                                 value=DEFAULT_SETTINGS.get("Datumsänderung"),
                                 data=[
-                                    {"value": "never", "label": "Nie"},
+                                    {"value": "never", "label": i18n.get("never")},
                                     {
                                         "value": "create",
-                                        "label": "Nur beim Erstellen von Einträgen",
+                                        "label": i18n.get("Only when creating entries"),
                                     },
                                     {
                                         "value": "change",
-                                        "label": "Nur beim Ändern von Einträgen",
+                                        "label": i18n.get("Only when changing entries"),
                                     },
                                     {
                                         "value": "createchange",
-                                        "label": "Sowohl beim Erstellen als auch beim Ändern von Einträgen",
+                                        "label": i18n.get(
+                                            "Both when creating and changing entries"
+                                        ),
                                     },
                                 ],
                                 w="40%",
@@ -997,21 +993,23 @@ modalEinstellungenInner = dmc.Stack(
                     dmc.Divider(),
                     dmc.Stack(
                         [
-                            dmc.Title("Häufigkeit lokaler Backups", order=4),
+                            dmc.Title(i18n.get("Frequency of local backups"), order=4),
                             dmc.Text(
-                                "Legt fest, wie oft ein lokales Backup erstellt wird."
+                                i18n.get("Defines how often a local backup is created.")
                             ),
                             dmc.Select(
                                 value=DEFAULT_SETTINGS.get("backup_häufigkeit"),
                                 data=[
-                                    {"value": "never", "label": "Nie"},
+                                    {"value": "never", "label": i18n.get("never")},
                                     {
                                         "value": "open",
-                                        "label": "Beim Öffnen/Aktualisieren der Seite",
+                                        "label": i18n.get(
+                                            "When opening/refreshing the page"
+                                        ),
                                     },
                                     {
                                         "value": "interval",
-                                        "label": "Nach einer bestimmten Zeit, und zwar:",
+                                        "label": i18n.get("After a set time, namely"),
                                     },
                                 ],
                                 w="40%",
@@ -1020,7 +1018,7 @@ modalEinstellungenInner = dmc.Stack(
                             ),
                             dmc.Group(
                                 [
-                                    dmc.Text("Alle..."),
+                                    dmc.Text(i18n.get("Every...")),
                                     dmc.NumberInput(
                                         value=DEFAULT_SETTINGS.get(
                                             "backup_häufigkeit_minuten"
@@ -1050,19 +1048,19 @@ modalEinstellungenInner = dmc.Stack(
                 dmc.Group(
                     [
                         dmc.Button(
-                            "Abbrechen",
+                            i18n.get("Cancel"),
                             color="red",
                             rightSection=DashIconify(icon=icons.close, height=24),
                             id="einstellungenButtonAbbrechen",
                         ),
                         dmc.Button(
-                            "Änderungen zurücksetzen",
+                            i18n.get("Reset changes"),
                             color="grey",
                             rightSection=DashIconify(icon=icons.refresh, height=24),
                             id="einstellungenButtonZurücksetzen",
                         ),
                         dmc.Button(
-                            "Änderungen speichern",
+                            i18n.get("Save changes"),
                             rightSection=DashIconify(icon=icons.save, height=20),
                             color="green",
                             id="einstellungenButtonSpeichern",
@@ -1077,14 +1075,16 @@ modalEinstellungenInner = dmc.Stack(
 
 modalBestätigungImportInner = dmc.Stack(
     [
-        dmc.Title("Datenbank speichern?", order=2),
-        dmc.Text("Soll ein Backup der geöffneten Datenbank erstellt werden?"),
+        dmc.Title(i18n.get("Save database?"), order=2),
+        dmc.Text(i18n.get("Should a backup of the open database be created?")),
         dmc.Group(
             [
-                dmc.Button("Ja", id="einstellung_datenbank_modal_ja"),
-                dmc.Button("Nein", id="einstellung_datenbank_modal_nein", color="red"),
+                dmc.Button(i18n.get("Yes"), id="einstellung_datenbank_modal_ja"),
                 dmc.Button(
-                    "Import abbrechen",
+                    i18n.get("No"), id="einstellung_datenbank_modal_nein", color="red"
+                ),
+                dmc.Button(
+                    i18n.get("Cancel import"),
                     id="einstellung_datenbank_modal_abbrechen",
                     variant="outline",
                     color="grey",
@@ -1098,7 +1098,7 @@ modalBestätigungImportInner = dmc.Stack(
 
 modal_füllmenge_verlauf_inner = dmc.Stack(
     [
-        dmc.Title("Füllstände", order=2),
+        dmc.Title(i18n.get("Fill levels"), order=2),
         dmc.LineChart(
             id="füllstände_kurve",
             curveType="linear",
@@ -1112,12 +1112,12 @@ modal_füllmenge_verlauf_inner = dmc.Stack(
 
 modal_bestätigung_speichern = dmc.Stack(
     [
-        dmc.Title("Eintrag speichern?", order=2),
+        dmc.Title(i18n.get("Save entry?"), order=2),
         dmc.Group(
             [
-                dmc.Button("Ja", id="speichern_bestätigung_ja"),
+                dmc.Button(i18n.get("Yes"), id="speichern_bestätigung_ja"),
                 dmc.Button(
-                    "Abbrechen",
+                    i18n.get("Cancel"),
                     id="speichern_bestätigung_abbrechen",
                     variant="outline",
                     color="grey",
@@ -1135,12 +1135,12 @@ modal_bestätigung_speichern = dmc.Stack(
 
 modal_bestätigung_löschen = dmc.Stack(
     [
-        dmc.Title("Eintrag löschen?", order=2),
+        dmc.Title(i18n.get("Delete entry?"), order=2),
         dmc.Group(
             [
-                dmc.Button("Ja", id="löschen_bestätigung_ja"),
+                dmc.Button(i18n.get("Yes"), id="löschen_bestätigung_ja"),
                 dmc.Button(
-                    "Abbrechen",
+                    i18n.get("Cancel"),
                     id="löschen_bestätigung_abbrechen",
                     variant="outline",
                     color="grey",
