@@ -2,17 +2,20 @@ from dash import Dash
 
 import waitress
 
-from callbacks import get_callbacks
 import functions
-from layout import MantineProvider
 from cli import args
 
-# Construct the server of the database
+functions.init_app(args.language)
+
+# Construct the server of the database. Cannot import from layout before the app is not safely initialized
+from layout import MantineProvider
+
 app = Dash(__name__)
 app.__init__(prevent_initial_callbacks=True)
 app.title = "beakerDB"
 app.layout = MantineProvider
-functions.init_app(args.language)
+
+from callbacks import get_callbacks
 
 if __name__ == "__main__":
 

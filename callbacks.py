@@ -15,16 +15,16 @@ from dash.exceptions import PreventUpdate
 import json
 import pandas as pd
 import functions
-from layout import i18n
 
 import uuid
 import base64
-import icons
 from pathlib import Path
-import shutil
 import dash_mantine_components as dmc
 import platform
-from default_values import DEFAULT_SETTINGS, TODAY
+
+import icons
+from layout import i18n
+from default_values import DEFAULT_SETTINGS, TODAY, LANG
 
 
 def get_callbacks(app):
@@ -1493,7 +1493,7 @@ def get_callbacks(app):
         else:
             return True, no_update
 
-    # Kontrolliert die Buttons im Einstellungsmenü für das Importieren, Exportieren und erstellen einer Datenbank
+    # Controls the buttons in the settings for importing, exporting and creating a database
     @app.callback(
         Output("einstellung_datenbank_exportieren_download", "data"),
         Output("modalBestätigungImport", "opened"),
@@ -1504,59 +1504,70 @@ def get_callbacks(app):
         Input("einstellung_datenbank_importieren_daten", "contents"),
     )
     def database_tools(export_n_clicks, neu_n_clicks, import_data):
-        dest_path = Path(f"current.sqlite")
-        if ctx.triggered_id == "einstellung_datenbank_exportieren":
-            src_path = Path("current.sqlite")
+        db = Path(f"current.sqlite")
 
+        if ctx.triggered_id == "einstellung_datenbank_exportieren":
+            # Returns the currently opened database to the download component
             return (
-                dcc.send_file(src_path),
+                dcc.send_file(db),
                 no_update,
                 no_update,
                 no_update,
-            )  # Gibt die momentan geöffnete Datenbank an die Download-Komponente weiter
+            )
 
         if ctx.triggered_id == "einstellung_datenbank_importieren_daten":
+            # Cut of the type description when importing the table.
             type, content = import_data.split(",")
-            content_decoded = base64.b64decode(
-                content
-            )  # Der von der Upload-Komponente bereitgestellte Inhalt ist immer Base64-verschlüsselt, daher muss er erst entschlküsselt werden.
 
-            try:  # Falls keine Datenbank vorhanden ist, so wird eine leere current.sqlite-Datei erstellt.
-                Path.touch(dest_path, exist_ok=False)
-            except:  # Ansonsten wird ein Modal geöffnet, um die geöffnete Datenbank noch zu archivieren oder zu überschreiben.
-                return no_update, True, json.dumps(content), None
+            # If a database is currently loaded, open a modal to let the use confirm the import and put the current database into the cache
+            if db.exists():
+                return (
+                    no_update,
+                    True,
+                    json.dumps(
+                        {
+                            "mode": "import",
+                            "content": content,
+                        }
+                    ),
+                    None,
+                )
+            # Otherwise create a new one and write the imported file directly to it
+            else:
+                Path.touch(db, exist_ok=False)
 
-            dest_path.write_bytes(
-                content_decoded
+            # The content is encoded in base64, so it needs to be decoded
+            db.write_bytes(
+                base64.b64decode(content)
             )  # Schreibe den hochgeladenen Inhalt in die Datei
 
+            # The last "None" is important for resetting the upload component
             return (
                 no_update,
                 no_update,
                 no_update,
                 None,
-            )  # Das letzte "None" ist wichtig, da ansonsten die Upload-Komponente nicht mehr richtig funktioniert.
+            )
 
         if ctx.triggered_id == "einstellung_datenbank_neu":
-            src_path = Path("blank.sqlite")  # Der Pfad zu einer leeren Datenbank
-            blank = src_path.open(mode="rb")  # Öffne sie im Binärmodus
-
-            if Path.exists(
-                dest_path
-            ):  # Falls bereits eine Datenbank existiert, so öffne auch hier den Dialog, um zu bestimmen, was mit der geöffneten Datenbank passieren soll.
+            if Path.exists(db):
                 return (
                     no_update,
                     True,
                     json.dumps(
-                        base64.b64encode(blank.read()).decode()
-                    ),  # Das Cache kann nur JSON-Dateien entgegennehmen. Daher muss der Dateiinhalt in Base64 verschlüsselt werde und in einen String dekodiert werden.
+                        {
+                            "mode": "new",
+                            "content": None,
+                        }
+                    ),
                     None,
                 )
             else:
-                shutil.copy(src_path, dest_path)
+                functions.init_app(LANG)
+
             return no_update, no_update, no_update, None
 
-    # Kontrolliert die Buttons des Modals, was beim Import oder Erstellen einer Datenbank die vorhandene Datenbank backupen lässt
+    # Controls the buttons of the modal, which backups the database when importing an existing or creating a new one
     @app.callback(
         Output("modalBestätigungImport", "opened", allow_duplicate=True),
         Output("current_db_cache", "data", allow_duplicate=True),
@@ -1569,26 +1580,41 @@ def get_callbacks(app):
     def backup_db_on_import(
         ja_n_clicks, nein_n_clicks, abbrechen_n_clicks, import_data
     ):
-        content_encoded = json.loads(import_data)
-        content = base64.b64decode(content_encoded)
+        import_data = json.loads(import_data)
+        mode = import_data.get("mode")
+
+        content_encoded = import_data.get("content")
+        if mode == "import":
+            content = base64.b64decode(content_encoded)
+        else:
+            content = None
+
+        db = Path(f"current.sqlite")
 
         if ctx.triggered_id == "einstellung_datenbank_modal_ja":
             functions.backup_db()
-            new_db = Path(f"current.sqlite")
-            new_db.write_bytes(content)
+            db.unlink()
+            functions.init_app(LANG)
+
+            if mode == "import" and content != None:
+                db.write_bytes(content)
 
         elif ctx.triggered_id == "einstellung_datenbank_modal_nein":
-            new_db = Path(f"current.sqlite")
-            new_db.write_bytes(content)
+            db.unlink()
+            functions.init_app(LANG)
+
+            if mode == "import" and content != None:
+                db.write_bytes(content)
 
         elif ctx.triggered_id == "einstellung_datenbank_modal_abbrechen":
             pass
 
+        # Delete the saved cache to not use unnecessary space. Also renew the table, so that the new content is shown instantly.
         return (
             False,
             json.dumps(""),
             functions.get_main_table().to_dict("records"),
-        )  # Lösche den gespeicherten Cache, um keinen unnötigen Platz zu verbrauchen. Erneuere außerdem die Tabelle, damit direkt der Inhalt der neuen Datenbank angezeigt wird.
+        )
 
     # Öffnet das Modal zu den Füllmengen
     @app.callback(

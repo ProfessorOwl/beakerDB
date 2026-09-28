@@ -562,6 +562,11 @@ def init_app(lang: str):
     """
 
     if not Path.exists(Path("current.sqlite")):
+        # Dispose of the old engine and create a new one so that old information gets deleted. This is important for importing or creating new databases in the settings of the app
+        global engine
+        engine.dispose()
+        engine = create_engine("sqlite:///current.sqlite")
+
         # Create an empty table
         Base.metadata.create_all(engine)
 
