@@ -1,9 +1,5 @@
-from dash import Dash, html, dcc
 import dash_mantine_components as dmc
-import dash_ag_grid as dag
-from dash_extensions import EventListener
 from dash_iconify import DashIconify
-from datetime import datetime, timedelta
 from i18n_modern import I18nModern
 import icons
 import functions
@@ -44,7 +40,7 @@ class DateInput(dmc.DateInput):
                     id=buttonId,
                     size="md",
                 ),
-                label=i18n.get("today"),
+                label=i18n.get("Today"),
             ),
         )
 
@@ -79,7 +75,7 @@ class Version:
 
     latest_version = functions.get_version_number()
     color = "gray.6"
-    badge_children = i18n.get("current")
+    badge_children = i18n.get("Up-to-Date")
 
     def __init__(self, version):
         self.current_version = version.removeprefix("Version ")
@@ -88,10 +84,10 @@ class Version:
                 pass
             elif self.latest_version != self.current_version:
                 self.color = "green.3"
-                self.badge_children = i18n.get("update_available")
+                self.badge_children = i18n.get("Update available")
 
     def Badge(self):
         return dmc.Badge(self.badge_children, color=self.color)
 
     def Text(self):
-        return dmc.Text(i18n.get("version") + " " + self.current_version, c=self.color)
+        return dmc.Text(i18n.get("Version") + " " + self.current_version, c=self.color)

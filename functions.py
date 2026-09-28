@@ -1,5 +1,4 @@
 import pandas as pd
-from typing import Type
 from sqlalchemy import (
     create_engine,
     ForeignKey,
