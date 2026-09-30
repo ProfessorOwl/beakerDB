@@ -25,6 +25,8 @@ from github import Github
 import requests
 import certifi
 
+from i18n import i18n
+
 engine = create_engine("sqlite:///current.sqlite")
 
 
@@ -121,8 +123,10 @@ class Inventar(Base):
 class Gebäude(Base):
     __tablename__ = "gebäude"
 
-    gebäude_id = Column("Gebäude_ID", Integer, primary_key=True, nullable=True)
-    gebäude = Column("Gebäude", Text())
+    gebäude_id = Column(
+        "Gebäude_ID", Integer, primary_key=True, nullable=True, doc="ID"
+    )
+    gebäude = Column("Gebäude", Text(), doc=i18n.get("Building"))
 
     def __repr__(self) -> str:
         return f"Gebäude(gebäude_id={self.gebäude_id!r}, gebäude={self.gebäude!r})"
@@ -131,11 +135,13 @@ class Gebäude(Base):
 class Gestisdaten(Base):
     __tablename__ = "gestisdaten"
 
-    zvg = Column("ZVG", Integer(), nullable=False, primary_key=True)
-    cas = Column("CAS", Text())
-    name = Column("Name", Text())
-    summenformel = Column("Summenformel", Text())
-    molmasse = Column("Molmasse", REAL())
+    zvg = Column(
+        "ZVG", Integer(), nullable=False, primary_key=True, doc=i18n.get("ZVG no.")
+    )
+    cas = Column("CAS", Text(), doc=i18n.get("CAS no."))
+    name = Column("Name", Text(), doc=i18n.get("Name"))
+    summenformel = Column("Summenformel", Text(), doc=i18n.get("Molecular formular"))
+    molmasse = Column("Molmasse", REAL(), doc=i18n.get("Molar mass"))
 
     def __repr__(self) -> str:
         return f"Gestisdaten(zvg={self.zvg!r}, cas={self.cas!r}, name={self.name}, summenformel={self.summenformel}, molmasse={self.molmasse})"
@@ -144,8 +150,10 @@ class Gestisdaten(Base):
 class Hersteller(Base):
     __tablename__ = "hersteller"
 
-    hersteller_id = Column("Hersteller_ID", Integer, primary_key=True, nullable=True)
-    hersteller = Column("Hersteller", Text())
+    hersteller_id = Column(
+        "Hersteller_ID", Integer, primary_key=True, nullable=True, doc="ID"
+    )
+    hersteller = Column("Hersteller", Text(), doc="Manufacturer")
 
     def __repr__(self) -> str:
         return f"Hersteller(hersteller_id={self.hersteller_id!r}, hersteller={self.hersteller!r})"
@@ -154,8 +162,10 @@ class Hersteller(Base):
 class Lieferanten(Base):
     __tablename__ = "lieferanten"
 
-    lieferant_id = Column("Lieferant_ID", Integer, primary_key=True, nullable=True)
-    lieferant = Column("Lieferant", Text())
+    lieferant_id = Column(
+        "Lieferant_ID", Integer, primary_key=True, nullable=True, doc="ID"
+    )
+    lieferant = Column("Lieferant", Text(), doc=i18n.get("Supplier"))
 
     def __repr__(self) -> str:
         return f"Lieferanten(lieferant_id={self.lieferant_id!r}, lieferant={self.lieferant!r})"
@@ -163,10 +173,11 @@ class Lieferanten(Base):
 
 class Mengeneinheiten(Base):
     __tablename__ = "mengeneinheiten"
+
     mengeneinheit_id = Column(
-        "Mengeneinheit_ID", Integer, primary_key=True, nullable=True
+        "Mengeneinheit_ID", Integer, primary_key=True, nullable=True, doc="ID"
     )
-    mengeneinheit = Column("Mengeneinheit", Text())
+    mengeneinheit = Column("Mengeneinheit", Text(), doc=i18n.get("Unit"))
 
     def __repr__(self) -> str:
         return f"Mengeneinheiten(mengeneinheit_id={self.mengeneinheit_id!r}, mengeneinheit={self.mengeneinheit!r})"
@@ -175,9 +186,19 @@ class Mengeneinheiten(Base):
 class Räume(Base):
     __tablename__ = "räume"
 
-    raum_id = Column("Raum_ID", Integer, primary_key=True, nullable=True)
-    gebäude_id = Column("Gebäude_ID", ForeignKey("gebäude.Gebäude_ID"))
-    raum = Column("Raum", Text())
+    raum_id = Column(
+        "Raum_ID",
+        Integer,
+        primary_key=True,
+        nullable=True,
+        doc=i18n.get("Room") + " ID",
+    )
+    gebäude_id = Column(
+        "Gebäude_ID",
+        ForeignKey("gebäude.Gebäude_ID"),
+        doc=i18n.get("Building") + " ID",
+    )
+    raum = Column("Raum", Text(), doc=i18n.get("Room"))
 
     def __repr__(self) -> str:
         return f"Räume(raum_id={self.raum_id!r}, gebäude_id={self.gebäude_id!r}, raum={self.raum})"
@@ -331,8 +352,8 @@ def generateSelectData_Namen() -> list[dict]:
     return data
 
 
-def getHeadings(table: str) -> list[str]:
-    """Gebe die Spaltenüberschriften einer Tabelle zurück."""
+def get_table_headings(table: str) -> list[str]:
+    """Return the name of every column from a table"""
     return stammdatenTables[table].__table__.columns.keys()
 
 
@@ -571,15 +592,21 @@ def init_app(lang: str):
         Base.metadata.create_all(engine)
 
         # --- BEGIN Insert basic master data ---
-        insertStammdaten(Gebäude, ["Gebäude_ID", "Gebäude"], ["0", "Ohne"])
+        insertStammdaten(Gebäude, ["Gebäude_ID", "Gebäude"], ["0", i18n.get("None")])
         insertStammdaten(
-            Hersteller, ["Hersteller_ID", "Hersteller"], ["0", "Nichts ausgewählt"]
+            Hersteller,
+            ["Hersteller_ID", "Hersteller"],
+            ["0", i18n.get("Nothing selected")],
         )
         insertStammdaten(
-            Lieferanten, ["Lieferant_ID", "Lieferant"], ["0", "Nichts ausgewählt"]
+            Lieferanten,
+            ["Lieferant_ID", "Lieferant"],
+            ["0", i18n.get("Nothing selected")],
         )
         insertStammdaten(
-            Räume, ["Raum_ID", "Gebäude_ID", "Raum"], ["0", "0", "Nichts ausgewählt"]
+            Räume,
+            ["Raum_ID", "Gebäude_ID", "Raum"],
+            ["0", "0", i18n.get("Nothing selected")],
         )
         insertStammdaten(
             Mengeneinheiten, ["Mengeneinheit_ID", "Mengeneinheit"], ["1", "g"]

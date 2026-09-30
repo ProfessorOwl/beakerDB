@@ -668,7 +668,9 @@ def get_callbacks(app):
             messages,
         )
 
-    # Öffne und schließe das Modal, in dem die Stammdaten bearbeitet werden können und initialisiere die Stammdatentabelle mit dem letzten Wert des Selectors. Setze die Stammdatentabelle zurück, wenn auf "Änderungen zurücksetzen" geclickt wird.
+    # Open and close the modal, in which the master data gets edited
+    # Initialize the master table with the last value of the selector
+    # Reset the master table, when "Reset changes" gets clicked
     @app.callback(
         Output("modalStammdaten", "opened"),
         Output("stammGrid", "columnDefs"),
@@ -683,8 +685,12 @@ def get_callbacks(app):
         Input("selectStammdaten", "value"),
         State("modalStammdaten", "opened"),
     )
-    def openModalStammdaten(
-        n_clicksModal, n_clicksZurücksetzen, n_clicksAbbrechen, selector, opened
+    def open_modal_masterdata(
+        n_clicksModal: int | None,
+        n_clicksZurücksetzen: int | None,
+        n_clicksAbbrechen: int | None,
+        selector: str,
+        opened: bool,
     ):
         if ctx.triggered_id == "stammdatenButtonAbbrechen":
             return (
@@ -701,38 +707,48 @@ def get_callbacks(app):
             "sqlite:///current.sqlite",
             dtype_backend="pyarrow",
         )
-
-        headings = functions.getHeadings(selector)
+        headings = functions.get_table_headings(selector)
         cache = dict()
         columnDefs = [
-            {"field": i, "sortable": True, "editable": True} for i in headings
+            {
+                "field": i,
+                "sortable": True,
+                "editable": True,
+                "headerName": getattr(
+                    functions.stammdatenTables[selector], i.lower()
+                ).doc,
+            }
+            for i in headings
         ]
-        columnDefs[-1].update(  # Letzte Spalte füllt den übrigen Raum aus
-            {"flex": True}
-        )
-        columnDefs[0].update(  # Erste Spalte (Primärschlüssel) ist nicht editierbar
-            {"editable": False}
-        )
-        # Verwende die Namen der Gebäude in einem Selektor statt nur der Gebäude ID als Zahl
+
+        # Let the last column take up the remaining space
+        columnDefs[-1].update({"flex": True})
+
+        # Set the first column as not-editable
+        columnDefs[0].update({"editable": False})
+
+        # Use the names of the available buildings in a select component
+        # instead of only the building ID
         if columnDefs[1].get("field") == "Gebäude_ID":
             label_value = functions.generateSelectData(
                 functions.Gebäude, ["gebäude_id", "gebäude"]
             )
 
-            # Dict zum Nachschlagen der Values
             data_lookup = {i.get("value"): i.get("label") for i in label_value}
-            # Liste für den Selektor. Die ID steht am Anfang, um für Eindeutigkeit zu sorgen und sie später wieder zu extrahieren
+
+            # Create a list for the select component.
+            # The ID is at the beginning to create unique lables
+            # The labels can then be extracted again at a later point
             data = [i.get("value", "") + ": " + i.get("label", "") for i in label_value]
 
-            # Ändere die ID-Spalte, sodass die Namen mit den Werten des Selektors übereinstimmen.
+            # Change the ID column, so that the names align with the values of the selector
             df["Gebäude_ID"] = df["Gebäude_ID"].map(
                 lambda x: str(x) + ": " + str(data_lookup.get(str(x)))
             )
 
-            # Aktualisiere die Eigenschaften der Spalte
+            # Update the properties of the column
             columnDefs[1].update(
                 {
-                    "headerName": "Gebäude",
                     "cellEditor": {"function": "AllFunctionalComponentEditors"},
                     "cellEditorParams": {
                         "component": dmc.Select(
@@ -740,7 +756,8 @@ def get_callbacks(app):
                             allowDeselect=False,
                         ),
                     },
-                    "cellEditorPopup": True,  # Ist notwendig, damit der Selektor nicht in der Zelle clippt
+                    # cellEditorPopup: True is mandatory so that the selector doesn't clip the cell
+                    "cellEditorPopup": True,
                 }
             )
 
@@ -749,9 +766,7 @@ def get_callbacks(app):
                 no_update,
                 columnDefs,
                 df.to_dict("records"),
-                json.dumps(
-                    cache
-                ),  # dcc.Store kann nur JSON Dateien empfangen, also muss das Cache immer als JSON exportiert/importiert werden
+                json.dumps(cache),
                 True,
                 True,
                 True,
