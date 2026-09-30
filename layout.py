@@ -9,11 +9,8 @@ import icons
 import functions
 import components as comp
 from default_values import VERSION, DEFAULT_SETTINGS
-from i18n_modern import I18nModern
-from cli import args
+from i18n import i18n
 
-i18n = I18nModern(args.language)
-i18n.load_from_file("locales/en.yaml", "en")
 i18n.load_from_file("locales/de.yaml", "de")
 
 # Definiere das Layout

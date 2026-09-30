@@ -23,7 +23,7 @@ import dash_mantine_components as dmc
 import platform
 
 import icons
-from layout import i18n
+from i18n import i18n
 from default_values import DEFAULT_SETTINGS, TODAY, LANG
 
 
