@@ -818,7 +818,7 @@ modalStammdatenInner = dmc.Stack(
                 dmc.Select(
                     value="manufacturers",
                     data=[
-                        {"value": "manufacturers", "label": i18n.get("Manufacturer")},
+                        {"value": "manufacturers", "label": i18n.get("Manufacturers")},
                         {"value": "suppliers", "label": i18n.get("suppliers")},
                         {"value": "buildings", "label": i18n.get("Buildings")},
                         {"value": "rooms", "label": i18n.get("Rooms")},
