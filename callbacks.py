@@ -93,7 +93,7 @@ def get_callbacks(app):
             return nothing_selected
         barcode = rows[0].get("Barcode", "")
         # Wenn der Barcode nicht in der Tabelle hinterlegt ist, dann zeige den Platzhalter an und setze die anderen Werte zurück
-        if functions.select_value(barcode, "barcode", functions.Inventar) == "":
+        if functions.select_value(barcode, "barcode", functions.Inventory) == "":
             return nothing_selected
 
         # Blende die Sparkline neben der Füllmenge standardmäßig aus
@@ -101,7 +101,9 @@ def get_callbacks(app):
         füllmenge_data = []
 
         # Extrahiere die letzte Füllmenge aus dem JSON-Array aller gespeicherten Füllmengen
-        füllmenge_raw = functions.select_value(barcode, "füllmenge", functions.Inventar)
+        füllmenge_raw = functions.select_value(
+            barcode, "füllmenge", functions.Inventory
+        )
         if len(füllmenge_raw or []) != 0 and füllmenge_raw:
             füllmenge = json.loads(füllmenge_raw)
             füllmenge_last_entry = füllmenge[-1][1]
@@ -116,7 +118,7 @@ def get_callbacks(app):
             barcode,
             füllmenge_last_entry,
             *[  # Gebe für jedes Feld den entsprechenden Wert aus der Inventartabelle zurück
-                functions.select_value(barcode, x, functions.Inventar)
+                functions.select_value(barcode, x, functions.Inventory)
                 for x in [
                     "name",
                     "summenformel",
@@ -319,7 +321,7 @@ def get_callbacks(app):
                 zuletzt_geprüft,
                 zvg,
             ],
-            functions.Inventar,
+            functions.Inventory,
         )
 
         df = functions.get_main_table()
@@ -349,7 +351,7 @@ def get_callbacks(app):
             return no_update, no_update, no_update, False
         elif ctx.triggered_id == "löschen_bestätigung_ja":
             barcode = rows[0].get("Barcode", "")
-            functions.delete_entry(barcode, functions.Inventar)
+            functions.delete_entry(barcode, functions.Inventory)
             global df  # Greife auf den globalen Dataframe zurück, damit die Tabelle auch nach Pagerefresh oder auf einem anderen Computer geändert ist
             df = functions.get_main_table()
             return (
@@ -441,7 +443,7 @@ def get_callbacks(app):
             patched_n_blur = Patch()
             patched_n_blur += 1
 
-            if functions.select_value(barcode, "barcode", functions.Inventar) == "":
+            if functions.select_value(barcode, "barcode", functions.Inventory) == "":
                 return (
                     not opened,
                     True,
@@ -500,7 +502,7 @@ def get_callbacks(app):
         State("modal-input-barcode", "value"),
     )
     def is_barcode_used(n_blur, barcode):
-        selected = functions.select_value(barcode, "barcode", functions.Inventar)
+        selected = functions.select_value(barcode, "barcode", functions.Inventory)
         if "" == barcode:
             return ("Barcode darf nicht leer sein", True)
         elif selected == barcode:
@@ -658,7 +660,7 @@ def get_callbacks(app):
                 zuletzt_geprüft,
                 zvg,
             ],
-            functions.Inventar(),
+            functions.Inventory(),
         )
 
         global df  # Greife auf den globalen Dataframe zurück, damit die Tabelle auch nach Pagerefresh oder auf einem anderen Computer geändert ist
@@ -731,7 +733,7 @@ def get_callbacks(app):
         # instead of only the building ID
         if columnDefs[1].get("field") == "Gebäude_ID":
             label_value = functions.generateSelectData(
-                functions.Gebäude, ["gebäude_id", "gebäude"]
+                functions.Buildings, ["gebäude_id", "gebäude"]
             )
 
             data_lookup = {i.get("value"): i.get("label") for i in label_value}
@@ -1160,26 +1162,26 @@ def get_callbacks(app):
             return (
                 functions.generateSelectData_Namen(),
                 functions.generateSelectData(
-                    functions.Mengeneinheiten,
+                    functions.Units,
                     ["mengeneinheit_id", "mengeneinheit"],
                 ),
                 functions.generateSelectData(
-                    functions.Hersteller, ["hersteller_id", "hersteller"]
+                    functions.Manufacturers, ["hersteller_id", "hersteller"]
                 ),
                 functions.generateSelectData(
-                    functions.Lieferanten, ["lieferant_id", "lieferant"]
+                    functions.Suppliers, ["lieferant_id", "lieferant"]
                 ),
                 functions.generateSelectData_Räume(),
                 functions.generateSelectData_Namen(),
                 functions.generateSelectData(
-                    functions.Mengeneinheiten,
+                    functions.Units,
                     ["mengeneinheit_id", "mengeneinheit"],
                 ),
                 functions.generateSelectData(
-                    functions.Hersteller, ["hersteller_id", "hersteller"]
+                    functions.Manufacturers, ["hersteller_id", "hersteller"]
                 ),
                 functions.generateSelectData(
-                    functions.Lieferanten, ["lieferant_id", "lieferant"]
+                    functions.Suppliers, ["lieferant_id", "lieferant"]
                 ),
                 functions.generateSelectData_Räume(),
             )

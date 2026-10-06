@@ -73,8 +73,8 @@ class Base(DeclarativeBase):
 
 
 # Erstelle jede SQL-Tabelle als Objekt für SQLAlchemy
-class Inventar(Base):
-    __tablename__ = "inventar"
+class Inventory(Base):
+    __tablename__ = "inventory"
 
     barcode = Column("Barcode", Text(), primary_key=True)
     cas = Column("CAS", Text())
@@ -82,26 +82,26 @@ class Inventar(Base):
     summenformel = Column("Summenformel", Text())
     raum_id = Column(
         "Raum_ID",
-        ForeignKey("räume.Raum_ID"),
+        ForeignKey("rooms.Raum_ID"),
         default=0,
     )
     lieferant_id = Column(
         "Lieferant_ID",
-        ForeignKey("lieferanten.Lieferant_ID"),
+        ForeignKey("suppliers.Lieferant_ID"),
         default=0,
     )
     füllmenge = Column("Füllmenge", Text())
     mengeneinheit_id = Column(
         "Mengeneinheit_ID",
         ForeignKey(
-            "mengeneinheiten.Mengeneinheit_ID",
+            "units.Mengeneinheit_ID",
         ),
         default=1,
     )
     kaufdatum = Column("Kaufdatum", Text())
     hersteller_id = Column(
         "Hersteller_ID",
-        ForeignKey("hersteller.Hersteller_ID"),
+        ForeignKey("manufacturers.Hersteller_ID"),
         default=0,
     )
     reinheit = Column("Reinheit", Text())
@@ -120,8 +120,8 @@ class Inventar(Base):
         return f"Inventar(barcode={self.barcode!r}, cas={self.cas!r}, name={self.name!r}, summenformel={self.summenformel!r}, raum_id={self.raum_id!r}, lieferant_id={self.lieferant_id!r}, füllmenge={self.füllmenge!r}, mengeneinheit_id={self.mengeneinheit_id!r},kaufdatum={self.kaufdatum!r}, hersteller_id={self.hersteller_id!r}, reinheit={self.reinheit!r}, konzentration={self.konzentration!r}, lösungsmittel={self.lösungsmittel!r}, molmasse={self.molmasse!r}, zuletzt_geprüft={self.zuletzt_geprüft!r}), archiviert={self.archiviert!r}"
 
 
-class Gebäude(Base):
-    __tablename__ = "gebäude"
+class Buildings(Base):
+    __tablename__ = "buildings"
 
     gebäude_id = Column(
         "Gebäude_ID", Integer, primary_key=True, nullable=True, doc="ID"
@@ -132,8 +132,8 @@ class Gebäude(Base):
         return f"Gebäude(gebäude_id={self.gebäude_id!r}, gebäude={self.gebäude!r})"
 
 
-class Gestisdaten(Base):
-    __tablename__ = "gestisdaten"
+class Gestis(Base):
+    __tablename__ = "gestis"
 
     zvg = Column(
         "ZVG", Integer(), nullable=False, primary_key=True, doc=i18n.get("ZVG no.")
@@ -147,8 +147,8 @@ class Gestisdaten(Base):
         return f"Gestisdaten(zvg={self.zvg!r}, cas={self.cas!r}, name={self.name}, summenformel={self.summenformel}, molmasse={self.molmasse})"
 
 
-class Hersteller(Base):
-    __tablename__ = "hersteller"
+class Manufacturers(Base):
+    __tablename__ = "manufacturers"
 
     hersteller_id = Column(
         "Hersteller_ID", Integer, primary_key=True, nullable=True, doc="ID"
@@ -159,8 +159,8 @@ class Hersteller(Base):
         return f"Hersteller(hersteller_id={self.hersteller_id!r}, hersteller={self.hersteller!r})"
 
 
-class Lieferanten(Base):
-    __tablename__ = "lieferanten"
+class Suppliers(Base):
+    __tablename__ = "suppliers"
 
     lieferant_id = Column(
         "Lieferant_ID", Integer, primary_key=True, nullable=True, doc="ID"
@@ -171,8 +171,8 @@ class Lieferanten(Base):
         return f"Lieferanten(lieferant_id={self.lieferant_id!r}, lieferant={self.lieferant!r})"
 
 
-class Mengeneinheiten(Base):
-    __tablename__ = "mengeneinheiten"
+class Units(Base):
+    __tablename__ = "units"
 
     mengeneinheit_id = Column(
         "Mengeneinheit_ID", Integer, primary_key=True, nullable=True, doc="ID"
@@ -183,8 +183,8 @@ class Mengeneinheiten(Base):
         return f"Mengeneinheiten(mengeneinheit_id={self.mengeneinheit_id!r}, mengeneinheit={self.mengeneinheit!r})"
 
 
-class Räume(Base):
-    __tablename__ = "räume"
+class Rooms(Base):
+    __tablename__ = "rooms"
 
     raum_id = Column(
         "Raum_ID",
@@ -195,7 +195,7 @@ class Räume(Base):
     )
     gebäude_id = Column(
         "Gebäude_ID",
-        ForeignKey("gebäude.Gebäude_ID"),
+        ForeignKey("buildings.Gebäude_ID"),
         doc=i18n.get("Building") + " ID",
     )
     raum = Column("Raum", Text(), doc=i18n.get("Room"))
@@ -206,13 +206,13 @@ class Räume(Base):
 
 # Verbinde Strings mit den Objekten der Tabellen
 stammdatenTables = {
-    "inventar": Inventar,
-    "mengeneinheiten": Mengeneinheiten,
-    "gebäude": Gebäude,
-    "lieferanten": Lieferanten,
-    "hersteller": Hersteller,
-    "räume": Räume,
-    "gestisdaten": Gestisdaten,
+    "inventory": Inventory,
+    "units": Units,
+    "buildings": Buildings,
+    "suppliers": Suppliers,
+    "manufacturers": Manufacturers,
+    "rooms": Rooms,
+    "gestis": Gestis,
 }
 
 
@@ -284,9 +284,9 @@ def create_row(
 def archive_row(barcode: str, to_archive: bool):
     """Toggles if an entry is archived by setting the column 'Archiviert' to 1 or 0"""
     if to_archive:
-        update_row(barcode, ["archiviert"], [1], Inventar)
+        update_row(barcode, ["archiviert"], [1], Inventory)
     else:
-        update_row(barcode, ["archiviert"], [0], Inventar)
+        update_row(barcode, ["archiviert"], [0], Inventory)
     return
 
 
@@ -304,10 +304,10 @@ def generateSelectData(table: type[Base], columns: list[str]) -> list[dict]:
 def generateSelectData_Räume() -> list[dict]:
     """Generiere eine Liste mit den Auswahlmöglichkeiten für die Dropdown-Selektoren für die Räume, die nach den Gebäuden gruppiert sein sollen"""
     with Session(engine) as session:
-        stmt1 = select(Räume.raum_id, Räume.raum, Gebäude.gebäude).join(
-            Gebäude, Räume.gebäude_id == Gebäude.gebäude_id
+        stmt1 = select(Rooms.raum_id, Rooms.raum, Buildings.gebäude).join(
+            Buildings, Rooms.gebäude_id == Buildings.gebäude_id
         )
-        stmt2 = select(Gebäude.gebäude)
+        stmt2 = select(Buildings.gebäude)
         items = session.execute(stmt1).all()
         gebäude = session.execute(stmt2).all()
         session.close()
@@ -325,8 +325,8 @@ def generateSelectData_Räume() -> list[dict]:
 def generateSelectData_Namen() -> list[dict]:
     """Generiere eine Liste mit den Auswahlmöglichkeiten für die Dropdown-Selektoren für die Chemikalien. Diese sind nach dem Inventar und der GESTIS-Liste gruppiert."""
     with Session(engine) as session:
-        stmt1 = select(Inventar.barcode, Inventar.name)
-        stmt2 = select(Gestisdaten.zvg, Gestisdaten.name)
+        stmt1 = select(Inventory.barcode, Inventory.name)
+        stmt2 = select(Gestis.zvg, Gestis.name)
         inventar = session.execute(stmt1).all()
         gestis = session.execute(stmt2).all()
         session.close()
@@ -360,8 +360,8 @@ def get_table_headings(table: str) -> list[str]:
 def updateStammdaten(selector: str, columns: list[str], values: list[str]):
     """Updates the stammdaten table specified with selector, where ``columns[0] == values[0]``
 
-    :param selector: One of the available tables in the stammdaten table, at the moment: "Gebäude", "Gestisdaten", "Hersteller", "Lieferanten", "Mengeneinheiten" and "Räume"
-    :type selector: "Gebäude", "Gestisdaten", "Hersteller", "Lieferanten", "Mengeneinheiten", "Räume"
+    :param selector: One of the available tables in the stammdaten table, at the moment: "buildings", "gestis", "manufacturers", "suppliers", "units" and "rooms"
+    :type selector: "buildings", "gestis", "manufacturers", "suppliers", "units", "rooms"
     :param columns: A list of column names to update in the selected table
     :type columns: list[str]
     :param values: A list of values to update in the selected table, where the index of ``values`` corresponds to the index of ``columns``
@@ -422,7 +422,7 @@ def insertStammdaten(selector: str | type[Base], columns: list[str], values: lis
 
 def get_main_table(is_archived: bool = False):
     def query(is_archived: int):
-        return f"SELECT CAS, Name, Summenformel, Barcode, Raum, Zuletzt_geprüft FROM Inventar INNER JOIN räume ON Inventar.Raum_ID == räume.Raum_ID WHERE Archiviert == {is_archived} "
+        return f"SELECT CAS, Name, Summenformel, Barcode, Raum, Zuletzt_geprüft FROM inventory INNER JOIN rooms ON inventory.Raum_ID == rooms.Raum_ID WHERE Archiviert == {is_archived} "
 
     if is_archived:
         df = pd.read_sql(
@@ -450,8 +450,8 @@ def getExistingData(id: str) -> dict[str, str]:
     """
 
     with Session(engine) as session:
-        entryGestis = session.get(Gestisdaten, id)
-        entryInventory = session.get(Inventar, id)
+        entryGestis = session.get(Gestis, id)
+        entryInventory = session.get(Inventory, id)
 
     if entryGestis and entryInventory:
         raise LookupError(
@@ -481,7 +481,7 @@ def backup_db():
 
 def save_füllmenge(barcode, date, füllmenge):
     füllmenge_data = []
-    füllmenge_raw = select_value(barcode, "füllmenge", Inventar)
+    füllmenge_raw = select_value(barcode, "füllmenge", Inventory)
     if len(füllmenge_raw or []) != 0 and füllmenge_raw:
         füllmenge_history = json.loads(füllmenge_raw)
         if [date, füllmenge] != füllmenge_history[-1]:
@@ -498,7 +498,7 @@ def save_füllmenge(barcode, date, füllmenge):
 
 def get_füllmenge_data(barcode):
     with Session(engine) as session:
-        stmt = select(Inventar.füllmenge).where(Inventar.barcode == barcode)
+        stmt = select(Inventory.füllmenge).where(Inventory.barcode == barcode)
         füllmenge = json.loads(session.scalars(stmt).one_or_none() or "")
 
         data = [{"datum": i[0], "Füllmenge": i[1]} for i in füllmenge]
@@ -572,11 +572,11 @@ def import_gestis(path_to_xlsx: str | PathLike, lang: str):
         if value.strip() == "" or value == "." or value.lower() == "nan":
             df.at[i, "Summenformel"] = None
 
-    df.to_sql("gestisdaten", engine, if_exists="delete_rows")
+    df.to_sql("gestis", engine, if_exists="delete_rows")
 
 
 def init_app(lang: str):
-    """Create an empty database and import data from GESTIS
+    """Create an empty database and import data from GESTIS. GESTIS data is imported again each time the app gets launched
 
     Args:
         lang (str): Accepts either "de" or "en" for defining the language of the app and the imported GESTIS-table
@@ -592,28 +592,24 @@ def init_app(lang: str):
         Base.metadata.create_all(engine)
 
         # --- BEGIN Insert basic master data ---
-        insertStammdaten(Gebäude, ["Gebäude_ID", "Gebäude"], ["0", i18n.get("None")])
+        insertStammdaten(Buildings, ["Gebäude_ID", "Gebäude"], ["0", i18n.get("None")])
         insertStammdaten(
-            Hersteller,
+            Manufacturers,
             ["Hersteller_ID", "Hersteller"],
             ["0", i18n.get("Nothing selected")],
         )
         insertStammdaten(
-            Lieferanten,
+            Suppliers,
             ["Lieferant_ID", "Lieferant"],
             ["0", i18n.get("Nothing selected")],
         )
         insertStammdaten(
-            Räume,
+            Rooms,
             ["Raum_ID", "Gebäude_ID", "Raum"],
             ["0", "0", i18n.get("Nothing selected")],
         )
-        insertStammdaten(
-            Mengeneinheiten, ["Mengeneinheit_ID", "Mengeneinheit"], ["1", "g"]
-        )
-        insertStammdaten(
-            Mengeneinheiten, ["Mengeneinheit_ID", "Mengeneinheit"], ["2", "mL"]
-        )
+        insertStammdaten(Units, ["Mengeneinheit_ID", "Mengeneinheit"], ["1", "g"])
+        insertStammdaten(Units, ["Mengeneinheit_ID", "Mengeneinheit"], ["2", "mL"])
         # --- END ---
 
     # --- BEGIN Retrieve GESTIS tables and add one of them to the master data according to lang ---

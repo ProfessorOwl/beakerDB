@@ -324,7 +324,7 @@ fensterRechts = [
                                                 value="1",
                                                 allowDeselect=False,
                                                 data=functions.generateSelectData(
-                                                    functions.Mengeneinheiten,
+                                                    functions.Units,
                                                     [
                                                         "mengeneinheit_id",
                                                         "mengeneinheit",
@@ -379,7 +379,7 @@ fensterRechts = [
                                     searchable=True,
                                     allowDeselect=False,
                                     data=functions.generateSelectData(
-                                        functions.Hersteller,
+                                        functions.Manufacturers,
                                         ["hersteller_id", "hersteller"],
                                     ),
                                 ),
@@ -390,7 +390,7 @@ fensterRechts = [
                                     searchable=True,
                                     allowDeselect=False,
                                     data=functions.generateSelectData(
-                                        functions.Lieferanten,
+                                        functions.Suppliers,
                                         ["lieferant_id", "lieferant"],
                                     ),
                                 ),
@@ -661,7 +661,7 @@ modalNeuerEintragInner = dmc.Stack(
                                                     value="1",
                                                     allowDeselect=False,
                                                     data=functions.generateSelectData(
-                                                        functions.Mengeneinheiten,
+                                                        functions.Units,
                                                         [
                                                             "mengeneinheit_id",
                                                             "mengeneinheit",
@@ -688,7 +688,7 @@ modalNeuerEintragInner = dmc.Stack(
                                         allowDeselect=False,
                                         value="0",
                                         data=functions.generateSelectData(
-                                            functions.Hersteller,
+                                            functions.Manufacturers,
                                             ["hersteller_id", "hersteller"],
                                         ),
                                     ),
@@ -699,7 +699,7 @@ modalNeuerEintragInner = dmc.Stack(
                                         allowDeselect=False,
                                         value="0",
                                         data=functions.generateSelectData(
-                                            functions.Lieferanten,
+                                            functions.Suppliers,
                                             ["lieferant_id", "lieferant"],
                                         ),
                                     ),
@@ -816,14 +816,14 @@ modalStammdatenInner = dmc.Stack(
         dmc.Group(
             [
                 dmc.Select(
-                    value="hersteller",
+                    value="manufacturers",
                     data=[
-                        {"value": "hersteller", "label": i18n.get("Manufacturer")},
-                        {"value": "lieferanten", "label": i18n.get("suppliers")},
-                        {"value": "gebäude", "label": i18n.get("Buildings")},
-                        {"value": "räume", "label": i18n.get("Rooms")},
-                        {"value": "gestisdaten", "label": i18n.get("Gestis data")},
-                        {"value": "mengeneinheiten", "label": i18n.get("Units")},
+                        {"value": "manufacturers", "label": i18n.get("Manufacturer")},
+                        {"value": "suppliers", "label": i18n.get("suppliers")},
+                        {"value": "buildings", "label": i18n.get("Buildings")},
+                        {"value": "rooms", "label": i18n.get("Rooms")},
+                        {"value": "gestis", "label": i18n.get("Gestis data")},
+                        {"value": "units", "label": i18n.get("Units")},
                     ],
                     id="selectStammdaten",
                     allowDeselect=False,
