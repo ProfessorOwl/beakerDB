@@ -76,132 +76,134 @@ class Base(DeclarativeBase):
 class Inventory(Base):
     __tablename__ = "inventory"
 
-    barcode = Column("Barcode", Text(), primary_key=True)
-    cas = Column("CAS", Text())
-    name = Column("Name", Text())
-    summenformel = Column("Summenformel", Text())
-    raum_id = Column(
-        "Raum_ID",
-        ForeignKey("rooms.Raum_ID"),
+    barcode = Column("barcode", Text(), primary_key=True)
+    cas = Column("cas", Text())
+    name = Column("name", Text())
+    formular = Column("formular", Text())
+    room_id = Column(
+        "room_id",
+        ForeignKey("rooms.room_id"),
         default=0,
     )
-    lieferant_id = Column(
-        "Lieferant_ID",
-        ForeignKey("suppliers.Lieferant_ID"),
+    supplier_id = Column(
+        "supplier_id",
+        ForeignKey("suppliers.supplier_id"),
         default=0,
     )
-    füllmenge = Column("Füllmenge", Text())
-    mengeneinheit_id = Column(
-        "Mengeneinheit_ID",
+    amount = Column("amount", Text())
+    unit_id = Column(
+        "unit_id",
         ForeignKey(
-            "units.Mengeneinheit_ID",
+            "units.unit_id",
         ),
         default=1,
     )
-    kaufdatum = Column("Kaufdatum", Text())
-    hersteller_id = Column(
-        "Hersteller_ID",
-        ForeignKey("manufacturers.Hersteller_ID"),
+    purchasedate = Column("purchasedate", Text())
+    manufacturer_id = Column(
+        "manufacturer_id",
+        ForeignKey("manufacturers.manufacturer_id"),
         default=0,
     )
-    reinheit = Column("Reinheit", Text())
-    konzentration = Column("Konzentration", Text())
-    lösungsmittel = Column("Lösungsmittel", Text())
-    molmasse = Column("Molmasse", REAL())
-    zuletzt_geprüft = Column("Zuletzt_geprüft", Text())
-    archiviert = Column(
-        "Archiviert",
+    purity = Column("purity", Text())
+    concentration = Column("concentration", Text())
+    solvent = Column("solvent", Text())
+    molarmass = Column("molarmass", REAL())
+    lastchecked = Column("lastchecked", Text())
+    archived = Column(
+        "archived",
         Integer(),
         default=0,
     )
     zvg = Column("ZVG", Integer())
 
     def __repr__(self) -> str:
-        return f"Inventar(barcode={self.barcode!r}, cas={self.cas!r}, name={self.name!r}, summenformel={self.summenformel!r}, raum_id={self.raum_id!r}, lieferant_id={self.lieferant_id!r}, füllmenge={self.füllmenge!r}, mengeneinheit_id={self.mengeneinheit_id!r},kaufdatum={self.kaufdatum!r}, hersteller_id={self.hersteller_id!r}, reinheit={self.reinheit!r}, konzentration={self.konzentration!r}, lösungsmittel={self.lösungsmittel!r}, molmasse={self.molmasse!r}, zuletzt_geprüft={self.zuletzt_geprüft!r}), archiviert={self.archiviert!r}"
+        return f"inventory(barcode={self.barcode!r}, cas={self.cas!r}, name={self.name!r}, formular={self.formular!r}, room_id={self.room_id!r}, supplier_id={self.supplier_id!r}, amount={self.amount!r}, unit_id={self.unit_id!r},purchasedate={self.purchasedate!r}, manufacturer_id={self.manufacturer_id!r}, purity={self.purity!r}, concentration={self.concentration!r}, solvent={self.solvent!r}, molarmass={self.molarmass!r}, lastchecked={self.lastchecked!r}), archived={self.archived!r}"
 
 
 class Buildings(Base):
     __tablename__ = "buildings"
 
-    gebäude_id = Column(
-        "Gebäude_ID", Integer, primary_key=True, nullable=True, doc="ID"
+    building_id = Column(
+        "building_id", Integer, primary_key=True, nullable=True, doc="ID"
     )
-    gebäude = Column("Gebäude", Text(), doc=i18n.get("Building"))
+    building = Column("building", Text(), doc=i18n.get("Building"))
 
     def __repr__(self) -> str:
-        return f"Gebäude(gebäude_id={self.gebäude_id!r}, gebäude={self.gebäude!r})"
+        return (
+            f"buildings(building_id={self.building_id!r}, building={self.building!r})"
+        )
 
 
 class Gestis(Base):
     __tablename__ = "gestis"
 
     zvg = Column(
-        "ZVG", Integer(), nullable=False, primary_key=True, doc=i18n.get("ZVG no.")
+        "zvg", Integer(), nullable=False, primary_key=True, doc=i18n.get("ZVG no.")
     )
-    cas = Column("CAS", Text(), doc=i18n.get("CAS no."))
-    name = Column("Name", Text(), doc=i18n.get("Name"))
-    summenformel = Column("Summenformel", Text(), doc=i18n.get("Molecular formular"))
-    molmasse = Column("Molmasse", REAL(), doc=i18n.get("Molar mass"))
+    cas = Column("cas", Text(), doc=i18n.get("CAS no."))
+    name = Column("name", Text(), doc=i18n.get("Name"))
+    formular = Column("formular", Text(), doc=i18n.get("Molecular formular"))
+    molarmass = Column("molarmass", REAL(), doc=i18n.get("Molar mass"))
 
     def __repr__(self) -> str:
-        return f"Gestisdaten(zvg={self.zvg!r}, cas={self.cas!r}, name={self.name}, summenformel={self.summenformel}, molmasse={self.molmasse})"
+        return f"gestis(zvg={self.zvg!r}, cas={self.cas!r}, name={self.name}, formular={self.formular}, molarmass={self.molarmass})"
 
 
 class Manufacturers(Base):
     __tablename__ = "manufacturers"
 
-    hersteller_id = Column(
-        "Hersteller_ID", Integer, primary_key=True, nullable=True, doc="ID"
+    manufacturer_id = Column(
+        "manufacturer_id", Integer, primary_key=True, nullable=True, doc="ID"
     )
-    hersteller = Column("Hersteller", Text(), doc="Manufacturer")
+    manufacturer = Column("manufacturer", Text(), doc=i18n.get("Manufacturer"))
 
     def __repr__(self) -> str:
-        return f"Hersteller(hersteller_id={self.hersteller_id!r}, hersteller={self.hersteller!r})"
+        return f"manufacturers(manufacturer_id={self.manufacturer_id!r}, manufacturer={self.manufacturer!r})"
 
 
 class Suppliers(Base):
     __tablename__ = "suppliers"
 
-    lieferant_id = Column(
-        "Lieferant_ID", Integer, primary_key=True, nullable=True, doc="ID"
+    supplier_id = Column(
+        "supplier_id", Integer, primary_key=True, nullable=True, doc="ID"
     )
-    lieferant = Column("Lieferant", Text(), doc=i18n.get("Supplier"))
+    supplier = Column("supplier", Text(), doc=i18n.get("Supplier"))
 
     def __repr__(self) -> str:
-        return f"Lieferanten(lieferant_id={self.lieferant_id!r}, lieferant={self.lieferant!r})"
+        return (
+            f"suppliers(supplier_id={self.supplier_id!r}, supplier={self.supplier!r})"
+        )
 
 
 class Units(Base):
     __tablename__ = "units"
 
-    mengeneinheit_id = Column(
-        "Mengeneinheit_ID", Integer, primary_key=True, nullable=True, doc="ID"
-    )
-    mengeneinheit = Column("Mengeneinheit", Text(), doc=i18n.get("Unit"))
+    unit_id = Column("unit_id", Integer, primary_key=True, nullable=True, doc="ID")
+    unit = Column("unit", Text(), doc=i18n.get("Unit"))
 
     def __repr__(self) -> str:
-        return f"Mengeneinheiten(mengeneinheit_id={self.mengeneinheit_id!r}, mengeneinheit={self.mengeneinheit!r})"
+        return f"units(unit_id={self.unit_id!r}, unit={self.unit!r})"
 
 
 class Rooms(Base):
     __tablename__ = "rooms"
 
-    raum_id = Column(
-        "Raum_ID",
+    room_id = Column(
+        "room_id",
         Integer,
         primary_key=True,
         nullable=True,
         doc=i18n.get("Room") + " ID",
     )
-    gebäude_id = Column(
-        "Gebäude_ID",
-        ForeignKey("buildings.Gebäude_ID"),
+    building_id = Column(
+        "building_id",
+        ForeignKey("buildings.building_id"),
         doc=i18n.get("Building") + " ID",
     )
-    raum = Column("Raum", Text(), doc=i18n.get("Room"))
+    room = Column("room", Text(), doc=i18n.get("Room"))
 
     def __repr__(self) -> str:
-        return f"Räume(raum_id={self.raum_id!r}, gebäude_id={self.gebäude_id!r}, raum={self.raum})"
+        return f"Räume(room_id={self.room_id!r}, building_id={self.building_id!r}, room={self.room})"
 
 
 # Verbinde Strings mit den Objekten der Tabellen
@@ -282,11 +284,11 @@ def create_row(
 
 
 def archive_row(barcode: str, to_archive: bool):
-    """Toggles if an entry is archived by setting the column 'Archiviert' to 1 or 0"""
+    """Toggles if an entry is archived by setting the column 'archived' to 1 or 0"""
     if to_archive:
-        update_row(barcode, ["archiviert"], [1], Inventory)
+        update_row(barcode, ["archived"], [1], Inventory)
     else:
-        update_row(barcode, ["archiviert"], [0], Inventory)
+        update_row(barcode, ["archived"], [0], Inventory)
     return
 
 
@@ -304,10 +306,10 @@ def generateSelectData(table: type[Base], columns: list[str]) -> list[dict]:
 def generateSelectData_Räume() -> list[dict]:
     """Generiere eine Liste mit den Auswahlmöglichkeiten für die Dropdown-Selektoren für die Räume, die nach den Gebäuden gruppiert sein sollen"""
     with Session(engine) as session:
-        stmt1 = select(Rooms.raum_id, Rooms.raum, Buildings.gebäude).join(
-            Buildings, Rooms.gebäude_id == Buildings.gebäude_id
+        stmt1 = select(Rooms.room_id, Rooms.room, Buildings.building).join(
+            Buildings, Rooms.building_id == Buildings.building_id
         )
-        stmt2 = select(Buildings.gebäude)
+        stmt2 = select(Buildings.building)
         items = session.execute(stmt1).all()
         gebäude = session.execute(stmt2).all()
         session.close()
@@ -422,7 +424,7 @@ def insertStammdaten(selector: str | type[Base], columns: list[str], values: lis
 
 def get_main_table(is_archived: bool = False):
     def query(is_archived: int):
-        return f"SELECT CAS, Name, Summenformel, Barcode, Raum, Zuletzt_geprüft FROM inventory INNER JOIN rooms ON inventory.Raum_ID == rooms.Raum_ID WHERE Archiviert == {is_archived} "
+        return f"SELECT cas, name, formular, barcode, room, lastchecked FROM inventory INNER JOIN rooms ON inventory.room_id == rooms.room_id WHERE archived == {is_archived} "
 
     if is_archived:
         df = pd.read_sql(
@@ -481,7 +483,7 @@ def backup_db():
 
 def save_füllmenge(barcode, date, füllmenge):
     füllmenge_data = []
-    füllmenge_raw = select_value(barcode, "füllmenge", Inventory)
+    füllmenge_raw = select_value(barcode, "amount", Inventory)
     if len(füllmenge_raw or []) != 0 and füllmenge_raw:
         füllmenge_history = json.loads(füllmenge_raw)
         if [date, füllmenge] != füllmenge_history[-1]:
@@ -498,10 +500,10 @@ def save_füllmenge(barcode, date, füllmenge):
 
 def get_füllmenge_data(barcode):
     with Session(engine) as session:
-        stmt = select(Inventory.füllmenge).where(Inventory.barcode == barcode)
+        stmt = select(Inventory.amount).where(Inventory.barcode == barcode)
         füllmenge = json.loads(session.scalars(stmt).one_or_none() or "")
 
-        data = [{"datum": i[0], "Füllmenge": i[1]} for i in füllmenge]
+        data = [{"date": i[0], i18n.get("Amount"): i[1]} for i in füllmenge]
         return data
 
 
@@ -529,7 +531,7 @@ def get_version_number() -> str | None:
 
 
 def import_gestis(path_to_xlsx: str | PathLike, lang: str):
-    """Replaces all the enties in the table ``gestisdaten`` with entries from the imported ``.xlsx``
+    """Replaces all the enties in the table ``gestis`` with entries from the imported ``.xlsx``
 
     Args:
         path_to_xlsx (str | PathLike): Path to the ``.xlsx`` file that can be downloaded on the GESTIS website
@@ -551,27 +553,27 @@ def import_gestis(path_to_xlsx: str | PathLike, lang: str):
     )
     df = df.rename(
         columns={
-            df.columns[0]: "ZVG",
-            df.columns[1]: "CAS",
-            df.columns[3]: "Summenformel",
-            df.columns[4]: "Molmasse",
+            df.columns[0]: "zvg",
+            df.columns[1]: "cas",
+            df.columns[2]: "name",
+            df.columns[3]: "formular",
+            df.columns[4]: "molarmass",
         }
     )
-    df = df.set_index("ZVG")
+    df = df.set_index("zvg")
 
-    for i, value in df["Molmasse"].items():
+    for i, value in df["molarmass"].items():
         try:
-            df.at[i, "Molmasse"] = float(value)
+            df.at[i, "molarmass"] = float(value)
         except:
-            df.at[i, "Molmasse"] = None
+            df.at[i, "molarmass"] = None
 
-    df["Molmasse"] = df["Molmasse"].apply(pd.to_numeric)
+    df["molarmass"] = df["molarmass"].apply(pd.to_numeric)
 
-    df["Summenformel"] = [str(i).replace("\n", ", ") for i in df["Summenformel"]]
-    for i, value in df["Summenformel"].items():
+    df["formular"] = [str(i).replace("\n", ", ") for i in df["formular"]]
+    for i, value in df["formular"].items():
         if value.strip() == "" or value == "." or value.lower() == "nan":
-            df.at[i, "Summenformel"] = None
-
+            df.at[i, "formular"] = None
     df.to_sql("gestis", engine, if_exists="delete_rows")
 
 
@@ -592,24 +594,26 @@ def init_app(lang: str):
         Base.metadata.create_all(engine)
 
         # --- BEGIN Insert basic master data ---
-        insertStammdaten(Buildings, ["Gebäude_ID", "Gebäude"], ["0", i18n.get("None")])
+        insertStammdaten(
+            Buildings, ["building_id", "building"], ["0", i18n.get("None")]
+        )
         insertStammdaten(
             Manufacturers,
-            ["Hersteller_ID", "Hersteller"],
+            ["manufacturer_id", "manufacturer"],
             ["0", i18n.get("Nothing selected")],
         )
         insertStammdaten(
             Suppliers,
-            ["Lieferant_ID", "Lieferant"],
+            ["supplier_id", "supplier"],
             ["0", i18n.get("Nothing selected")],
         )
         insertStammdaten(
             Rooms,
-            ["Raum_ID", "Gebäude_ID", "Raum"],
+            ["room_id", "building_id", "building"],
             ["0", "0", i18n.get("Nothing selected")],
         )
-        insertStammdaten(Units, ["Mengeneinheit_ID", "Mengeneinheit"], ["1", "g"])
-        insertStammdaten(Units, ["Mengeneinheit_ID", "Mengeneinheit"], ["2", "mL"])
+        insertStammdaten(Units, ["unit_id", "unit"], ["1", "g"])
+        insertStammdaten(Units, ["unit_id", "unit"], ["2", "mL"])
         # --- END ---
 
     # --- BEGIN Retrieve GESTIS tables and add one of them to the master data according to lang ---

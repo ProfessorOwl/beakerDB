@@ -91,7 +91,7 @@ def get_callbacks(app):
         )
         if not rows:  # Wenn nichts ausgewählt ist
             return nothing_selected
-        barcode = rows[0].get("Barcode", "")
+        barcode = rows[0].get("barcode", "")
         # Wenn der Barcode nicht in der Tabelle hinterlegt ist, dann zeige den Platzhalter an und setze die anderen Werte zurück
         if functions.select_value(barcode, "barcode", functions.Inventory) == "":
             return nothing_selected
@@ -101,9 +101,7 @@ def get_callbacks(app):
         füllmenge_data = []
 
         # Extrahiere die letzte Füllmenge aus dem JSON-Array aller gespeicherten Füllmengen
-        füllmenge_raw = functions.select_value(
-            barcode, "füllmenge", functions.Inventory
-        )
+        füllmenge_raw = functions.select_value(barcode, "amount", functions.Inventory)
         if len(füllmenge_raw or []) != 0 and füllmenge_raw:
             füllmenge = json.loads(füllmenge_raw)
             füllmenge_last_entry = füllmenge[-1][1]
@@ -121,18 +119,18 @@ def get_callbacks(app):
                 functions.select_value(barcode, x, functions.Inventory)
                 for x in [
                     "name",
-                    "summenformel",
+                    "formular",
                     "cas",
-                    "mengeneinheit_id",
-                    "kaufdatum",
-                    "lieferant_id",
-                    "hersteller_id",
-                    "raum_id",
-                    "reinheit",
-                    "konzentration",
-                    "molmasse",
-                    "lösungsmittel",
-                    "zuletzt_geprüft",
+                    "unit_id",
+                    "purchasedate",
+                    "supplier_id",
+                    "manufacturer_id",
+                    "room_id",
+                    "purity",
+                    "concentration",
+                    "molarmass",
+                    "solvent",
+                    "lastchecked",
                     "zvg",
                 ]
             ],
@@ -171,31 +169,31 @@ def get_callbacks(app):
         n_clicks,
         name,
         barcode,
-        füllmenge,
-        kaufdatum,
-        herstellerID,
-        lieferantID,
-        raumID,
-        reinheit,
-        konzentration,
-        lösungsmittel,
-        casnr,
-        molmasse,
-        summenformel,
-        mengeneinheitID,
-        zuletzt_geprüft,
+        amount,
+        purchasedate,
+        manufacturer_id,
+        supplier_id,
+        room_id,
+        purity,
+        concentration,
+        solvent,
+        cas,
+        molarmass,
+        formular,
+        unit_id,
+        lastchecked,
         zvg,
         einstellungen_cache,
     ):
         # Falls die Felder leer sind trage 0 ein, was dem leeren Wert in der SQL-Tabelle entspricht
-        if herstellerID == None or "":
-            herstellerID = 0
-        if lieferantID == None or "":
-            lieferantID = 0
-        if raumID == None or "":
-            raumID = 0
-        if mengeneinheitID == None or "":
-            mengeneinheitID = 0
+        if manufacturer_id == None or "":
+            manufacturer_id = 0
+        if supplier_id == None or "":
+            supplier_id = 0
+        if room_id == None or "":
+            room_id = 0
+        if unit_id == None or "":
+            unit_id = 0
 
         messages = [
             dict(  # ...und gebe eine Notifikation heraus
@@ -211,8 +209,8 @@ def get_callbacks(app):
                 color="green.3",
             )
         ]
-        if "," in str(füllmenge):
-            füllmenge = füllmenge.replace(",", ".")
+        if "," in str(amount):
+            amount = amount.replace(",", ".")
             messages.append(
                 dict(  # ...und gebe eine Notifikation heraus
                     title=i18n.get("Warning!"),
@@ -228,8 +226,8 @@ def get_callbacks(app):
                     color="yellow.3",
                 )
             )
-        if "," in str(molmasse):
-            molmasse = molmasse.replace(",", ".")
+        if "," in str(molarmass):
+            molarmass = molarmass.replace(",", ".")
             messages.append(
                 dict(  # ...und gebe eine Notifikation heraus
                     title=i18n.get("Warning!"),
@@ -251,9 +249,9 @@ def get_callbacks(app):
         if (
             einstellungen_cache.get("datumsänderung") == "change"
             or einstellungen_cache.get("datumsänderung") == "createchange"
-        ) and zuletzt_geprüft != TODAY:
-            zuletzt_geprüft = TODAY
-            set_props("input-geprüft", {"value": zuletzt_geprüft})
+        ) and lastchecked != TODAY:
+            lastchecked = TODAY
+            set_props("input-geprüft", {"value": lastchecked})
             messages.append(
                 dict(  # ...und gebe eine Notifikation heraus
                     title="Achtung!",
@@ -273,8 +271,8 @@ def get_callbacks(app):
         # Lade die historischen Einträge der Füllmenge und ergänze die neu eingetragene Füllmenge, falls sie nicht schon im Array unter diesem Datum vorhanden ist.
         füllmenge_history, füllmenge_data = functions.save_füllmenge(
             barcode,
-            zuletzt_geprüft,
-            füllmenge,
+            lastchecked,
+            amount,
         )
 
         füllmenge_hidden = True
@@ -288,37 +286,37 @@ def get_callbacks(app):
             [
                 "name",
                 "barcode",
-                "füllmenge",
-                "kaufdatum",
-                "reinheit",
-                "konzentration",
-                "lösungsmittel",
+                "amount",
+                "purchasedate",
+                "purity",
+                "concentration",
+                "solvent",
                 "cas",
-                "molmasse",
-                "summenformel",
-                "hersteller_id",
-                "lieferant_id",
-                "raum_id",
-                "mengeneinheit_id",
-                "zuletzt_geprüft",
+                "molarmass",
+                "formular",
+                "manufacturer_id",
+                "supplier_id",
+                "room_id",
+                "unit_id",
+                "lastchecked",
                 "zvg",
             ],
             [
                 name,
                 barcode,
                 füllmenge_history,
-                kaufdatum,
-                reinheit,
-                konzentration,
-                lösungsmittel,
-                casnr,
-                molmasse,
-                summenformel,
-                herstellerID,
-                lieferantID,
-                raumID,
-                mengeneinheitID,
-                zuletzt_geprüft,
+                purchasedate,
+                purity,
+                concentration,
+                solvent,
+                cas,
+                molarmass,
+                formular,
+                manufacturer_id,
+                supplier_id,
+                room_id,
+                unit_id,
+                lastchecked,
                 zvg,
             ],
             functions.Inventory,
@@ -350,7 +348,7 @@ def get_callbacks(app):
         elif ctx.triggered_id == "löschen_bestätigung_abbrechen":
             return no_update, no_update, no_update, False
         elif ctx.triggered_id == "löschen_bestätigung_ja":
-            barcode = rows[0].get("Barcode", "")
+            barcode = rows[0].get("barcode", "")
             functions.delete_entry(barcode, functions.Inventory)
             global df  # Greife auf den globalen Dataframe zurück, damit die Tabelle auch nach Pagerefresh oder auf einem anderen Computer geändert ist
             df = functions.get_main_table()
@@ -536,35 +534,35 @@ def get_callbacks(app):
         n_clicks,
         name,
         barcode,
-        füllmenge,
-        kaufdatum,
-        herstellerID,
-        lieferantID,
-        raumID,
-        reinheit,
-        konzentration,
-        lösungsmittel,
-        casnr,
-        molmasse,
-        summenformel,
-        mengeneinheitID,
-        zuletzt_geprüft,
+        amount,
+        purchasedate,
+        manufacturer_id,
+        supplier_id,
+        room_id,
+        purity,
+        concentration,
+        solvent,
+        cas,
+        molarmass,
+        formular,
+        unit_id,
+        lastchecked,
         zvg,
     ):
         # Falls die ID-Felder leer sind trage 0 ein, was dem "Nicht ausgewählt" in der SQL-Tabelle entspricht
-        if herstellerID == None or "":
-            herstellerID = 0
-        if lieferantID == None or "":
-            lieferantID = 0
-        if raumID == None or "":
-            raumID = 0
-        if mengeneinheitID == None or "":
-            mengeneinheitID = 0
+        if manufacturer_id == None or "":
+            manufacturer_id = 0
+        if supplier_id == None or "":
+            supplier_id = 0
+        if room_id == None or "":
+            room_id = 0
+        if unit_id == None or "":
+            unit_id = 0
         # Trage bei den Reelen Zahlen None ein, falls sie leer gelassen werden. "" gibt als String andernfalls einen Fehler.
-        if füllmenge == "":
-            füllmenge = None
-        if molmasse == "":
-            molmasse = None
+        if amount == "":
+            amount = None
+        if molarmass == "":
+            molarmass = None
 
         messages = [
             dict(  # ...und gebe eine Notifikation heraus
@@ -581,8 +579,8 @@ def get_callbacks(app):
             )
         ]
 
-        if "," in str(füllmenge) and füllmenge:
-            füllmenge = füllmenge.replace(",", ".")
+        if "," in str(amount) and amount:
+            amount = amount.replace(",", ".")
             messages.append(
                 dict(  # ...und gebe eine Notifikation heraus
                     title="Achtung!",
@@ -599,8 +597,8 @@ def get_callbacks(app):
                 )
             )
 
-        if "," in str(molmasse) and molmasse:
-            molmasse = molmasse.replace(",", ".")
+        if "," in str(molarmass) and molarmass:
+            molarmass = molarmass.replace(",", ".")
             messages.append(
                 dict(  # ...und gebe eine Notifikation heraus
                     title="Achtung!",
@@ -619,45 +617,45 @@ def get_callbacks(app):
         # Lade die historischen Einträge der Füllmenge und ergänze die neu eingetragene Füllmenge, falls sie nicht schon im Array unter diesem Datum vorhanden ist.
         füllmenge_history, füllmenge_data = functions.save_füllmenge(
             barcode,
-            zuletzt_geprüft,
-            füllmenge,
+            lastchecked,
+            amount,
         )
         # Trage alle Werte in der Datenbank ein
         functions.create_row(
             [
                 "name",
                 "barcode",
-                "füllmenge",
-                "kaufdatum",
-                "reinheit",
-                "konzentration",
-                "lösungsmittel",
+                "amount",
+                "purchasedate",
+                "purity",
+                "concentration",
+                "solvent",
                 "cas",
-                "molmasse",
-                "summenformel",
-                "hersteller_id",
-                "lieferant_id",
-                "raum_id",
-                "mengeneinheit_id",
-                "zuletzt_geprüft",
+                "molarmass",
+                "formular",
+                "manufacturer_id",
+                "supplier_id",
+                "room_id",
+                "unit_id",
+                "lastchecked",
                 "zvg",
             ],
             [
                 name,
                 barcode,
                 füllmenge_history,
-                kaufdatum,
-                reinheit,
-                konzentration,
-                lösungsmittel,
-                casnr,
-                molmasse,
-                summenformel,
-                herstellerID,
-                lieferantID,
-                raumID,
-                mengeneinheitID,
-                zuletzt_geprüft,
+                purchasedate,
+                purity,
+                concentration,
+                solvent,
+                cas,
+                molarmass,
+                formular,
+                manufacturer_id,
+                supplier_id,
+                room_id,
+                unit_id,
+                lastchecked,
                 zvg,
             ],
             functions.Inventory(),
@@ -731,9 +729,9 @@ def get_callbacks(app):
 
         # Use the names of the available buildings in a select component
         # instead of only the building ID
-        if columnDefs[1].get("field") == "Gebäude_ID":
+        if columnDefs[1].get("field") == "building_id":
             label_value = functions.generateSelectData(
-                functions.Buildings, ["gebäude_id", "gebäude"]
+                functions.Buildings, ["building_id", "building"]
             )
 
             data_lookup = {i.get("value"): i.get("label") for i in label_value}
@@ -744,7 +742,7 @@ def get_callbacks(app):
             data = [i.get("value", "") + ": " + i.get("label", "") for i in label_value]
 
             # Change the ID column, so that the names align with the values of the selector
-            df["Gebäude_ID"] = df["Gebäude_ID"].map(
+            df["building_id"] = df["building_id"].map(
                 lambda x: str(x) + ": " + str(data_lookup.get(str(x)))
             )
 
@@ -969,7 +967,7 @@ def get_callbacks(app):
                 if c != "op":
                     # Die Spalte "Gebäude_ID" bei Räumen enthält nicht die ID, sondern einen zusammengesetzten String aus ID und Wert. Extrahiere also vor dem Speichern die ID.
                     columns.append(c)
-                    if c == "Gebäude_ID":
+                    if c == "building_id":
                         try:
                             values.append(v.split(":")[0])
                         except:  # Bei den Gebäuden ist die Gebäude_ID eine gewöhnliche ID, also muss sie nicht vorher gesplitted werden.
@@ -1163,25 +1161,25 @@ def get_callbacks(app):
                 functions.generateSelectData_Namen(),
                 functions.generateSelectData(
                     functions.Units,
-                    ["mengeneinheit_id", "mengeneinheit"],
+                    ["unit_id", "unit"],
                 ),
                 functions.generateSelectData(
-                    functions.Manufacturers, ["hersteller_id", "hersteller"]
+                    functions.Manufacturers, ["manufacturer_id", "manufacturer"]
                 ),
                 functions.generateSelectData(
-                    functions.Suppliers, ["lieferant_id", "lieferant"]
+                    functions.Suppliers, ["supplier_id", "supplier"]
                 ),
                 functions.generateSelectData_Räume(),
                 functions.generateSelectData_Namen(),
                 functions.generateSelectData(
                     functions.Units,
-                    ["mengeneinheit_id", "mengeneinheit"],
+                    ["unit_id", "unit"],
                 ),
                 functions.generateSelectData(
-                    functions.Manufacturers, ["hersteller_id", "hersteller"]
+                    functions.Manufacturers, ["manufacturer_id", "manufacturer"]
                 ),
                 functions.generateSelectData(
-                    functions.Suppliers, ["lieferant_id", "lieferant"]
+                    functions.Suppliers, ["supplier_id", "supplier"]
                 ),
                 functions.generateSelectData_Räume(),
             )
@@ -1229,13 +1227,13 @@ def get_callbacks(app):
         barcode = event.get("detail").get("scanCode")
 
         filter = {
-            "Barcode": {
+            "barcode": {
                 "filterType": "text",
                 "type": "contains",
                 "filter": barcode,
             }
         }
-        return filter, [{"Barcode": barcode}]
+        return filter, [{"barcode": barcode}]
 
     # Reset all filters from mainGrid when the Filter button is pressed
     @app.callback(
@@ -1284,16 +1282,16 @@ def get_callbacks(app):
 
         setField("cas", "input-cas-nr")
         setField("name", "input-name")
-        setField("summenformel", "input-summenformel")
-        setField("raum_id", "input-raum")
-        setField("lieferant_id", "input-lieferant")
-        setField("mengeneinheit_id", "input-mengeneinheit")
-        setField("kaufdatum", "input-kaufdatum")
-        setField("hersteller_id", "input-hersteller")
-        setField("reinheit", "input-reinheit")
-        setField("konzentration", "input-konzentration")
-        setField("lösungsmittel", "input-lösungsmittel")
-        setField("molmasse", "input-molmasse")
+        setField("formular", "input-summenformel")
+        setField("room_id", "input-raum")
+        setField("supplier_id", "input-lieferant")
+        setField("unit_id", "input-mengeneinheit")
+        setField("purchasedate", "input-kaufdatum")
+        setField("manufacturer_id", "input-hersteller")
+        setField("purity", "input-reinheit")
+        setField("concentration", "input-konzentration")
+        setField("solvent", "input-lösungsmittel")
+        setField("molarmass", "input-molmasse")
         setField("zvg", "input-zvg")
 
         if (
@@ -1642,7 +1640,7 @@ def get_callbacks(app):
         State("mainGrid", "selectedRows"),
     )
     def open_füllstände_verlauf(n_clicks, opened, rows):
-        barcode = rows[0].get("Barcode", "")
+        barcode = rows[0].get("barcode", "")
         data = functions.get_füllmenge_data(barcode)
         return True, data
 
@@ -1787,7 +1785,7 @@ def get_callbacks(app):
                     icon=icons.unarchive,
                 ),
                 df.to_dict("records"),
-                [{"Barcode": ""}],
+                [{"barcode": ""}],
             )
         else:
             df = functions.get_main_table()
@@ -1806,7 +1804,7 @@ def get_callbacks(app):
                     icon=icons.archive,
                 ),
                 df.to_dict("records"),
-                [{"Barcode": ""}],
+                [{"barcode": ""}],
             )
 
     # Control the logic of the to_archive Button
@@ -1818,7 +1816,7 @@ def get_callbacks(app):
         State("mainGrid", "selectedRows"),
     )
     def transfer_to_archive(n_clicks, left_section, rows):
-        barcode = rows[0].get("Barcode", "")
+        barcode = rows[0].get("barcode", "")
 
         if left_section:
             functions.archive_row(barcode, False)

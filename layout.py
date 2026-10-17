@@ -106,38 +106,38 @@ fensterLinks = html.Div(
         ),
         dag.AgGrid(
             id="mainGrid",
-            getRowId="params.data.Barcode",
+            getRowId="params.data.barcode",
             columnDefs=[
                 {
-                    "field": "Barcode",
+                    "field": "barcode",
                     "sortable": True,
                     "sort": "asc",
                     "headerName": i18n.get("Barcode"),
                 },
                 {
-                    "field": "Name",
+                    "field": "name",
                     "sortable": True,
                     "headerName": i18n.get("Name"),
                 },
                 {
-                    "field": "Summenformel",
+                    "field": "formular",
                     "cellRenderer": "SummenformelRenderer",
                     "sortable": True,
                     "headerName": i18n.get("Molecular formular"),
                 },
                 {
-                    "field": "Zuletzt_geprüft",
+                    "field": "lastchecked",
                     "headerName": i18n.get("Last checked"),
                     "sortable": True,
                     "filter": "agTextColumnFilter",
                 },
                 {
-                    "field": "Raum",
+                    "field": "room",
                     "sortable": True,
                     "headerName": i18n.get("Room"),
                 },
                 {
-                    "field": "CAS",
+                    "field": "cas",
                     "headerName": i18n.get("CAS no."),
                     "sortable": True,
                 },
@@ -326,8 +326,8 @@ fensterRechts = [
                                                 data=functions.generateSelectData(
                                                     functions.Units,
                                                     [
-                                                        "mengeneinheit_id",
-                                                        "mengeneinheit",
+                                                        "unit_id",
+                                                        "unit",
                                                     ],
                                                 ),
                                                 w=60,
@@ -380,7 +380,7 @@ fensterRechts = [
                                     allowDeselect=False,
                                     data=functions.generateSelectData(
                                         functions.Manufacturers,
-                                        ["hersteller_id", "hersteller"],
+                                        ["manufacturer_id", "manufacturer"],
                                     ),
                                 ),
                                 dmc.Select(  # Lieferant
@@ -391,7 +391,7 @@ fensterRechts = [
                                     allowDeselect=False,
                                     data=functions.generateSelectData(
                                         functions.Suppliers,
-                                        ["lieferant_id", "lieferant"],
+                                        ["supplier_id", "supplier"],
                                     ),
                                 ),
                                 dmc.Select(  # Raum
@@ -663,8 +663,8 @@ modalNeuerEintragInner = dmc.Stack(
                                                     data=functions.generateSelectData(
                                                         functions.Units,
                                                         [
-                                                            "mengeneinheit_id",
-                                                            "mengeneinheit",
+                                                            "unit_id",
+                                                            "unit",
                                                         ],
                                                     ),
                                                     w=60,
@@ -689,7 +689,7 @@ modalNeuerEintragInner = dmc.Stack(
                                         value="0",
                                         data=functions.generateSelectData(
                                             functions.Manufacturers,
-                                            ["hersteller_id", "hersteller"],
+                                            ["manufacturer_id", "manufacturer"],
                                         ),
                                     ),
                                     dmc.Select(  # Lieferant
@@ -700,7 +700,7 @@ modalNeuerEintragInner = dmc.Stack(
                                         value="0",
                                         data=functions.generateSelectData(
                                             functions.Suppliers,
-                                            ["lieferant_id", "lieferant"],
+                                            ["supplier_id", "supplier"],
                                         ),
                                     ),
                                     dmc.Select(  # Raum
@@ -1099,8 +1099,8 @@ modal_füllmenge_verlauf_inner = dmc.Stack(
         dmc.LineChart(
             id="füllstände_kurve",
             curveType="linear",
-            dataKey="datum",
-            series=[{"name": "Füllmenge", "color": "indigo"}],
+            dataKey="date",
+            series=[{"name": i18n.get("Amount"), "color": "indigo"}],
             data=[],
             h=300,
         ),
