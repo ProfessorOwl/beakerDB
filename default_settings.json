@@ -1,5 +1,5 @@
 {
-    "datumsänderung": "never", 
-    "backup_häufigkeit": "never", 
-    "backup_häufigkeit_minuten": 1
+    "settings_select_set_date_automatically": "never", 
+    "settings_select_backup_frequency": "never", 
+    "settings_input_backup_frequency": 1
 }

@@ -27,12 +27,12 @@
     text-align: right;
 }
 
-#füllmenge_sparkline_wrapper .recharts-responsive-container :hover {
+#wrapper_sparkline_amount .recharts-responsive-container :hover {
     cursor: pointer;
     filter: brightness(0.8) saturate(135%)
 }
 
-#füllmenge_sparkline_wrapper .recharts-surface :hover {
+#wrapper_sparkline_amount .recharts-surface :hover {
     filter: initial;
 }
 
@@ -49,68 +49,68 @@
 
 /* Mantine Breakpoint xxl */
 @media (max-width: 104em) { 
-    #button-filter-reset {
+    #btn_reset_filter {
         padding: 0px 7px 0px 7px;
     }
 
-    #button-filter-reset .mantine-Button-section {
+    #btn_reset_filter .mantine-Button-section {
         margin: 0px;
     }
 }
 
 /* Mantine Breakpoint xl */
 @media (max-width: 90em) {
-    #button-stammdaten, 
-    #button_to_gestis, 
-    #button_to_archive,
-    #modal-button-speichern,
-    #modal-button-abbrechen {
+    #btn_edit_masterdata, 
+    #btn_open_gestis, 
+    #btn_archive_entry,
+    #modal_btn_save_entry,
+    #modal_btn_cancel {
         padding: 0px 7px 0px 7px;
     }
 
-    #button-speichern {
+    #btn_save_entry {
         flex: 3 !important
     }
 
-    #button-stammdaten .mantine-Button-section,
-    #button_to_gestis .mantine-Button-section,
-    #button_to_archive .mantine-Button-section,
-    #modal-button-speichern .mantine-Button-section,
-    #modal-button-abbrechen .mantine-Button-section {
+    #btn_edit_masterdata .mantine-Button-section,
+    #btn_open_gestis .mantine-Button-section,
+    #btn_archive_entry .mantine-Button-section,
+    #modal_btn_save_entry .mantine-Button-section,
+    #modal_btn_cancel .mantine-Button-section {
         margin: 0px;
     }
 }
 
 /* Mantine Breakpoint lg */
 @media (max-width: 74em) {
-    #button-open-modal {
+    #btn_create_new_entry {
         padding: 0px 5px 0px 5px;
     }
 
-    #button-open-modal .mantine-Button-section {
+    #btn_create_new_entry .mantine-Button-section {
         margin: 0px;
     }
 }
 
 /* Mantine Breakpoint md */
 @media (max-width: 64em) {
-    #button-speichern {
+    #btn_save_entry {
         padding: 0px 5px 0px 5px;
         flex: 1 !important
     }
 
-    #button-speichern .mantine-Button-section {
+    #btn_save_entry .mantine-Button-section {
         margin: 0px;
     }
 
-    #button_wrapper {
+    #wrapper_main_buttons {
         gap: var(--mantine-spacing-sm)
     }
 }
 
 /* Mantine Breakpoint sm */
 @media (max-width: 48em) {
-        #button_wrapper {
+        #wrapper_main_buttons {
         gap: 0.5rem
     }
 

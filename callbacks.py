@@ -30,10 +30,10 @@ from default_values import DEFAULT_SETTINGS, TODAY, LANG
 def get_callbacks(app):
 
     # Initialize the main table with fresh data from the database.
-    # The input of mainWrapper is just a dummy. The callback gets fired everytime mainWrapper is initialized on the website by default.
+    # The input of wrapper_main is just a dummy. The callback gets fired everytime wrapper_main is initialized on the website by default.
     @app.callback(
-        Output("mainGrid", "rowData"),
-        Input("mainWrapper", "children"),
+        Output("main_table", "rowData"),
+        Input("wrapper_main", "children"),
         prevent_initial_call=False,
     )
     def init_mainGrid(children):
@@ -41,27 +41,27 @@ def get_callbacks(app):
 
     # Callback das jedes Feld aktualisiert, sobald man eine neue Zeile in der Tabelle auswählt
     @app.callback(
-        Output("input-barcode", "value"),
-        Output("input-füllmenge", "value"),
-        Output("input-name", "value"),
-        Output("input-summenformel", "value"),
-        Output("input-cas-nr", "value"),
-        Output("input-mengeneinheit", "value"),
-        Output("input-kaufdatum", "value"),
-        Output("input-lieferant", "value"),
-        Output("input-hersteller", "value"),
-        Output("input-raum", "value"),
-        Output("input-reinheit", "value"),
-        Output("input-konzentration", "value"),
-        Output("input-molmasse", "value"),
-        Output("input-lösungsmittel", "value"),
-        Output("input-geprüft", "value"),
-        Output("input-zvg", "value"),
-        Output("inputContainer", "style"),
-        Output("inputPlaceholder", "display"),
-        Output("füllmenge_sparkline_wrapper", "hidden"),
-        Output("füllmenge_sparkline", "data"),
-        Input("mainGrid", "selectedRows"),
+        Output("input_barcode", "value"),
+        Output("input_amount", "value"),
+        Output("input_name", "value"),
+        Output("input_formular", "value"),
+        Output("input_cas", "value"),
+        Output("input_unit", "value"),
+        Output("input_purchasedate", "value"),
+        Output("input_supplier", "value"),
+        Output("input_manufacturer", "value"),
+        Output("input_room", "value"),
+        Output("input_purity", "value"),
+        Output("input_concentration", "value"),
+        Output("input_molarmass", "value"),
+        Output("input_solvent", "value"),
+        Output("input_lastchecked", "value"),
+        Output("input_zvg", "value"),
+        Output("wrapper_entry", "style"),
+        Output("placeholder_entry", "display"),
+        Output("wrapper_sparkline_amount", "hidden"),
+        Output("sparkline_amount", "data"),
+        Input("main_table", "selectedRows"),
     )
     def update_fields(rows):
         patched_input = Patch()
@@ -84,7 +84,7 @@ def get_callbacks(app):
             "",
             "",
             "",
-            patched_input,  # Blende "inputContainer" aus
+            patched_input,  # Blende "wrapper_entry" aus
             "flex",  # Blende den Platzhalter ein
             True,
             no_update,
@@ -142,28 +142,28 @@ def get_callbacks(app):
 
     # Sobald der Speicherbutton gedrückt wird, aktualisiere die Werte in der sichtbaren Tabelle wie auch in der Datenbank
     @app.callback(
-        Output("mainGrid", "rowData", allow_duplicate=True),
-        Output("notification-container", "sendNotifications"),
-        Output("füllmenge_sparkline_wrapper", "hidden", allow_duplicate=True),
-        Output("füllmenge_sparkline", "data", allow_duplicate=True),
-        Input("button-speichern", "n_clicks"),
-        State("input-name", "value"),
-        State("input-barcode", "value"),
-        State("input-füllmenge", "value"),
-        State("input-kaufdatum", "value"),
-        State("input-hersteller", "value"),
-        State("input-lieferant", "value"),
-        State("input-raum", "value"),
-        State("input-reinheit", "value"),
-        State("input-konzentration", "value"),
-        State("input-lösungsmittel", "value"),
-        State("input-cas-nr", "value"),
-        State("input-molmasse", "value"),
-        State("input-summenformel", "value"),
-        State("input-mengeneinheit", "value"),
-        State("input-geprüft", "value"),
-        State("input-zvg", "value"),
-        State("einstellungenCache", "data"),
+        Output("main_table", "rowData", allow_duplicate=True),
+        Output("notifications", "sendNotifications"),
+        Output("wrapper_sparkline_amount", "hidden", allow_duplicate=True),
+        Output("sparkline_amount", "data", allow_duplicate=True),
+        Input("btn_save_entry", "n_clicks"),
+        State("input_name", "value"),
+        State("input_barcode", "value"),
+        State("input_amount", "value"),
+        State("input_purchasedate", "value"),
+        State("input_manufacturer", "value"),
+        State("input_supplier", "value"),
+        State("input_room", "value"),
+        State("input_purity", "value"),
+        State("input_concentration", "value"),
+        State("input_solvent", "value"),
+        State("input_cas", "value"),
+        State("input_molarmass", "value"),
+        State("input_formular", "value"),
+        State("input_unit", "value"),
+        State("input_lastchecked", "value"),
+        State("input_zvg", "value"),
+        State("cache_settings", "data"),
     )
     def save_data(
         n_clicks,
@@ -247,11 +247,13 @@ def get_callbacks(app):
         # Wenn ja, dann hänge eine Nachricht an, dass das geschehen ist und überschreibe das vorherige Datum mit heute.
         einstellungen_cache = json.loads(einstellungen_cache)
         if (
-            einstellungen_cache.get("datumsänderung") == "change"
-            or einstellungen_cache.get("datumsänderung") == "createchange"
+            einstellungen_cache.get("settings_select_set_date_automatically")
+            == "change"
+            or einstellungen_cache.get("settings_select_set_date_automatically")
+            == "createchange"
         ) and lastchecked != TODAY:
             lastchecked = TODAY
-            set_props("input-geprüft", {"value": lastchecked})
+            set_props("input_lastchecked", {"value": lastchecked})
             messages.append(
                 dict(  # ...und gebe eine Notifikation heraus
                     title="Achtung!",
@@ -328,14 +330,14 @@ def get_callbacks(app):
 
     # Kontrolliert die Logik des "Eintrag Löschen" Modals
     @app.callback(
-        Output("mainGrid", "rowData", allow_duplicate=True),
-        Output("notification-container", "sendNotifications", allow_duplicate=True),
-        Output("mainGrid", "selectedRows", allow_duplicate=True),
-        Output("modal_bestätigung_löschen", "opened"),
-        Input("button-löschen", "n_clicks"),
-        Input("löschen_bestätigung_abbrechen", "n_clicks"),
-        Input("löschen_bestätigung_ja", "n_clicks"),
-        State("mainGrid", "selectedRows"),
+        Output("main_table", "rowData", allow_duplicate=True),
+        Output("notifications", "sendNotifications", allow_duplicate=True),
+        Output("main_table", "selectedRows", allow_duplicate=True),
+        Output("modal_confirm_delete", "opened"),
+        Input("btn_delete_entry", "n_clicks"),
+        Input("delete_btn_cancel", "n_clicks"),
+        Input("delete_btn_yes", "n_clicks"),
+        State("main_table", "selectedRows"),
     )
     def remove_row(
         n_clicks_löschen,
@@ -343,11 +345,11 @@ def get_callbacks(app):
         n_clicks_ja,
         rows,
     ):
-        if ctx.triggered_id == "button-löschen":
+        if ctx.triggered_id == "btn_delete_entry":
             return no_update, no_update, no_update, True
-        elif ctx.triggered_id == "löschen_bestätigung_abbrechen":
+        elif ctx.triggered_id == "delete_btn_cancel":
             return no_update, no_update, no_update, False
-        elif ctx.triggered_id == "löschen_bestätigung_ja":
+        elif ctx.triggered_id == "delete_btn_yes":
             barcode = rows[0].get("barcode", "")
             functions.delete_entry(barcode, functions.Inventory)
             global df  # Greife auf den globalen Dataframe zurück, damit die Tabelle auch nach Pagerefresh oder auf einem anderen Computer geändert ist
@@ -374,38 +376,38 @@ def get_callbacks(app):
 
     # Öffne bzw. schließe das Fenster, in dem ein neuer Eintrag hinzugefügt werden kann und setze alle Felder zurück
     @app.callback(
-        Output("modalNeuerEintrag", "opened"),
+        Output("modal_new_entry", "opened"),
         Output(
-            "modal-button-speichern",
+            "modal_btn_save_entry",
             "disabled",
             allow_duplicate=True,
         ),
-        Output("modal-input-barcode", "error", allow_duplicate=True),
-        Output("modal-input-name", "value"),
-        Output("modal-input-barcode", "value"),
-        Output("modal-input-summenformel", "value"),
-        Output("modal-input-cas-nr", "value"),
-        Output("modal-input-mengeneinheit", "value"),
-        Output("modal-input-füllmenge", "value"),
-        Output("modal-input-kaufdatum", "value"),
-        Output("modal-input-lieferant", "value"),
-        Output("modal-input-hersteller", "value"),
-        Output("modal-input-raum", "value"),
-        Output("modal-input-reinheit", "value"),
-        Output("modal-input-konzentration", "value"),
-        Output("modal-input-molmasse", "value"),
-        Output("modal-input-lösungsmittel", "value"),
-        Output("modal-input-geprüft", "value"),
-        Output("modal-input-barcode", "n_blur"),
-        Input("button-open-modal", "n_clicks"),
-        Input("modal-button-abbrechen", "n_clicks"),
-        Input("modal-button-speichern", "n_clicks"),
-        State("einstellungenCache", "data"),
-        State("modalNeuerEintrag", "opened"),
-        Input("scanListener", "n_events"),
-        State("scanListener", "event"),
-        State("modalNeuerEintrag", "opened"),
-        State("modalStammdaten", "opened"),
+        Output("modal_input_barcode", "error", allow_duplicate=True),
+        Output("modal_input_name", "value"),
+        Output("modal_input_barcode", "value"),
+        Output("modal_input_formular", "value"),
+        Output("modal_input_cas", "value"),
+        Output("modal_input_unit", "value"),
+        Output("modal_input_amount", "value"),
+        Output("modal_input_purchasedate", "value"),
+        Output("modal_input_supplier", "value"),
+        Output("modal_input_manufacturer", "value"),
+        Output("modal_input_room", "value"),
+        Output("modal_input_purity", "value"),
+        Output("modal_input_concentration", "value"),
+        Output("modal_input_molarmass", "value"),
+        Output("modal_input_solvent", "value"),
+        Output("modal_input_lastchecked", "value"),
+        Output("modal_input_barcode", "n_blur"),
+        Input("btn_create_new_entry", "n_clicks"),
+        Input("modal_btn_cancel", "n_clicks"),
+        Input("modal_btn_save_entry", "n_clicks"),
+        State("cache_settings", "data"),
+        State("modal_new_entry", "opened"),
+        Input("eventlistener_scan", "n_events"),
+        State("eventlistener_scan", "event"),
+        State("modal_new_entry", "opened"),
+        State("modal_masterdata", "opened"),
     )
     def openModalNeuerEintrag(
         n_clicks1,
@@ -422,14 +424,16 @@ def get_callbacks(app):
         patched_n_blur = no_update
 
         if (
-            einstellungen_cache.get("datumsänderung") == "create"
-            or einstellungen_cache.get("datumsänderung") == "createchange"
+            einstellungen_cache.get("settings_select_set_date_automatically")
+            == "create"
+            or einstellungen_cache.get("settings_select_set_date_automatically")
+            == "createchange"
         ):
             input_geprüft = TODAY
         else:
             input_geprüft = ""
 
-        if ctx.triggered_id == "scanListener":
+        if ctx.triggered_id == "eventlistener_scan":
             if (
                 not event
                 or not event.get("detail")
@@ -490,14 +494,14 @@ def get_callbacks(app):
 
     # Gebe einen Fehler zurück, wenn der Barcode bereits vergeben ist
     @app.callback(
-        Output("modal-input-barcode", "error", allow_duplicate=True),
+        Output("modal_input_barcode", "error", allow_duplicate=True),
         Output(
-            "modal-button-speichern",
+            "modal_btn_save_entry",
             "disabled",
             allow_duplicate=True,
         ),
-        Input("modal-input-barcode", "n_blur"),
-        State("modal-input-barcode", "value"),
+        Input("modal_input_barcode", "n_blur"),
+        State("modal_input_barcode", "value"),
     )
     def is_barcode_used(n_blur, barcode):
         selected = functions.select_value(barcode, "barcode", functions.Inventory)
@@ -510,25 +514,25 @@ def get_callbacks(app):
 
     # Speichere den neuen Eintrag
     @app.callback(
-        Output("mainGrid", "rowData", allow_duplicate=True),
-        Output("notification-container", "sendNotifications", allow_duplicate=True),
-        Input("modal-button-speichern", "n_clicks"),
-        State("modal-input-name", "value"),
-        State("modal-input-barcode", "value"),
-        State("modal-input-füllmenge", "value"),
-        State("modal-input-kaufdatum", "value"),
-        State("modal-input-hersteller", "value"),
-        State("modal-input-lieferant", "value"),
-        State("modal-input-raum", "value"),
-        State("modal-input-reinheit", "value"),
-        State("modal-input-konzentration", "value"),
-        State("modal-input-lösungsmittel", "value"),
-        State("modal-input-cas-nr", "value"),
-        State("modal-input-molmasse", "value"),
-        State("modal-input-summenformel", "value"),
-        State("modal-input-mengeneinheit", "value"),
-        State("modal-input-geprüft", "value"),
-        State("modal-input-zvg", "value"),
+        Output("main_table", "rowData", allow_duplicate=True),
+        Output("notifications", "sendNotifications", allow_duplicate=True),
+        Input("modal_btn_save_entry", "n_clicks"),
+        State("modal_input_name", "value"),
+        State("modal_input_barcode", "value"),
+        State("modal_input_amount", "value"),
+        State("modal_input_purchasedate", "value"),
+        State("modal_input_manufacturer", "value"),
+        State("modal_input_supplier", "value"),
+        State("modal_input_room", "value"),
+        State("modal_input_purity", "value"),
+        State("modal_input_concentration", "value"),
+        State("modal_input_solvent", "value"),
+        State("modal_input_cas", "value"),
+        State("modal_input_molarmass", "value"),
+        State("modal_input_formular", "value"),
+        State("modal_input_unit", "value"),
+        State("modal_input_lastchecked", "value"),
+        State("modal_input_zvg", "value"),
     )
     def save_new_data(
         n_clicks,
@@ -672,18 +676,18 @@ def get_callbacks(app):
     # Initialize the master table with the last value of the selector
     # Reset the master table, when "Reset changes" gets clicked
     @app.callback(
-        Output("modalStammdaten", "opened"),
-        Output("stammGrid", "columnDefs"),
-        Output("stammGrid", "rowData"),
-        Output("stammdatenCache", "data", allow_duplicate=True),
-        Output("notification-container", "clean"),
-        Output("stammdatenButtonZurücksetzen", "disabled"),
-        Output("stammdatenButtonSpeichern", "disabled"),
-        Input("button-stammdaten", "n_clicks"),
-        Input("stammdatenButtonZurücksetzen", "n_clicks"),
-        Input("stammdatenButtonAbbrechen", "n_clicks"),
-        Input("selectStammdaten", "value"),
-        State("modalStammdaten", "opened"),
+        Output("modal_masterdata", "opened"),
+        Output("masterdata_table", "columnDefs"),
+        Output("masterdata_table", "rowData"),
+        Output("cache_masterdata", "data", allow_duplicate=True),
+        Output("notifications", "clean"),
+        Output("btn_masterdata_reset", "disabled"),
+        Output("btn_masterdata_save", "disabled"),
+        Input("btn_edit_masterdata", "n_clicks"),
+        Input("btn_masterdata_reset", "n_clicks"),
+        Input("btn_masterdata_cancel", "n_clicks"),
+        Input("select_masterdata_tables", "value"),
+        State("modal_masterdata", "opened"),
     )
     def open_modal_masterdata(
         n_clicksModal: int | None,
@@ -692,7 +696,7 @@ def get_callbacks(app):
         selector: str,
         opened: bool,
     ):
-        if ctx.triggered_id == "stammdatenButtonAbbrechen":
+        if ctx.triggered_id == "btn_masterdata_cancel":
             return (
                 not opened,
                 no_update,
@@ -761,7 +765,7 @@ def get_callbacks(app):
                 }
             )
 
-        if ctx.triggered_id == "stammdatenButtonZurücksetzen":
+        if ctx.triggered_id == "btn_masterdata_reset":
             return (
                 no_update,
                 columnDefs,
@@ -772,7 +776,7 @@ def get_callbacks(app):
                 True,
             )
 
-        if ctx.triggered_id == "selectStammdaten":
+        if ctx.triggered_id == "select_masterdata_tables":
             return (
                 no_update,
                 columnDefs,
@@ -795,25 +799,25 @@ def get_callbacks(app):
 
     # Delete all notifications in the the queue and currently displayed when the modal is opened or closed
     @app.callback(
-        Output("notification-container", "clean", allow_duplicate=True),
-        Input("modalStammdaten", "opened"),
+        Output("notifications", "clean", allow_duplicate=True),
+        Input("modal_masterdata", "opened"),
     )
     def cleanNotificationContainer(opened):
         return True
 
     # Füge mit den Buttons Zeilen zur Stammdatentabelle hinzu oder lösche sie
     @app.callback(
-        Output("stammGrid", "rowTransaction"),
-        Output("stammGrid", "deleteSelectedRows"),
-        Output("stammdatenCache", "data", allow_duplicate=True),
-        Output("stammdatenButtonZurücksetzen", "disabled", allow_duplicate=True),
-        Output("stammdatenButtonSpeichern", "disabled", allow_duplicate=True),
-        Input("stammdatenButtonZeileHinzufügen", "n_clicks"),
-        Input("stammdatenButtonZeileLöschen", "n_clicks"),
-        State("stammGrid", "rowData"),
-        State("stammGrid", "columnDefs"),
-        State("stammdatenCache", "data"),
-        State("stammGrid", "selectedRows"),
+        Output("masterdata_table", "rowTransaction"),
+        Output("masterdata_table", "deleteSelectedRows"),
+        Output("cache_masterdata", "data", allow_duplicate=True),
+        Output("btn_masterdata_reset", "disabled", allow_duplicate=True),
+        Output("btn_masterdata_save", "disabled", allow_duplicate=True),
+        Input("btn_masterdata_add_row", "n_clicks"),
+        Input("btn_masterdata_delete_row", "n_clicks"),
+        State("masterdata_table", "rowData"),
+        State("masterdata_table", "columnDefs"),
+        State("cache_masterdata", "data"),
+        State("masterdata_table", "selectedRows"),
     )
     def addRemoveLine(
         n_clicks_hinzufügen, n_clicks_löschen, rowData, columnDefs, cache, selectedRows
@@ -840,7 +844,7 @@ def get_callbacks(app):
             unusedID = firstColumnEntries[-1] + 1
 
         # Wenn auf "Zeile hinzufügen" gedrückt wird:
-        if ctx.triggered_id == "stammdatenButtonZeileHinzufügen":
+        if ctx.triggered_id == "btn_masterdata_add_row":
             # Überprüfe, ob die Reihe schonmal editiert wurde und daher als dict hinterlegt ist, sonst wirft .get() einen Fehler, weile dort kein dict existiert.
             if isinstance(cache.get(str(unusedID)), dict):
                 if "Delete" in cache.get(str(unusedID)).get("op"):
@@ -858,7 +862,7 @@ def get_callbacks(app):
         firstColumnId = str(selectedRow.get(firstColumnName))
 
         # Wenn auf "Zeile löschen" gedrückt wird
-        if ctx.triggered_id == "stammdatenButtonZeileLöschen":
+        if ctx.triggered_id == "btn_masterdata_delete_row":
             # Überprüfe wieder, ob die Zeile bereits im Cache liegt
             if isinstance(cache.get(str(selectedRow.get(firstColumnName))), dict):
                 # Lösche die Zeile aus dem Cache, wenn sie mit inserted eingefügt wurde
@@ -889,9 +893,9 @@ def get_callbacks(app):
 
     # Blende den Zeile löschen-Button aus, wenn die Zeile mit der ID 0 ausgewählt ist.
     @app.callback(
-        Output("stammdatenButtonZeileLöschen", "disabled", allow_duplicate=True),
-        Input("stammGrid", "selectedRows"),
-        State("stammGrid", "columnDefs"),
+        Output("btn_masterdata_delete_row", "disabled", allow_duplicate=True),
+        Input("masterdata_table", "selectedRows"),
+        State("masterdata_table", "columnDefs"),
     )
     def toggleDeleteButton(selectedRows, columnDefs):
         if selectedRows:
@@ -906,12 +910,12 @@ def get_callbacks(app):
 
     # Speichere die Zeilen im Cache ab, wenn ein Zeileneintrag geändert wird
     @app.callback(
-        Output("stammdatenCache", "data", allow_duplicate=True),
-        Output("stammdatenButtonZurücksetzen", "disabled", allow_duplicate=True),
-        Output("stammdatenButtonSpeichern", "disabled", allow_duplicate=True),
-        Input("stammGrid", "cellValueChanged"),
-        State("stammdatenCache", "data"),
-        State("stammGrid", "columnDefs"),
+        Output("cache_masterdata", "data", allow_duplicate=True),
+        Output("btn_masterdata_reset", "disabled", allow_duplicate=True),
+        Output("btn_masterdata_save", "disabled", allow_duplicate=True),
+        Input("masterdata_table", "cellValueChanged"),
+        State("cache_masterdata", "data"),
+        State("masterdata_table", "columnDefs"),
     )
     def editLine(cellValue, cache, columnDefs):
         firstColumnName = columnDefs[0].get("field")
@@ -947,13 +951,13 @@ def get_callbacks(app):
 
     # Speichere die geänderten Zeilen der Stammdatentabelle in der Datenbank ab.
     @app.callback(
-        Output("stammdatenCache", "data", allow_duplicate=True),
-        Output("notification-container", "sendNotifications", allow_duplicate=True),
-        Output("stammdatenButtonZurücksetzen", "disabled", allow_duplicate=True),
-        Output("stammdatenButtonSpeichern", "disabled", allow_duplicate=True),
-        Input("stammdatenButtonSpeichern", "n_clicks"),
-        State("selectStammdaten", "value"),
-        State("stammdatenCache", "data"),
+        Output("cache_masterdata", "data", allow_duplicate=True),
+        Output("notifications", "sendNotifications", allow_duplicate=True),
+        Output("btn_masterdata_reset", "disabled", allow_duplicate=True),
+        Output("btn_masterdata_save", "disabled", allow_duplicate=True),
+        Input("btn_masterdata_save", "n_clicks"),
+        State("select_masterdata_tables", "value"),
+        State("cache_masterdata", "data"),
     )
     def saveData(n_clicks, selector, cache):
         cache = json.loads(cache)
@@ -1142,21 +1146,21 @@ def get_callbacks(app):
 
     # Aktualisiere alle Select-Felder, die Daten aus der Datenbank anzeigen, nachdem die Datenbank modifiziert wurde. Dadurch werden keine veralteten Daten angezeigt.
     @app.callback(
-        Output("input-selectFromDatabase", "data"),
-        Output("input-mengeneinheit", "data"),
-        Output("input-hersteller", "data"),
-        Output("input-lieferant", "data"),
-        Output("input-raum", "data"),
-        Output("modal-input-selectFromDatabase", "data"),
-        Output("modal-input-mengeneinheit", "data"),
-        Output("modal-input-hersteller", "data"),
-        Output("modal-input-lieferant", "data"),
-        Output("modal-input-raum", "data"),
-        Input("stammdatenButtonSpeichern", "n_clicks"),
-        Input("button-speichern", "n_clicks"),
+        Output("input_database_search", "data"),
+        Output("input_unit", "data"),
+        Output("input_manufacturer", "data"),
+        Output("input_supplier", "data"),
+        Output("input_room", "data"),
+        Output("modal_input_database_search", "data"),
+        Output("modal_input_unit", "data"),
+        Output("modal_input_manufacturer", "data"),
+        Output("modal_input_supplier", "data"),
+        Output("modal_input_room", "data"),
+        Input("btn_masterdata_save", "n_clicks"),
+        Input("btn_save_entry", "n_clicks"),
     )
     def updateLists(n_clicks_stammdaten, n_clicks_speichern):
-        if ctx.triggered_id == "stammdatenButtonSpeichern":
+        if ctx.triggered_id == "btn_masterdata_save":
             return (
                 functions.generateSelectData_Namen(),
                 functions.generateSelectData(
@@ -1200,21 +1204,21 @@ def get_callbacks(app):
     # Initialisiere den Scan-Script, der zwischen normalem Input und gescannten Input unterscheidet. Scanner soll als normale Tastatur funktionieren, wenn Stammdaten- oder "Neuer Eintrag"-Fenster geöffnet ist.
     clientside_callback(
         ClientsideFunction(namespace="helper", function_name="initScanner"),
-        Output("scanListener", "id"),
-        Input("scanListener", "id"),
-        Input("modalNeuerEintrag", "opened"),
-        Input("modalStammdaten", "opened"),
+        Output("eventlistener_scan", "id"),
+        Input("eventlistener_scan", "id"),
+        Input("modal_new_entry", "opened"),
+        Input("modal_masterdata", "opened"),
         prevent_initial_call=False  # fmt: skip
     )
 
-    # Search for the string that the scanListener returns after firing and select the first available entry
+    # Search for the string that the eventlistener_scan returns after firing and select the first available entry
     @app.callback(
-        Output("mainGrid", "filterModel"),
-        Output("mainGrid", "selectedRows"),
-        Input("scanListener", "n_events"),
-        State("scanListener", "event"),
-        State("modalNeuerEintrag", "opened"),
-        State("modalStammdaten", "opened"),
+        Output("main_table", "filterModel"),
+        Output("main_table", "selectedRows"),
+        Input("eventlistener_scan", "n_events"),
+        State("eventlistener_scan", "event"),
+        State("modal_new_entry", "opened"),
+        State("modal_masterdata", "opened"),
     )
     def handle_scan(n_events, event, isNeuerEintragOpen, isStammdatenOpen):
         if (
@@ -1235,17 +1239,17 @@ def get_callbacks(app):
         }
         return filter, [{"barcode": barcode}]
 
-    # Reset all filters from mainGrid when the Filter button is pressed
+    # Reset all filters from main_table when the Filter button is pressed
     @app.callback(
-        Output("mainGrid", "filterModel", allow_duplicate=True),
-        Output("button-filter-reset", "disabled"),
-        Input("button-filter-reset", "n_clicks"),
-        Input("mainGrid", "filterModel"),
+        Output("main_table", "filterModel", allow_duplicate=True),
+        Output("btn_reset_filter", "disabled"),
+        Input("btn_reset_filter", "n_clicks"),
+        Input("main_table", "filterModel"),
     )
     def resetFilter(n_clicks, filterModel):
-        if ctx.triggered_id == "button-filter-reset":
+        if ctx.triggered_id == "btn_reset_filter":
             return {}, True
-        elif ctx.triggered_id == "mainGrid":
+        elif ctx.triggered_id == "main_table":
             if len(filterModel) == 0:
                 return no_update, True
             else:
@@ -1253,17 +1257,17 @@ def get_callbacks(app):
 
     # Fill a new or existing entry with the contents of the gestis database or another existing entry
     @app.callback(
-        Output("modal-input-popover", "opened"),
-        Output("input-popover", "opened"),
-        Input("input-selectFromDatabaseConfirm", "n_clicks"),
-        Input("modal-input-selectFromDatabaseConfirm", "n_clicks"),
-        State("input-selectFromDatabase", "value"),
-        State("modal-input-selectFromDatabase", "value"),
+        Output("modal_popover_database_search", "opened"),
+        Output("popover_database_search", "opened"),
+        Input("btn_confirm_database_search", "n_clicks"),
+        Input("modal_btn_confirm_database_search", "n_clicks"),
+        State("input_database_search", "value"),
+        State("modal_input_database_search", "value"),
     )
     def updateFromExistingData(n_clicks, n_clicksModal, value, valueModal):
         modalPrefix = ""
-        if ctx.triggered_id == "modal-input-selectFromDatabaseConfirm":
-            modalPrefix = "modal-"
+        if ctx.triggered_id == "modal_btn_confirm_database_search":
+            modalPrefix = "modal_"
             existingData = functions.getExistingData(valueModal)
         else:
             existingData = functions.getExistingData(value)
@@ -1280,22 +1284,22 @@ def get_callbacks(app):
                 if i != "None":
                     set_props(modalPrefix + field, {"value": i})
 
-        setField("cas", "input-cas-nr")
-        setField("name", "input-name")
-        setField("formular", "input-summenformel")
-        setField("room_id", "input-raum")
-        setField("supplier_id", "input-lieferant")
-        setField("unit_id", "input-mengeneinheit")
-        setField("purchasedate", "input-kaufdatum")
-        setField("manufacturer_id", "input-hersteller")
-        setField("purity", "input-reinheit")
-        setField("concentration", "input-konzentration")
-        setField("solvent", "input-lösungsmittel")
-        setField("molarmass", "input-molmasse")
-        setField("zvg", "input-zvg")
+        setField("cas", "input_cas")
+        setField("name", "input_name")
+        setField("formular", "input_formular")
+        setField("room_id", "input_room")
+        setField("supplier_id", "input_supplier")
+        setField("unit_id", "input_unit")
+        setField("purchasedate", "input_purchasedate")
+        setField("manufacturer_id", "input_manufacturer")
+        setField("purity", "input_purity")
+        setField("concentration", "input_concentration")
+        setField("solvent", "input_solvent")
+        setField("molarmass", "input_molarmass")
+        setField("zvg", "input_zvg")
 
         if (
-            ctx.triggered_id == "modal-input-selectFromDatabaseConfirm"
+            ctx.triggered_id == "modal_btn_confirm_database_search"
         ):  # Schließe das Modal, wenn auf "Eintrag übernehmen" gedrückt wird
             return False, no_update
         else:
@@ -1303,21 +1307,21 @@ def get_callbacks(app):
 
     # Set the input of the database search selector to a blank string when it gets opened
     @app.callback(
-        Input("input-popover", "opened"),
-        Input("modal-input-popover", "opened"),
+        Input("popover_database_search", "opened"),
+        Input("modal_popover_database_search", "opened"),
     )
     def resetSelectFromDatabase(opened, modalOpened):
-        if ctx.triggered_id == "input-popover":
-            set_props("input-selectFromDatabase", {"value": None})
-        elif ctx.triggered_id == "modal-input-popover":
-            set_props("modal-input-selectFromDatabase", {"value": None})
+        if ctx.triggered_id == "popover_database_search":
+            set_props("input_database_search", {"value": None})
+        elif ctx.triggered_id == "modal_popover_database_search":
+            set_props("modal_input_database_search", {"value": None})
 
     # Setze das Datum auf Heute bei den DateInput-Selektoren, wenn auf den "Heute"-Button gedrückt wird
     @app.callback(
-        Input("input-kaufdatum-heute", "n_clicks"),
-        Input("modal-input-kaufdatum-heute", "n_clicks"),
-        Input("input-geprüft-heute", "n_clicks"),
-        Input("modal-input-geprüft-heute", "n_clicks"),
+        Input("btn_purchasedate_today", "n_clicks"),
+        Input("modal_btn_purchasedate_today", "n_clicks"),
+        Input("btn_lastchecked_today", "n_clicks"),
+        Input("modal_btn_lastchecked_today", "n_clicks"),
     )
     def setDateToToday(
         n_clicks_kaufdatumHeute,
@@ -1326,10 +1330,10 @@ def get_callbacks(app):
         n_clicks_modalGeprüftHeute,
     ):
         input_ids = [
-            "input-kaufdatum-heute",
-            "modal-input-kaufdatum-heute",
-            "input-geprüft-heute",
-            "modal-input-geprüft-heute",
+            "btn_purchasedate_today",
+            "modal_btn_purchasedate_today",
+            "btn_lastchecked_today",
+            "modal_btn_lastchecked_today",
         ]
         # Setzt den Output des Feldes auf das heutige Datum, wenn der Button vom Feld gedrückt wird.
         # Entferne dafür "-heute" hinter der ID, um auf das Feld und nicht den Button zu verweisen.
@@ -1340,14 +1344,14 @@ def get_callbacks(app):
 
     # Öffne oder schließe das Einstellungsmenü
     @app.callback(
-        Output("modalEinstellungen", "opened"),
-        Input("button-einstellungen", "n_clicks"),
-        Input("einstellungenButtonAbbrechen", "n_clicks"),
-        State("modalEinstellungen", "opened"),
-        State("einstellungenCache", "data"),
+        Output("modal_settings", "opened"),
+        Input("btn_open_settings", "n_clicks"),
+        Input("settings_btn_cancel", "n_clicks"),
+        State("modal_settings", "opened"),
+        State("cache_settings", "data"),
     )
     def toggleSettings(n_clicks_Öffnen, n_clicks_Abbrechen, opened, cache):
-        if ctx.triggered_id == "einstellungenButtonAbbrechen":
+        if ctx.triggered_id == "settings_btn_cancel":
             return not opened
 
         cache = json.loads(cache)
@@ -1358,13 +1362,13 @@ def get_callbacks(app):
         ) in (
             cache.items()
         ):  # Falls die Einstellung im Cache ist, setze ihren Wert auf den gespeicherten Wert im Cache
-            set_props("einstellung_" + key, {"value": value})
+            set_props(key, {"value": value})
         return not opened
 
     # Initialisiere das Cache mit den Einstellungen
     @app.callback(
-        Output("einstellungenCache", "data", allow_duplicate=True),
-        State("einstellungenCache", "data"),
+        Output("cache_settings", "data", allow_duplicate=True),
+        State("cache_settings", "data"),
         prevent_initial_call=False,
     )
     def init_settings(settings_cache):
@@ -1375,18 +1379,18 @@ def get_callbacks(app):
 
     # Speichere die Daten der Einstellungen im Browser ab
     @app.callback(
-        Output("einstellungenCache", "data", allow_duplicate=True),
-        Output("modalEinstellungen", "opened", allow_duplicate=True),
-        Output("notification-container", "sendNotifications", allow_duplicate=True),
+        Output("cache_settings", "data", allow_duplicate=True),
+        Output("modal_settings", "opened", allow_duplicate=True),
+        Output("notifications", "sendNotifications", allow_duplicate=True),
         inputs=dict(
-            n_clicks_speichern=Input("einstellungenButtonSpeichern", "n_clicks"),
-            n_clicks_reset=Input("einstellungenButtonZurücksetzen", "n_clicks"),
-            settings_cache=State("einstellungenCache", "data"),
+            n_clicks_speichern=Input("settings_btn_save", "n_clicks"),
+            n_clicks_reset=Input("settings_btn_reset", "n_clicks"),
+            settings_cache=State("cache_settings", "data"),
             settings=dict(
-                datumsänderung=State("einstellung_datumsänderung", "value"),
-                backup_häufigkeit=State("einstellung_backup_häufigkeit", "value"),
+                datumsänderung=State("settings_select_set_date_automatically", "value"),
+                backup_häufigkeit=State("settings_select_backup_frequency", "value"),
                 backup_häufigkeit_minuten=State(
-                    "einstellung_backup_häufigkeit_minuten", "value"
+                    "settings_input_backup_frequency", "value"
                 ),
             ),
         ),
@@ -1407,7 +1411,7 @@ def get_callbacks(app):
             }
 
         # Wenn auf "Zurücksetzen" gedrückt wird, gehe durch jede Änderung durch und setze jede Einstellung auf ihren vorigen Wert bzw. den Standardwert zurück
-        if ctx.triggered_id == "einstellungenButtonZurücksetzen":
+        if ctx.triggered_id == "settings_btn_reset":
             for key in settings.keys():
                 set_props(
                     "einstellung_" + key,
@@ -1437,9 +1441,9 @@ def get_callbacks(app):
 
     # Setze ein Feld ein zur manuellen Eingabe von Zeiten, wie oft ein Backup durchgeführt werden soll, wenn die entsprechende Option ausgewählt wird
     @app.callback(
-        Output("einstellung_backup_häufigkeit_minuten_container", "display"),
-        Input("einstellung_backup_häufigkeit", "value"),
-        State("einstellung_backup_häufigkeit_minuten", "value"),
+        Output("settings_wrapper_input_backup_frequency", "display"),
+        Input("settings_select_backup_frequency", "value"),
+        State("settings_input_backup_frequency", "value"),
     )
     def add_input(value_häufigkeit, value_minuten):
         # Wenn der Wert auf "interval" gesetzt wird, mache das Eingabefeld für die Minuten sichtbar
@@ -1451,9 +1455,9 @@ def get_callbacks(app):
 
     # Regelt die Logik für die Backups.
     @app.callback(
-        Output("notification-container", "sendNotifications", allow_duplicate=True),
-        Input("einstellungenCache", "data"),
-        Input("einstellung_backup_häufigkeit_helper", "n_intervals"),
+        Output("notifications", "sendNotifications", allow_duplicate=True),
+        Input("cache_settings", "data"),
+        Input("interval_backup_frequency", "n_intervals"),
         prevent_initial_call=False,
     )
     def make_backup(einstellungen_cache, n_intervals):
@@ -1478,22 +1482,22 @@ def get_callbacks(app):
         ]
 
         if (
-            cache.get("backup_häufigkeit") == "open"
+            cache.get("settings_select_backup_frequency") == "open"
         ):  # Wegen prevent_initial_call = False wird das Callback bei jedem Neuladen oder Aufrufen der Seite durchgeführt, wodurch mit copy_and_rename ein Backup erstellt wird
             functions.backup_db()
             return messages
         elif (
-            cache.get("backup_häufigkeit") == "interval"
-            and ctx.triggered_id == "einstellung_backup_häufigkeit_helper"
+            cache.get("settings_select_backup_frequency") == "interval"
+            and ctx.triggered_id == "interval_backup_frequency"
         ):
             functions.backup_db()
             return messages
 
     # Startet oder stoppt den Timer für die intervallbasierten Backups
     @app.callback(
-        Output("einstellung_backup_häufigkeit_helper", "disabled"),
-        Output("einstellung_backup_häufigkeit_helper", "interval"),
-        Input("einstellungenCache", "data"),
+        Output("interval_backup_frequency", "disabled"),
+        Output("interval_backup_frequency", "interval"),
+        Input("cache_settings", "data"),
         prevent_initial_call=False,
     )
     def make_interval_backup(einstellungen_cache):
@@ -1502,26 +1506,26 @@ def get_callbacks(app):
         else:
             raise PreventUpdate
 
-        frequency_ms = cache.get("backup_häufigkeit_minuten") * 60 * 1000
-        if cache.get("backup_häufigkeit") == "interval":
+        frequency_ms = cache.get("settings_input_backup_frequency") * 60 * 1000
+        if cache.get("settings_select_backup_frequency") == "interval":
             return False, frequency_ms
         else:
             return True, no_update
 
     # Controls the buttons in the settings for importing, exporting and creating a database
     @app.callback(
-        Output("einstellung_datenbank_exportieren_download", "data"),
-        Output("modalBestätigungImport", "opened"),
-        Output("current_db_cache", "data"),
-        Output("einstellung_datenbank_importieren_daten", "contents"),
-        Input("einstellung_datenbank_exportieren", "n_clicks"),
-        Input("einstellung_datenbank_neu", "n_clicks"),
-        Input("einstellung_datenbank_importieren_daten", "contents"),
+        Output("settings_download_export_database", "data"),
+        Output("modal_confirm_backup", "opened"),
+        Output("cache_current_database", "data"),
+        Output("settings_btn_import_database", "contents"),
+        Input("settings_btn_export_database", "n_clicks"),
+        Input("settings_btn_create_database", "n_clicks"),
+        Input("settings_btn_import_database", "contents"),
     )
     def database_tools(export_n_clicks, neu_n_clicks, import_data):
         db = Path(f"current.sqlite")
 
-        if ctx.triggered_id == "einstellung_datenbank_exportieren":
+        if ctx.triggered_id == "settings_btn_export_database":
             # Returns the currently opened database to the download component
             return (
                 dcc.send_file(db),
@@ -1530,7 +1534,7 @@ def get_callbacks(app):
                 no_update,
             )
 
-        if ctx.triggered_id == "einstellung_datenbank_importieren_daten":
+        if ctx.triggered_id == "settings_btn_import_database":
             # Cut of the type description when importing the table.
             type, content = import_data.split(",")
 
@@ -1564,7 +1568,7 @@ def get_callbacks(app):
                 None,
             )
 
-        if ctx.triggered_id == "einstellung_datenbank_neu":
+        if ctx.triggered_id == "settings_btn_create_database":
             if Path.exists(db):
                 return (
                     no_update,
@@ -1584,13 +1588,13 @@ def get_callbacks(app):
 
     # Controls the buttons of the modal, which backups the database when importing an existing or creating a new one
     @app.callback(
-        Output("modalBestätigungImport", "opened", allow_duplicate=True),
-        Output("current_db_cache", "data", allow_duplicate=True),
-        Output("mainGrid", "rowData", allow_duplicate=True),
-        Input("einstellung_datenbank_modal_ja", "n_clicks"),
-        Input("einstellung_datenbank_modal_nein", "n_clicks"),
-        Input("einstellung_datenbank_modal_abbrechen", "n_clicks"),
-        State("current_db_cache", "data"),
+        Output("modal_confirm_backup", "opened", allow_duplicate=True),
+        Output("cache_current_database", "data", allow_duplicate=True),
+        Output("main_table", "rowData", allow_duplicate=True),
+        Input("backup_btn_yes", "n_clicks"),
+        Input("backup_btn_no", "n_clicks"),
+        Input("backup_btn_cancel", "n_clicks"),
+        State("cache_current_database", "data"),
     )
     def backup_db_on_import(
         ja_n_clicks, nein_n_clicks, abbrechen_n_clicks, import_data
@@ -1606,7 +1610,7 @@ def get_callbacks(app):
 
         db = Path(f"current.sqlite")
 
-        if ctx.triggered_id == "einstellung_datenbank_modal_ja":
+        if ctx.triggered_id == "backup_btn_yes":
             functions.backup_db()
             db.unlink()
             functions.init_app(LANG)
@@ -1614,14 +1618,14 @@ def get_callbacks(app):
             if mode == "import" and content != None:
                 db.write_bytes(content)
 
-        elif ctx.triggered_id == "einstellung_datenbank_modal_nein":
+        elif ctx.triggered_id == "backup_btn_no":
             db.unlink()
             functions.init_app(LANG)
 
             if mode == "import" and content != None:
                 db.write_bytes(content)
 
-        elif ctx.triggered_id == "einstellung_datenbank_modal_abbrechen":
+        elif ctx.triggered_id == "backup_btn_cancel":
             pass
 
         # Delete the saved cache to not use unnecessary space. Also renew the table, so that the new content is shown instantly.
@@ -1633,11 +1637,11 @@ def get_callbacks(app):
 
     # Öffnet das Modal zu den Füllmengen
     @app.callback(
-        Output("modal_füllmenge_verlauf", "opened"),
-        Output("füllstände_kurve", "data"),
-        Input("füllmenge_sparkline_wrapper", "n_clicks"),
-        State("modal_füllmenge_verlauf", "opened"),
-        State("mainGrid", "selectedRows"),
+        Output("modal_linechart_amount", "opened"),
+        Output("chart_amount", "data"),
+        Input("wrapper_sparkline_amount", "n_clicks"),
+        State("modal_linechart_amount", "opened"),
+        State("main_table", "selectedRows"),
     )
     def open_füllstände_verlauf(n_clicks, opened, rows):
         barcode = rows[0].get("barcode", "")
@@ -1646,17 +1650,17 @@ def get_callbacks(app):
 
     # Führe Keyboard-Shortcuts aus
     @app.callback(
-        Input("keyboardListener", "n_events"),
-        Input("keyboardListener", "event"),
-        State("inputContainer", "hidden"),
-        State("modalNeuerEintrag", "opened"),
-        State("button-speichern", "n_clicks"),
-        State("modal-button-speichern", "n_clicks"),
-        State("modal-button-speichern", "disabled"),
-        State("button-open-modal", "n_clicks"),
-        State("modal_bestätigung_speichern", "opened"),
-        State("speichern_bestätigung_ja", "n_clicks"),
-        State("button-open-modal", "disabled"),
+        Input("eventlistener_keyboard", "n_events"),
+        Input("eventlistener_keyboard", "event"),
+        State("wrapper_entry", "hidden"),
+        State("modal_new_entry", "opened"),
+        State("btn_save_entry", "n_clicks"),
+        State("modal_btn_save_entry", "n_clicks"),
+        State("modal_btn_save_entry", "disabled"),
+        State("btn_create_new_entry", "n_clicks"),
+        State("modal_confirm_save", "opened"),
+        State("save_btn_yes", "n_clicks"),
+        State("btn_create_new_entry", "disabled"),
     )
     def execute_shortcut(
         n_events,
@@ -1679,10 +1683,10 @@ def get_callbacks(app):
         if is_shift:
             if key == "Enter":
                 if not is_input_hidden and not is_neuer_eintrag_open:
-                    set_props("modal_bestätigung_speichern", {"opened": True})
+                    set_props("modal_confirm_save", {"opened": True})
                     return
                 elif is_neuer_eintrag_open and not is_modal_speichern_disabled:
-                    set_props("modal_bestätigung_speichern", {"opened": True})
+                    set_props("modal_confirm_save", {"opened": True})
                     return
             elif (
                 is_metaKey
@@ -1697,19 +1701,19 @@ def get_callbacks(app):
                         and not is_neuer_eintrag_disabled
                     ):
                         set_props(
-                            "button-open-modal",
+                            "btn_create_new_entry",
                             {"n_clicks": neuer_eintrag_n_clicks + 1},
                         )
                         return
 
     # Kontrolliert die Logik hinter dem "Eintrag Speichern" Modal
     @app.callback(
-        Output("modal_bestätigung_speichern", "opened"),
-        Input("speichern_bestätigung_ja", "n_clicks"),
-        Input("speichern_bestätigung_abbrechen", "n_clicks"),
-        State("button-speichern", "n_clicks"),
-        State("modal-button-speichern", "n_clicks"),
-        State("modalNeuerEintrag", "opened"),
+        Output("modal_confirm_save", "opened"),
+        Input("save_btn_yes", "n_clicks"),
+        Input("save_btn_cancel", "n_clicks"),
+        State("btn_save_entry", "n_clicks"),
+        State("modal_btn_save_entry", "n_clicks"),
+        State("modal_new_entry", "opened"),
     )
     def confirm_save(
         ja_n_clicks,
@@ -1719,35 +1723,35 @@ def get_callbacks(app):
         is_neuer_eintrag_open,
     ):
 
-        if ctx.triggered_id == "speichern_bestätigung_ja":
+        if ctx.triggered_id == "save_btn_yes":
             if is_neuer_eintrag_open:
                 set_props(
-                    "modal-button-speichern",
+                    "modal_btn_save_entry",
                     {"n_clicks": neuen_eintrag_speichern_n_clicks + 1},
                 )
             elif not is_neuer_eintrag_open:
                 set_props(
-                    "button-speichern", {"n_clicks": eintrag_speichern_n_clicks + 1}
+                    "btn_save_entry", {"n_clicks": eintrag_speichern_n_clicks + 1}
                 )
-        elif ctx.triggered_id == "speichern_bestätigung_abbrechen":
+        elif ctx.triggered_id == "save_btn_cancel":
             pass
 
         return False
 
     # Control the logic of the archive button
     @app.callback(
-        Output("input-name", "leftSection"),
-        Output("button_archive", "children"),
-        Output("button_archive", "variant"),
-        Output("button-open-modal", "disabled"),
-        Output("mainGrid", "dashGridOptions"),
-        Output("button_to_archive", "children"),
-        Output("button_to_archive_tooltip", "label"),
-        Output("button_to_archive", "rightSection"),
-        Output("mainGrid", "rowData", allow_duplicate=True),
-        Output("mainGrid", "selectedRows", allow_duplicate=True),
-        Input("button_archive", "n_clicks"),
-        State("input-name", "leftSection"),
+        Output("input_name", "leftSection"),
+        Output("btn_toggle_archive", "children"),
+        Output("btn_toggle_archive", "variant"),
+        Output("btn_create_new_entry", "disabled"),
+        Output("main_table", "dashGridOptions"),
+        Output("btn_archive_entry", "children"),
+        Output("btn_archive_entry_tooltip", "label"),
+        Output("btn_archive_entry", "rightSection"),
+        Output("main_table", "rowData", allow_duplicate=True),
+        Output("main_table", "selectedRows", allow_duplicate=True),
+        Input("btn_toggle_archive", "n_clicks"),
+        State("input_name", "leftSection"),
     )
     def open_archive(n_clicks, leftSection):
         grid_dark = Patch()
@@ -1809,11 +1813,11 @@ def get_callbacks(app):
 
     # Control the logic of the to_archive Button
     @app.callback(
-        Output("mainGrid", "rowData", allow_duplicate=True),
-        Output("notification-container", "sendNotifications", allow_duplicate=True),
-        Input("button_to_archive", "n_clicks"),
-        State("input-name", "leftSection"),
-        State("mainGrid", "selectedRows"),
+        Output("main_table", "rowData", allow_duplicate=True),
+        Output("notifications", "sendNotifications", allow_duplicate=True),
+        Input("btn_archive_entry", "n_clicks"),
+        State("input_name", "leftSection"),
+        State("main_table", "selectedRows"),
     )
     def transfer_to_archive(n_clicks, left_section, rows):
         barcode = rows[0].get("barcode", "")
@@ -1865,9 +1869,9 @@ def get_callbacks(app):
         return df.to_dict("records"), message
 
     @app.callback(
-        Output("button_to_gestis", "disabled"),
-        Output("anchor_to_gestis", "href"),
-        Input("input-zvg", "value"),
+        Output("btn_open_gestis", "disabled"),
+        Output("anchor_open_gestis", "href"),
+        Input("input_zvg", "value"),
     )
     def toggle_gestis_button(value: str):
         if value == "":
