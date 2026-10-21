@@ -8,12 +8,12 @@ from cli import args
 functions.init_app(args.language)
 
 # Construct the server of the database. Cannot import from layout before the app is not safely initialized
-from layout import MantineProvider
+from layout import mantine_provider
 
 app = Dash(__name__)
 app.__init__(prevent_initial_callbacks=True)
 app.title = "beakerDB"
-app.layout = MantineProvider
+app.layout = mantine_provider
 
 from callbacks import get_callbacks
 

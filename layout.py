@@ -15,14 +15,14 @@ i18n.load_from_file("locales/de.yaml", "de")
 
 # Definiere das Layout
 # Das linke untere, welches die Tabelle enthält
-fensterLinks = html.Div(
+left_window = html.Div(
     [
         dmc.Group(
             [
                 dmc.Image(src="assets/Logo.svg", w=330, maw="50%"),
                 dmc.Group(
                     [
-                        dmc.Button(
+                        comp.ButtonClicks(
                             dmc.Text(i18n.get("Reset Filter"), visibleFrom="xxl"),
                             id="btn_reset_filter",
                             rightSection=DashIconify(
@@ -36,7 +36,7 @@ fensterLinks = html.Div(
                             target="#btn_reset_filter",
                             hiddenFrom="xxl",
                         ),
-                        dmc.Button(
+                        comp.ButtonClicks(
                             dmc.Text(i18n.get("Edit Master Data"), visibleFrom="xl"),
                             id="btn_edit_masterdata",
                             rightSection=DashIconify(icon=icons.edit, height=20),
@@ -46,11 +46,10 @@ fensterLinks = html.Div(
                             target="#btn_edit_masterdata",
                             hiddenFrom="xl",
                         ),
-                        dmc.Button(
+                        comp.ButtonClicks(
                             dmc.Text(i18n.get("New Entry"), visibleFrom="lg"),
                             id="btn_create_new_entry",
                             rightSection=DashIconify(icon=icons.add, height=24),
-                            n_clicks=0,
                         ),
                         comp.KbdTooltip(
                             target="#btn_create_new_entry",
@@ -177,58 +176,7 @@ fensterLinks = html.Div(
     style={"padding": "20px 5px 20px 20px"},
 )
 
-stoffeigenschaften = (
-    dmc.Fieldset(
-        dmc.SimpleGrid(
-            [
-                dmc.TextInput(id="input_cas", label=i18n.get("CAS no.")),
-                dmc.Group(
-                    [
-                        comp.NumberInput(  # Molmasse
-                            "input_molarmass",
-                            i18n.get("Molar mass"),
-                        ),
-                        dmc.TextInput(
-                            id="input_formular",
-                            label=i18n.get("Molecular formular"),
-                        ),
-                    ],
-                    grow=True,
-                ),
-                dmc.Group(
-                    [
-                        dmc.TextInput(
-                            id="input_zvg",
-                            label=i18n.get("ZVG no."),
-                            disabled=True,
-                        ),
-                        dmc.Anchor(
-                            dmc.Button(
-                                i18n.get("Open in GESTIS"),
-                                leftSection=DashIconify(
-                                    icon=icons.externalLink,
-                                ),
-                                disabled=True,
-                                id="btn_open_gestis",
-                                fullWidth=True,
-                            ),
-                            id="anchor_open_gestis",
-                            href="",
-                            target="_blank",
-                            underline="never",
-                        ),
-                    ],
-                    grow=True,
-                    align="end",
-                ),
-            ],
-            cols=1,
-        ),
-        legend=i18n.get("Chemical properties"),
-    ),
-)
-# Das rechte untere Hauptfenster mit den Informationen zu dem entsprechenden Stoff
-fensterRechts = [
+right_window = [
     html.Div(
         [
             dmc.ScrollAreaAutosize(
@@ -450,7 +398,7 @@ fensterRechts = [
                                             disabled=True,
                                         ),
                                         dmc.Anchor(
-                                            dmc.Button(
+                                            comp.ButtonClicks(
                                                 dmc.Text(
                                                     i18n.get("Open in GESTIS"),
                                                     visibleFrom="xl",
@@ -488,13 +436,12 @@ fensterRechts = [
                 [
                     dmc.ButtonGroup(
                         [
-                            dmc.Button(
+                            comp.ButtonClicks(
                                 dmc.Text(i18n.get("Save"), visibleFrom="md"),
                                 id="btn_save_entry",
                                 color="green",
                                 rightSection=DashIconify(icon=icons.save),
                                 size="lg",
-                                n_clicks=0,
                                 flex=1,
                             ),
                             dmc.Tooltip(
@@ -506,7 +453,7 @@ fensterRechts = [
                                 target="#btn_save_entry",
                                 label=[dmc.Kbd("Shift"), " + ", dmc.Kbd("Enter")],
                             ),
-                            dmc.Button(
+                            comp.ButtonClicks(
                                 dmc.Text(
                                     i18n.get("Put in Archive"),
                                     visibleFrom="xl",
@@ -760,14 +707,13 @@ modal_new_entry = dmc.Stack(
                             ),
                             dmc.ButtonGroup(
                                 [
-                                    dmc.Button(
+                                    comp.ButtonClicks(
                                         dmc.Text(i18n.get("Save"), visibleFrom="xl"),
                                         id="modal_btn_save_entry",
                                         color="green",
                                         rightSection=DashIconify(icon=icons.save),
                                         size="lg",
                                         fullWidth=True,
-                                        n_clicks=0,
                                     ),
                                     dmc.Tooltip(
                                         label=i18n.get("Save"),
@@ -782,7 +728,7 @@ modal_new_entry = dmc.Stack(
                                             dmc.Kbd("Enter"),
                                         ],
                                     ),
-                                    dmc.Button(
+                                    comp.ButtonClicks(
                                         dmc.Text(i18n.get("Cancel"), visibleFrom="xl"),
                                         id="modal_btn_cancel",
                                         color="red",
@@ -828,13 +774,13 @@ modal_masterdata = dmc.Stack(
                 ),
                 dmc.Group(
                     [
-                        dmc.Button(
+                        comp.ButtonClicks(
                             i18n.get("Delete row"),
                             id="btn_masterdata_delete_row",
                             rightSection=DashIconify(icon=icons.delete, height=20),
                             color="red",
                         ),
-                        dmc.Button(
+                        comp.ButtonClicks(
                             i18n.get("Add row"),
                             id="btn_masterdata_add_row",
                             rightSection=DashIconify(icon=icons.add, height=24),
@@ -870,20 +816,20 @@ modal_masterdata = dmc.Stack(
             [
                 dmc.Group(
                     [
-                        dmc.Button(
+                        comp.ButtonClicks(
                             i18n.get("Cancel"),
                             color="red",
                             rightSection=DashIconify(icon=icons.close, height=24),
                             id="btn_masterdata_cancel",
                         ),
-                        dmc.Button(
+                        comp.ButtonClicks(
                             i18n.get("Reset changes"),
                             color="grey",
                             rightSection=DashIconify(icon=icons.refresh, height=24),
                             id="btn_masterdata_reset",
                             disabled=True,
                         ),
-                        dmc.Button(
+                        comp.ButtonClicks(
                             i18n.get("Save changes"),
                             rightSection=DashIconify(icon=icons.save, height=20),
                             color="green",
@@ -926,7 +872,7 @@ modal_settings = dmc.Stack(
                             ),
                             dmc.Group(
                                 [
-                                    dmc.Button(
+                                    comp.ButtonClicks(
                                         i18n.get("Export"),
                                         id="settings_btn_export_database",
                                     ),
@@ -934,13 +880,13 @@ modal_settings = dmc.Stack(
                                         id="settings_download_export_database"
                                     ),
                                     dcc.Upload(
-                                        dmc.Button(
+                                        comp.ButtonClicks(
                                             i18n.get("Import"),
                                         ),
                                         id="settings_btn_import_database",
                                         accept=".sqlite",
                                     ),
-                                    dmc.Button(
+                                    comp.ButtonClicks(
                                         i18n.get("Create new database"),
                                         id="settings_btn_create_database",
                                     ),
@@ -1044,19 +990,19 @@ modal_settings = dmc.Stack(
             [
                 dmc.Group(
                     [
-                        dmc.Button(
+                        comp.ButtonClicks(
                             i18n.get("Cancel"),
                             color="red",
                             rightSection=DashIconify(icon=icons.close, height=24),
                             id="settings_btn_cancel",
                         ),
-                        dmc.Button(
+                        comp.ButtonClicks(
                             i18n.get("Reset changes"),
                             color="grey",
                             rightSection=DashIconify(icon=icons.refresh, height=24),
                             id="settings_btn_reset",
                         ),
-                        dmc.Button(
+                        comp.ButtonClicks(
                             i18n.get("Save changes"),
                             rightSection=DashIconify(icon=icons.save, height=20),
                             color="green",
@@ -1076,9 +1022,9 @@ modal_confirm_backup = dmc.Stack(
         dmc.Text(i18n.get("Should a backup of the open database be created?")),
         dmc.Group(
             [
-                dmc.Button(i18n.get("Yes"), id="backup_btn_yes"),
-                dmc.Button(i18n.get("No"), id="backup_btn_no", color="red"),
-                dmc.Button(
+                comp.ButtonClicks(i18n.get("Yes"), id="backup_btn_yes"),
+                comp.ButtonClicks(i18n.get("No"), id="backup_btn_no", color="red"),
+                comp.ButtonClicks(
                     i18n.get("Cancel import"),
                     id="backup_btn_cancel",
                     variant="outline",
@@ -1110,8 +1056,8 @@ modal_confirm_save = dmc.Stack(
         dmc.Title(i18n.get("Save entry?"), order=2),
         dmc.Group(
             [
-                dmc.Button(i18n.get("Yes"), id="save_btn_yes"),
-                dmc.Button(
+                comp.ButtonClicks(i18n.get("Yes"), id="save_btn_yes"),
+                comp.ButtonClicks(
                     i18n.get("Cancel"),
                     id="save_btn_cancel",
                     variant="outline",
@@ -1133,8 +1079,8 @@ modal_confirm_delete = dmc.Stack(
         dmc.Title(i18n.get("Delete entry?"), order=2),
         dmc.Group(
             [
-                dmc.Button(i18n.get("Yes"), id="delete_btn_yes"),
-                dmc.Button(
+                comp.ButtonClicks(i18n.get("Yes"), id="delete_btn_yes"),
+                comp.ButtonClicks(
                     i18n.get("Cancel"),
                     id="delete_btn_cancel",
                     variant="outline",
@@ -1152,7 +1098,7 @@ modal_confirm_delete = dmc.Stack(
 )
 
 
-MantineProvider = dmc.MantineProvider(
+mantine_provider = dmc.MantineProvider(
     [
         dcc.Store(id="cache_masterdata"),
         dcc.Store(id="cache_settings", storage_type="local"),
@@ -1172,14 +1118,20 @@ MantineProvider = dmc.MantineProvider(
             events=[
                 {
                     "event": "keydown",
-                    "props": ["key", "shiftKey", "metaKey", "ctrlKey" "target.tagName"],
+                    "props": [
+                        "key",
+                        "shiftKey",
+                        "metaKey",
+                        "ctrlKey",
+                        "target.tagName",
+                    ],
                 }
             ],
         ),
         dmc.Grid(
             [
-                dmc.GridCol(fensterLinks, span=8),
-                dmc.GridCol(fensterRechts, span=4),
+                dmc.GridCol(left_window, span=8),
+                dmc.GridCol(right_window, span=4),
             ],
             id="wrapper_main",
             gutter=0,

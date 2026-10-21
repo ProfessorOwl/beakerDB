@@ -91,3 +91,10 @@ class Version:
 
     def Text(self):
         return dmc.Text(i18n.get("Version") + " " + self.current_version, c=self.color)
+
+
+class ButtonClicks(dmc.Button):
+    """Button with ``n_clicks = 0`` by default"""
+
+    def __init__(self, children, **kwargs):
+        super().__init__(children=children, n_clicks=0, **kwargs)
