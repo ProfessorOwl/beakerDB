@@ -167,6 +167,7 @@ def get_callbacks(app):
             if len(amount) > 1:
                 hide_sparkline = False
                 amount_values = [i[1] for i in amount]
+                amount_values.sort(reverse=True)
         else:
             amount_last_entry = amount_raw
 
@@ -225,7 +226,7 @@ def get_callbacks(app):
     )
     def save_entry(
         n_clicks: int,
-        name: str,
+        name: str | None,
         barcode: str,
         amount: str | None,
         purchasedate: str | None,
@@ -244,7 +245,6 @@ def get_callbacks(app):
         cache_settings_json: str,
     ) -> tuple:
         """Save every entry to the database and refresh ``main_table`` once ``btn_save_entry`` is clicked
-
 
         Args:
             n_clicks (int): dummy input to trigger the callback
@@ -355,15 +355,17 @@ def get_callbacks(app):
             )
 
         # Load all entries for the amount and put in the new amount, if it is unequal to the last amount
-        amount_history, amount_values = functions.save_amount(
+        amount_history = functions.append_amount(
             barcode,
             lastchecked,
             amount,
         )
 
         hide_sparkline = True
-
-        if len(amount_values) > 1:
+        amount_data = (
+            [i[1] for i in json.loads(amount_history)] if amount_history else []
+        )
+        if len(amount_data) > 1:
             hide_sparkline = False
 
         functions.update_row(
@@ -409,7 +411,7 @@ def get_callbacks(app):
 
         df = functions.get_main_table()
 
-        return (df.to_dict("records"), messages, hide_sparkline, amount_values)
+        return (df.to_dict("records"), messages, hide_sparkline, amount_data)
 
     @app.callback(
         Output("main_table", "rowData", allow_duplicate=True),
@@ -654,7 +656,7 @@ def get_callbacks(app):
     def save_new_entry(
         n_clicks: int,
         name: str | None,
-        barcode: str | None,
+        barcode: str,
         amount: str | None,
         purchasedate: str | None,
         manufacturer_id: str | int | None,
@@ -675,7 +677,7 @@ def get_callbacks(app):
         Args:
             n_clicks (int): dummy input to trigger the callback
             name (str | None):
-            barcode (str | None):
+            barcode (str):
             amount (str | None):
             purchasedate (str | None):
             manufacturer_id (str | int | None):
@@ -763,7 +765,7 @@ def get_callbacks(app):
                 )
             )
         # Load all entries for the amount and put in the new amount, if it is unequal to the last amount
-        amount_history, amount_data = functions.save_amount(
+        amount_history = functions.append_amount(
             barcode,
             lastchecked,
             amount,
@@ -891,7 +893,7 @@ def get_callbacks(app):
                 "sortable": True,
                 "editable": True,
                 "headerName": getattr(
-                    functions.stammdatenTables[selector], i.lower()
+                    functions.masterdata_tables[selector], i.lower()
                 ).doc,
             }
             for i in headings
@@ -906,7 +908,7 @@ def get_callbacks(app):
         # Use the names of the available buildings in a select component
         # instead of only the building ID
         if column_defs[1].get("field") == "building_id":
-            label_value = functions.generateSelectData(
+            label_value = functions.generate_select_data(
                 functions.Buildings, ["building_id", "building"]
             )
 
@@ -1217,7 +1219,7 @@ def get_callbacks(app):
             # Go through the different types of operations that should be performed on the table rows
             if op == "Update":
                 try:
-                    functions.updateStammdaten(selector, columns, values)
+                    functions.update_masterdata_entry(selector, columns, values)
                     modify_cache.pop(id)
                     correctly_saved.add(id)
                 except Exception as e:
@@ -1226,7 +1228,7 @@ def get_callbacks(app):
                             title=i18n.get(
                                 "Error updating entry with ID ${id}", values={"id": id}
                             ),
-                            message=functions.convertErrorToMessage(e),
+                            message=functions.masterdata_error_parser(e),
                             id=str(uuid.uuid4()),
                             action="show",
                             icon=DashIconify(
@@ -1241,7 +1243,7 @@ def get_callbacks(app):
                     )
             elif op == "Delete":
                 try:
-                    functions.deleteStammdaten(selector, values)
+                    functions.delete_masterdata_entry(selector, values)
                     modify_cache.pop(id)
                     correctly_saved.add(id)
                 except Exception as e:
@@ -1250,7 +1252,7 @@ def get_callbacks(app):
                             title=i18n.get(
                                 "Error deleting entry with ID ${id}", values={"id": id}
                             ),
-                            message=functions.convertErrorToMessage(e),
+                            message=functions.masterdata_error_parser(e),
                             id=str(uuid.uuid4()),
                             action="show",
                             icon=DashIconify(
@@ -1265,7 +1267,7 @@ def get_callbacks(app):
                     )
             elif op == "Insert":
                 try:
-                    functions.insertStammdaten(selector, columns, values)
+                    functions.insert_masterdata_entry(selector, columns, values)
                     modify_cache.pop(id)
                     correctly_saved.add(id)
                 except Exception as e:
@@ -1274,7 +1276,7 @@ def get_callbacks(app):
                             title=i18n.get(
                                 "Error inserting entry with ID ${id}", values={"id": id}
                             ),
-                            message=functions.convertErrorToMessage(e),
+                            message=functions.masterdata_error_parser(e),
                             id=str(uuid.uuid4()),
                             action="show",
                             icon=DashIconify(
@@ -1392,39 +1394,39 @@ def get_callbacks(app):
 
         if ctx.triggered_id == "btn_masterdata_save":
             return (
-                functions.generateSelectData_Namen(),
-                functions.generateSelectData(
+                functions.generate_select_data_search(),
+                functions.generate_select_data(
                     functions.Units,
                     ["unit_id", "unit"],
                 ),
-                functions.generateSelectData(
+                functions.generate_select_data(
                     functions.Manufacturers, ["manufacturer_id", "manufacturer"]
                 ),
-                functions.generateSelectData(
+                functions.generate_select_data(
                     functions.Suppliers, ["supplier_id", "supplier"]
                 ),
-                functions.generateSelectData_Räume(),
-                functions.generateSelectData_Namen(),
-                functions.generateSelectData(
+                functions.generate_select_data_rooms(),
+                functions.generate_select_data_search(),
+                functions.generate_select_data(
                     functions.Units,
                     ["unit_id", "unit"],
                 ),
-                functions.generateSelectData(
+                functions.generate_select_data(
                     functions.Manufacturers, ["manufacturer_id", "manufacturer"]
                 ),
-                functions.generateSelectData(
+                functions.generate_select_data(
                     functions.Suppliers, ["supplier_id", "supplier"]
                 ),
-                functions.generateSelectData_Räume(),
+                functions.generate_select_data_rooms(),
             )
         else:
             return (
-                functions.generateSelectData_Namen(),
+                functions.generate_select_data_search(),
                 no_update,
                 no_update,
                 no_update,
                 no_update,
-                functions.generateSelectData_Namen(),
+                functions.generate_select_data_search(),
                 no_update,
                 no_update,
                 no_update,
@@ -1546,9 +1548,9 @@ def get_callbacks(app):
 
         if ctx.triggered_id == "modal_btn_confirm_database_search":
             modal_prefix = "modal_"
-            existing_data = functions.getExistingData(value_modal)
+            existing_data = functions.get_existing_data(value_modal)
         else:
-            existing_data = functions.getExistingData(value)
+            existing_data = functions.get_existing_data(value)
 
         def set_field(
             key: str,
@@ -2034,7 +2036,7 @@ def get_callbacks(app):
     def open_amount_chart(
         n_clicks: int, is_open: bool, selected_rows: list[dict]
     ) -> tuple[Literal[True], list[dict]]:
-        """Open the modal to
+        """Open the modal to the amount chart
 
         Args:
             n_clicks (int): dummy input to trigger the callback when ``wrapper_sparkline_amount`` is clicked
@@ -2046,7 +2048,7 @@ def get_callbacks(app):
         """
 
         barcode = selected_rows[0].get("barcode", "")
-        data = functions.get_amount_data(barcode)
+        data = functions.get_amount_chart_data(barcode)
         return True, data
 
     @app.callback(

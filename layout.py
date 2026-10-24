@@ -215,7 +215,7 @@ right_window = [
                                                         "withinPortal": False
                                                     },
                                                     searchable=True,
-                                                    data=functions.generateSelectData_Namen(),
+                                                    data=functions.generate_select_data_search(),
                                                     limit=20,
                                                     withCheckIcon=False,
                                                 ),
@@ -268,7 +268,7 @@ right_window = [
                                                 id="input_unit",
                                                 value="1",
                                                 allowDeselect=False,
-                                                data=functions.generateSelectData(
+                                                data=functions.generate_select_data(
                                                     functions.Units,
                                                     [
                                                         "unit_id",
@@ -323,7 +323,7 @@ right_window = [
                                     label=i18n.get("Manufacturer"),
                                     searchable=True,
                                     allowDeselect=False,
-                                    data=functions.generateSelectData(
+                                    data=functions.generate_select_data(
                                         functions.Manufacturers,
                                         ["manufacturer_id", "manufacturer"],
                                     ),
@@ -334,7 +334,7 @@ right_window = [
                                     label=i18n.get("Supplier"),
                                     searchable=True,
                                     allowDeselect=False,
-                                    data=functions.generateSelectData(
+                                    data=functions.generate_select_data(
                                         functions.Suppliers,
                                         ["supplier_id", "supplier"],
                                     ),
@@ -345,7 +345,7 @@ right_window = [
                                     label=i18n.get("Room"),
                                     searchable=True,
                                     allowDeselect=False,
-                                    data=functions.generateSelectData_Räume(),
+                                    data=functions.generate_select_data_rooms(),
                                 ),
                                 dmc.TextInput(  # Reinheit
                                     id="input_purity",
@@ -367,7 +367,7 @@ right_window = [
                             ],
                             cols=2,
                         ),
-                        legend=i18n.get("inventory"),
+                        legend=i18n.get("Inventory"),
                     ),
                     dmc.Space(h={"base": 0, "lg": 10, "xl": 21}),
                     dmc.Fieldset(
@@ -547,7 +547,7 @@ modal_new_entry = dmc.Stack(
                                         id="modal_input_database_search",
                                         comboboxProps={"withinPortal": False},
                                         searchable=True,
-                                        data=functions.generateSelectData_Namen(),
+                                        data=functions.generate_select_data_search(),
                                         limit=20,
                                         withCheckIcon=False,
                                     ),
@@ -604,7 +604,7 @@ modal_new_entry = dmc.Stack(
                                                     id="modal_input_unit",
                                                     value="1",
                                                     allowDeselect=False,
-                                                    data=functions.generateSelectData(
+                                                    data=functions.generate_select_data(
                                                         functions.Units,
                                                         [
                                                             "unit_id",
@@ -631,7 +631,7 @@ modal_new_entry = dmc.Stack(
                                         searchable=True,
                                         allowDeselect=False,
                                         value="0",
-                                        data=functions.generateSelectData(
+                                        data=functions.generate_select_data(
                                             functions.Manufacturers,
                                             ["manufacturer_id", "manufacturer"],
                                         ),
@@ -642,7 +642,7 @@ modal_new_entry = dmc.Stack(
                                         searchable=True,
                                         allowDeselect=False,
                                         value="0",
-                                        data=functions.generateSelectData(
+                                        data=functions.generate_select_data(
                                             functions.Suppliers,
                                             ["supplier_id", "supplier"],
                                         ),
@@ -653,7 +653,7 @@ modal_new_entry = dmc.Stack(
                                         searchable=True,
                                         allowDeselect=False,
                                         value="0",
-                                        data=functions.generateSelectData_Räume(),
+                                        data=functions.generate_select_data_rooms(),
                                     ),
                                     dmc.TextInput(  # Reinheit
                                         id="modal_input_purity",
@@ -675,7 +675,7 @@ modal_new_entry = dmc.Stack(
                                 ],
                                 cols=2,
                             ),
-                            legend=i18n.get("inventory"),
+                            legend=i18n.get("Inventory"),
                         ),
                     ],
                     span=8,

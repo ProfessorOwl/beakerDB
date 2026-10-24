@@ -30,18 +30,34 @@ from i18n import i18n
 engine = create_engine("sqlite:///current.sqlite")
 
 
-def convertErrorToMessage(error: Exception):
+def masterdata_error_parser(error: Exception) -> str:
+    """Takes a python error that could occur while saving the masterdata and gives back a user friendly string
+
+    Args:
+        error (Exception): an error that occurs when saving edited or new masterdata
+
+    Returns:
+        str: a user friendly version of the error
+    """
+
     if error is None:
         return ""
 
     text = str(error)
+
     if "foreign key" in text.lower():
         if "delete from" in text.lower():
-            return "Der Eintrag ist in einer anderen Tabelle in Verwendung und kann daher nicht gelöscht werden."
+            return i18n.get(
+                "The entry cannot be deleted because it is used in another table."
+            )
         if "insert into" in text.lower():
-            return "Die referenzierte ID des neuen Eintrages ist noch nicht vergeben. Wähle eine andere ID aus oder erstelle in der entsprechenden Tabelle eine neue."
+            return i18n.get(
+                "The referenced ID of the new entry is not yet assigned. Choose another ID or create an entry with the specified ID in the other table."
+            )
         if "update" in text.lower():
-            return "Die referenzierte ID des aktualisierten Eintrages ist noch nicht vergeben. Wähle eine andere ID aus oder erstelle in der entsprechenden Tabelle eine neue."
+            return i18n.get(
+                "The referenced ID of the updated Entry is not yet assigned. Choose another ID or create an entry with the specified ID in the other table."
+            )
     return text
 
 
@@ -60,7 +76,7 @@ class Fmt:
     RED = "\033[91m"
 
 
-# Sorgt dafür, dass Foreign Keys aktiviert sind, sodass verknüpfte Stammdaten nicht fälschlicherweise gelöscht werden können
+# Enables foreign key constraint for the tables
 @event.listens_for(Engine, "connect")
 def set_sqlite_pragma(dbapi_connection, connection_record):
     cursor = dbapi_connection.cursor()
@@ -72,7 +88,6 @@ class Base(DeclarativeBase):
     pass
 
 
-# Erstelle jede SQL-Tabelle als Objekt für SQLAlchemy
 class Inventory(Base):
     __tablename__ = "inventory"
 
@@ -206,8 +221,8 @@ class Rooms(Base):
         return f"Räume(room_id={self.room_id!r}, building_id={self.building_id!r}, room={self.room})"
 
 
-# Verbinde Strings mit den Objekten der Tabellen
-stammdatenTables = {
+# Connect strings with the table classes
+masterdata_tables = {
     "inventory": Inventory,
     "units": Units,
     "buildings": Buildings,
@@ -218,10 +233,21 @@ stammdatenTables = {
 }
 
 
-def select_value(barcode: str, columnSelect: str, table) -> str:
-    """Lese den Wert einer Spalte der Tabelle aus, in dessen Zeile der entsprechende Barcode steht."""
+def select_value(barcode: str, column: str, table: type[Inventory]) -> str:
+    # """Lese den Wert einer Spalte der Tabelle aus, in dessen Zeile der entsprechende Barcode steht."""
+    """Return the value of a column from the table ``Inventory`` via the barcode
+
+    Args:
+        barcode (str): barcode of the row to select from
+        column (str): column to select from
+        table (Inventory): must contain a column with the name ``"barcode"``
+
+    Returns:
+        str: item from ``column`` and row containing ``barcode``
+    """
+
     with Session(engine) as session:
-        stmt = select(getattr(table, columnSelect)).where(table.barcode == barcode)
+        stmt = select(getattr(table, column)).where(table.barcode == barcode)
         item = session.scalars(stmt).one_or_none()
         session.close()
     if item is None:
@@ -230,81 +256,123 @@ def select_value(barcode: str, columnSelect: str, table) -> str:
         return str(item)
 
 
-def delete_entry(barcode: str, table):
-    """Lösche den Eintrag mit dem enstprechenden Barcode"""
+def delete_entry(barcode: str, table: type[Inventory]) -> None:
+    """Delete the entry containing ``barcode`` from ``table``
+
+    Args:
+        barcode (str): barcode of the row to delete
+        table (type[Inventory]): must contain a column with the name ``"barcode"``
+    """
+
     with Session(engine) as session:
         entry = session.get(table, barcode)
         session.delete(entry)
         session.commit()
         session.close()
-    return
 
 
 def update_row(
     barcode: str,
-    columnsSelect: list[str],
+    columns: list[str],
     values: list[None | int | float | str],
-    table,
-):
-    """Update eine Zeile in der Tabelle mit Werten in den entsprechenden Spalten."""
-    if len(columnsSelect) != len(values):
-        raise ValueError(
-            "columnsSelect und values müssen die gleiche Anzahl Elemente besitzen"
-        )
-    dict = {
-        getattr(table, columnsSelect[i]): values[i] for i in range(len(columnsSelect))
-    }
-    for k, v in dict.items():
+    table: type[Inventory],
+) -> None:
+    """Update the row of ``table`` with values from ``columns``
+
+    Args:
+        barcode (str): barcode of the row to update
+        columns (list[str]): list of columns to update
+        values (list[None  |  int  |  float  |  str]): list of values to update
+        table (type[Inventory]): must contain a column with the name ``"barcode"``
+
+    Raises:
+        ValueError: if the number of items in ``columns`` and ``values`` differs
+    """
+
+    if len(columns) != len(values):
+        raise ValueError("Columns and values must have the same number of elements")
+
+    entries = {getattr(table, columns[i]): values[i] for i in range(len(columns))}
+
+    for k, v in entries.items():
         if v == "":
-            dict.update({k: None})
+            entries.update({k: None})
     with Session(engine) as session:
-        session.query(table).filter_by(barcode=barcode).update(dict)
+        session.query(table).filter_by(barcode=barcode).update(entries)
         session.commit()
         session.close()
 
 
 def create_row(
-    columnsSelect: list[str],
+    columns: list[str],
     values: list[int | float | str | None],
-    table,
-):
-    """Erstelle eine neue Zeile in der Tabelle mit Werten in den entsprechenden Spalten."""
-    if len(columnsSelect) != len(values):
-        raise ValueError(
-            "columnsSelect und values müssen die gleiche Anzahl Elemente besitzen"
-        )
+    table: Base,
+) -> None:
+    """Create a new row in ``table`` with and insert ``values`` in ``columns``
+
+    Args:
+        columns (list[str]): columns that values should be inserted to
+        values (list[int  |  float  |  str  |  None]): values to insert into the columns
+        table (type[Inventory): table to create a new row in
+
+    Raises:
+        ValueError: if the number of items in ``columns`` and ``values`` differs
+    """
+
+    if len(columns) != len(values):
+        raise ValueError("Columns and values must have the same number of elements")
 
     with Session(engine) as session:
-        for i in range(len(columnsSelect)):
-            setattr(table, columnsSelect[i], values[i])
+        for i in range(len(columns)):
+            setattr(table, columns[i], values[i])
         session.add(table)
         session.commit()
         session.close()
-    return
 
 
-def archive_row(barcode: str, to_archive: bool):
-    """Toggles if an entry is archived by setting the column 'archived' to 1 or 0"""
+def archive_row(barcode: str, to_archive: bool) -> None:
+    """Toggles if an entry from table ``inventory`` is archived by setting the column 'archived' to 1 or 0
+
+    Args:
+        barcode (str): barcode of the row to update
+        to_archive (bool): ``True`` if the row should be archived, ``False`` if it should be taken out of it
+    """
+
     if to_archive:
         update_row(barcode, ["archived"], [1], Inventory)
     else:
         update_row(barcode, ["archived"], [0], Inventory)
-    return
 
 
-def generateSelectData(table: type[Base], columns: list[str]) -> list[dict]:
-    """Generiere eine Liste mit den Auswahlmöglichkeiten für die Dropdown-Selektoren"""
-    columnClasses = [getattr(table, column) for column in columns]
+def generate_select_data(table: type[Base], columns: list[str]) -> list[dict[str, str]]:
+    """Generate a list of options for ``dmc.Select`` components
+
+    Args:
+        table (type[Base]): table to create the list from
+        columns (list[str]): columns to use
+
+    Returns:
+        list[dict]: list of dicts for use in ``dmc.Select`` components, containing values and their labels
+    """
+
+    column_attributes = [getattr(table, c) for c in columns]
+
     with Session(engine) as session:
-        stmt = select(*columnClasses)
+        stmt = select(*column_attributes)
         items = session.execute(stmt).all()
         session.close()
-    data = [{"value": str(item[0]), "label": str(item[1])} for item in items]
+
+    data = [{"value": str(i[0]), "label": str(i[1])} for i in items]
+
     return data
 
 
-def generateSelectData_Räume() -> list[dict]:
-    """Generiere eine Liste mit den Auswahlmöglichkeiten für die Dropdown-Selektoren für die Räume, die nach den Gebäuden gruppiert sein sollen"""
+def generate_select_data_rooms() -> list[dict[str, str]]:
+    """Generates a list of options for ``dmc.Select`` components containing all rooms grouped by buildings contained in the tables ``Rooms`` and ``Buildings``
+
+    Returns:
+        list[dict[str, str]]: list of dicts for use in ``dmc.Select`` components, containing grouped values and their labels
+    """
     with Session(engine) as session:
         stmt1 = select(Rooms.room_id, Rooms.room, Buildings.building).join(
             Buildings, Rooms.building_id == Buildings.building_id
@@ -324,105 +392,152 @@ def generateSelectData_Räume() -> list[dict]:
     return data
 
 
-def generateSelectData_Namen() -> list[dict]:
-    """Generiere eine Liste mit den Auswahlmöglichkeiten für die Dropdown-Selektoren für die Chemikalien. Diese sind nach dem Inventar und der GESTIS-Liste gruppiert."""
+def generate_select_data_search() -> list[dict[str, str]]:
+    # """Generiere eine Liste mit den Auswahlmöglichkeiten für die Dropdown-Selektoren für die Chemikalien. Diese sind nach dem Inventar und der GESTIS-Liste gruppiert."""
+    """Generates a list of options for ``dmc.Select`` components containing containing all chemicals from the main and GESTIS database`
+
+    Returns:
+        list[dict[str, str]]: list of dicts for use in ``dmc.Select`` components, containing grouped values and their labels
+    """
+
     with Session(engine) as session:
         stmt1 = select(Inventory.barcode, Inventory.name)
         stmt2 = select(Gestis.zvg, Gestis.name)
-        inventar = session.execute(stmt1).all()
+        inventory = session.execute(stmt1).all()
         gestis = session.execute(stmt2).all()
         session.close()
+
     data = []
     data.append(
         {
-            "group": "Im Inventar",
+            "group": i18n.get("Inventory"),
             "items": [
                 {"value": str(item[0]), "label": f"{item[1]} ({item[0]})"}
-                for item in inventar
+                for item in inventory
             ],
         }
     )
     data.append(
         {
-            "group": "In GESTIS",
+            "group": "GESTIS",
             "items": [
                 {"value": str(item[0]), "label": f"{item[1]} ({item[0]})"}
                 for item in gestis
             ],
         }
     )
+
     return data
 
 
 def get_table_headings(table: str) -> list[str]:
-    """Return the name of every column from a table"""
-    return stammdatenTables[table].__table__.columns.keys()
+    """Return the name of every column from ``table``.
 
+    Args:
+        table (str): table to get the column names from
 
-def updateStammdaten(selector: str, columns: list[str], values: list[str]):
-    """Updates the stammdaten table specified with selector, where ``columns[0] == values[0]``
-
-    :param selector: One of the available tables in the stammdaten table, at the moment: "buildings", "gestis", "manufacturers", "suppliers", "units" and "rooms"
-    :type selector: "buildings", "gestis", "manufacturers", "suppliers", "units", "rooms"
-    :param columns: A list of column names to update in the selected table
-    :type columns: list[str]
-    :param values: A list of values to update in the selected table, where the index of ``values`` corresponds to the index of ``columns``
-    :type values: list[str]
-
-    :raises ValueError: If columns or values is empty,
+    Returns:
+        list[str]: list of columns from ``table``
     """
+
+    return masterdata_tables[table].__table__.columns.keys()
+
+
+def update_masterdata_entry(
+    selector: str, columns: list[str], values: list[str]
+) -> None:
+    """Updates a table from masterdata specified with ``selector``. Writes the items of ``values`` in ``columns``.
+
+    Args:
+        selector (Literal["buildings", "gestis", "manufacturers", "suppliers", "units", "rooms"]): one of the available tables in the stammdaten table, at the moment: "buildings", "gestis", "manufacturers", "suppliers", "units" and "rooms"
+        columns (list[str]): a list of column names to update in the selected table
+        values (list[str]): a list of values to update in the selected table, where the index of ``values`` corresponds to the index of ``columns``
+
+    Raises:
+        ValueError: If columns or values are empty
+    """
+
     if len(columns) == 0:
         raise ValueError("columns mustn't be empty")
     if len(values) == 0:
         raise ValueError("values mustn't be empty")
 
-    table = stammdatenTables[selector]
+    table = masterdata_tables[selector]
     stmt = (
         update(table)
         .where(getattr(table, columns[0].lower()) == values[0])
         .values({columns[i].lower(): values[i] for i in range(1, len(columns))})
     )
+
     with Session(engine) as session:
         session.execute(stmt)
         session.commit()
         session.close()
-    return
 
 
-def deleteStammdaten(selector: str, values: list[str]):
-    """Deletes a row from the stammdaten table specified with selector."""
+def delete_masterdata_entry(selector: str, values: list[str]) -> None:
+    """Deletes a row in a table from masterdata specified with ``selector``. Takes the first item of ``values`` as key.
+
+
+    Args:
+        selector (str): table to delete a row from
+        values (list[str]): the first item is taken as key
+
+    Raises:
+        ValueError: if ``values`` doesn't contain any items
+    """
+
     if len(values) == 0:
         raise ValueError("values mustn't be empty")
 
-    table = stammdatenTables[selector]
+    table = masterdata_tables[selector]
+
     with Session(engine) as session:
         entry = session.get(table, values[0])
         session.delete(entry)
         session.commit()
         session.close()
-    return
 
 
-def insertStammdaten(selector: str | type[Base], columns: list[str], values: list[str]):
+def insert_masterdata_entry(
+    selector: str | type[Base], columns: list[str], values: list[str]
+) -> None:
+    """Inserts a row into a table from masterdata specified with ``selector``.
+
+    Args:
+        selector (str | type[Base]): table to insert a row into
+        columns (list[str]): a list of column names to update in the selected table
+        values (list[str]): a list of values to update in the selected table, where the index of ``values`` corresponds to the index of ``columns``
+
+    Raises:
+        ValueError: if ``values`` or columns don't contain any items
+    """
+
     if len(columns) == 0:
         raise ValueError("columns mustn't be empty")
     if len(values) == 0:
         raise ValueError("values mustn't be empty")
 
     if isinstance(selector, str):
-        table = stammdatenTables[selector]()
+        table = masterdata_tables[selector]()
     else:
         table = selector()
+
     with Session(engine) as session:
         for i in range(len(columns)):
             setattr(table, columns[i].lower(), values[i])
         session.add(table)
         session.commit()
         session.close()
-    return
 
 
-def get_main_table(is_archived: bool = False):
+def get_main_table(is_archived: bool = False) -> pd.DataFrame:
+    """Returns the data for the main table via sql. ``is_archived`` filters for entries where column ``archived`` is ``True``
+
+    Args:
+        is_archived (bool, optional): When set to ``True``, filters for entries where column ``archived`` is ``True`` . Defaults to False.
+    """
+
     def query(is_archived: int):
         return f"SELECT cas, name, formular, barcode, room, lastchecked FROM inventory INNER JOIN rooms ON inventory.room_id == rooms.room_id WHERE archived == {is_archived} "
 
@@ -442,82 +557,108 @@ def get_main_table(is_archived: bool = False):
     return df
 
 
-def getExistingData(id: str) -> dict[str, str]:
+def get_existing_data(id: str) -> dict[str, str]:
     """Retrieves key-value pairs of a row matching to ``id`` in either the GESTIS table or inventory
 
-    :param id: A unique primary key from inventory or GESTIS table
-    :type id: str
-    :return: A dict with key-value pairs of every column and its respective value in the searched for row
-    :rtype: dict
+    Args:
+        id (str): a unique primary key from inventory or GESTIS table
+
+    Returns:
+    dict: key-value pairs of every column and its respective value in the row with key ``id``
     """
 
     with Session(engine) as session:
-        entryGestis = session.get(Gestis, id)
-        entryInventory = session.get(Inventory, id)
+        entry_gestis = session.get(Gestis, id)
+        entry_inventory = session.get(Inventory, id)
 
-    if entryGestis and entryInventory:
+    if entry_gestis and entry_inventory:
         raise LookupError(
             "Entry is in both the inventory as well as the GESTIS table. Use unique identifiers for both tables!"
         )
 
-    entry = entryGestis or entryInventory
+    entry = entry_gestis or entry_inventory
     if entry == None:
         raise TypeError
+
     mapper = inspect(entry.__class__)
-
-    tableAsDict = dict()
+    table = dict()
     for i in mapper.column_attrs:
-        tableAsDict.update({i.key: str(getattr(entry, i.key))})
-    return tableAsDict
+        table.update({i.key: str(getattr(entry, i.key))})
+    return table
 
 
-def backup_db():
-    """Kopiere die Datenbank in den Backup-Ordner"""
+def backup_db() -> None:
+    """Copy the main database ``.sqlite`` file to the ``/backups`` folder"""
+
     src_path = Path("current.sqlite")
     time = dt.datetime.today().isoformat(timespec="seconds")
     time = time.replace(":", "")
     dest_path = Path("backup") / (time + ".sqlite")
+
     Path.mkdir(Path("backup"), exist_ok=True)
     shutil.copy(src_path, dest_path)
 
 
-def save_amount(barcode, date, füllmenge):
-    füllmenge_data = []
-    füllmenge_raw = select_value(barcode, "amount", Inventory)
-    if len(füllmenge_raw or []) != 0 and füllmenge_raw:
-        füllmenge_history = json.loads(füllmenge_raw)
-        if [date, füllmenge] != füllmenge_history[-1]:
-            füllmenge_history.append([date, füllmenge])
-        füllmenge_data = [i[1] for i in füllmenge_history]
-        füllmenge_history = json.dumps(füllmenge_history)
-    elif füllmenge:
-        füllmenge_history = [[date, füllmenge]]
-        füllmenge_history = json.dumps(füllmenge_history)
+def append_amount(barcode: str, date: str | None, amount: str | None) -> str | None:
+    """Append ``amount`` with its ``date`` to the list of amounts saved in an entry of the main table with id ``barcode``. This function doesn`t save the amount to the sql database.
+
+    Args:
+        barcode (str): barcode of the id retrieve the amount history from and append ``amount`` to
+        date (str | None): the date on which the amount was recorded
+        amount (str | None): amount of the entry
+
+    Returns:
+        str | None: json encoded, actually a list containg a sequence of lists with the first the date on index 0 and amount on index 1
+    """
+
+    amount_raw = select_value(barcode, "amount", Inventory)
+
+    if len(amount_raw or []) != 0 and amount_raw:
+        history = json.loads(amount_raw)
+        if [date, amount] != history[-1]:
+            history.append([date, amount])
+        history = json.dumps(history)
+    elif amount:
+        history = [[date, amount]]
+        history = json.dumps(history)
     else:
-        füllmenge_history = None
-    return füllmenge_history, füllmenge_data
+        history = None
+    return history
 
 
-def get_amount_data(barcode):
+def get_amount_chart_data(barcode: str) -> list[dict]:
+    """Returns the history of amount data for a ``dmc.LineChart`` component
+
+    Args:
+        barcode (str): barcode of the entry to retrieve the amount from
+
+    Returns:
+        list[dict]: list of dicts containing each a date and amount to plot in the chart.
+            Note that the amount is internationalised, so that it displays in the correct language.
+    """
+
     with Session(engine) as session:
         stmt = select(Inventory.amount).where(Inventory.barcode == barcode)
-        füllmenge = json.loads(session.scalars(stmt).one_or_none() or "")
+        amount = json.loads(session.scalars(stmt).one_or_none() or "")
 
-        data = [{"date": i[0], i18n.get("Amount"): i[1]} for i in füllmenge]
-        return data
+    data = [{"date": i[0], i18n.get("Amount"): i[1]} for i in amount]
+    data.sort(key=lambda i: i["date"])
+
+    return data
 
 
-# Declare the function key for Windows (ctrl) and Mac (command) depending on the OS for use in keyboard shortcuts
 def system_key() -> dmc.Kbd:
-    """Returns either `dmc.Kbd("⌘")` or `dmc.Kbd("Strg")` depending on the system"""
+    """Returns either ``dmc.Kbd("⌘")`` or ``dmc.Kbd("Ctrl")`` depending on the system. Note that "Ctrl" is internationalized and returns the correct identifier for the key depending on the language."""
+
     if platform.system() == "Darwin":
         return dmc.Kbd("⌘")
     else:
-        return dmc.Kbd("Strg")
+        return dmc.Kbd(i18n.get("Ctrl"))
 
 
 def get_version_number() -> str | None:
     """Returns the version number of the latest release in the beakerDB repository"""
+
     g = Github(None)
     try:
         if g.get_rate_limit().rate.remaining > 0:
@@ -594,26 +735,26 @@ def init_app(lang: str):
         Base.metadata.create_all(engine)
 
         # --- BEGIN Insert basic master data ---
-        insertStammdaten(
+        insert_masterdata_entry(
             Buildings, ["building_id", "building"], ["0", i18n.get("None")]
         )
-        insertStammdaten(
+        insert_masterdata_entry(
             Manufacturers,
             ["manufacturer_id", "manufacturer"],
             ["0", i18n.get("Nothing selected")],
         )
-        insertStammdaten(
+        insert_masterdata_entry(
             Suppliers,
             ["supplier_id", "supplier"],
             ["0", i18n.get("Nothing selected")],
         )
-        insertStammdaten(
+        insert_masterdata_entry(
             Rooms,
             ["room_id", "building_id", "building"],
             ["0", "0", i18n.get("Nothing selected")],
         )
-        insertStammdaten(Units, ["unit_id", "unit"], ["1", "g"])
-        insertStammdaten(Units, ["unit_id", "unit"], ["2", "mL"])
+        insert_masterdata_entry(Units, ["unit_id", "unit"], ["1", "g"])
+        insert_masterdata_entry(Units, ["unit_id", "unit"], ["2", "mL"])
         # --- END ---
 
     # --- BEGIN Retrieve GESTIS tables and add one of them to the master data according to lang ---
