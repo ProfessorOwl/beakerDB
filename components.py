@@ -11,14 +11,14 @@ i18n.load_from_file("locales/de.yaml", "de")
 
 
 class DateInput(dmc.DateInput):
-    """Vorkonfigurierter DateInput mit Button, um das Datum auf Heute zu setzen."""
+    """Preconfigured ``dmc.DateInput`` with a buttom to set the date to today."""
 
-    def __init__(self, id: str, label: str, buttonId: str):
+    def __init__(self, id: str, label: str, button_id: str):
         """
         Args:
-            id (str): Id der Komponente
-            label (str): Text, der über der Komponente angezeigt werden soll
-            buttonId (str): Id des Buttons
+            id (str): id of the component
+            label (str): text to show above the component
+            button_id (str): id of the button
         """
         super().__init__(
             id=id,
@@ -37,7 +37,7 @@ class DateInput(dmc.DateInput):
                         height=16,
                     ),
                     variant="light",
-                    id=buttonId,
+                    id=button_id,
                     size="md",
                 ),
                 label=i18n.get("Today"),
@@ -46,12 +46,13 @@ class DateInput(dmc.DateInput):
 
 
 class NumberInput(dmc.NumberInput):
-    """Vorkonfigurierter NumberInput. Erlaubt keine negativen Zahlen, blendet Kontrollelemente aus und zeigt immer ein deutsches Komma an."""
+    """Preconfigured ``dmc.NumberInput. It doesn't alow negative numbers, hides the control elements and always shows a german comma."""
 
     def __init__(self, id: str, label: str, **kwargs):
-        """Args:
-        id (str): Id der Komponente
-        label (str): Text, der über der Komponente angezeigt werden soll"""
+        """
+        Args:
+            id (str): if of the component
+            label (str): text to show above the component"""
         super().__init__(
             id=id,
             label=label,
@@ -64,7 +65,7 @@ class NumberInput(dmc.NumberInput):
 
 
 class KbdTooltip(dmc.Tooltip):
-    """Vorkonfigurierter Tooltip mit mehr padding-bottom"""
+    """Preconfigured Tooltip with more padding at the bottom."""
 
     def __init__(self, **kwargs):
         super().__init__(pb=10, position="bottom", **kwargs)
@@ -86,10 +87,10 @@ class Version:
                 self.color = "green.3"
                 self.badge_children = i18n.get("Update available")
 
-    def Badge(self):
+    def badge(self):
         return dmc.Badge(self.badge_children, color=self.color)
 
-    def Text(self):
+    def text(self):
         return dmc.Text(i18n.get("Version") + " " + self.current_version, c=self.color)
 
 

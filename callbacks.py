@@ -74,7 +74,7 @@ def get_callbacks(app):
         Input("wrapper_main", "children"),
         prevent_initial_call=False,
     )
-    def init_mainGrid(children) -> list[dict]:
+    def init_main_grid(children) -> list[dict]:
         """Initialize the main table with fresh data from the database.
         ``wrapper_main`` as an input is just a dummy. The callback gets fired everytime wrapper_main is initialized on the website by default.
 
@@ -92,7 +92,7 @@ def get_callbacks(app):
         Output("input_barcode", "value"),
         Output("input_amount", "value"),
         Output("input_name", "value"),
-        Output("input_formular", "value"),
+        Output("input_formula", "value"),
         Output("input_cas", "value"),
         Output("input_unit", "value"),
         Output("input_purchasedate", "value"),
@@ -179,7 +179,7 @@ def get_callbacks(app):
                 functions.select_value(barcode, x, functions.Inventory)
                 for x in [
                     "name",
-                    "formular",
+                    "formula",
                     "cas",
                     "unit_id",
                     "purchasedate",
@@ -218,7 +218,7 @@ def get_callbacks(app):
         State("input_solvent", "value"),
         State("input_cas", "value"),
         State("input_molarmass", "value"),
-        State("input_formular", "value"),
+        State("input_formula", "value"),
         State("input_unit", "value"),
         State("input_lastchecked", "value"),
         State("input_zvg", "value"),
@@ -238,7 +238,7 @@ def get_callbacks(app):
         solvent: str | None,
         cas: str | None,
         molarmass: str | None,
-        formular: str | None,
+        formula: str | None,
         unit_id: str | int | None,
         lastchecked: str | None,
         zvg: str | None,
@@ -260,7 +260,7 @@ def get_callbacks(app):
             solvent (str | None):
             cas (str | None):
             molarmass (str | None):
-            formular (str | None):
+            formula (str | None):
             unit_id (str | int | None):
             lastchecked (str | None):
             zvg (str | None):
@@ -380,7 +380,7 @@ def get_callbacks(app):
                 "solvent",
                 "cas",
                 "molarmass",
-                "formular",
+                "formula",
                 "manufacturer_id",
                 "supplier_id",
                 "room_id",
@@ -398,7 +398,7 @@ def get_callbacks(app):
                 solvent,
                 cas,
                 molarmass,
-                formular,
+                formula,
                 manufacturer_id,
                 supplier_id,
                 room_id,
@@ -483,7 +483,7 @@ def get_callbacks(app):
         Output("modal_input_barcode", "error", allow_duplicate=True),
         Output("modal_input_name", "value"),
         Output("modal_input_barcode", "value"),
-        Output("modal_input_formular", "value"),
+        Output("modal_input_formula", "value"),
         Output("modal_input_cas", "value"),
         Output("modal_input_unit", "value"),
         Output("modal_input_amount", "value"),
@@ -648,7 +648,7 @@ def get_callbacks(app):
         State("modal_input_solvent", "value"),
         State("modal_input_cas", "value"),
         State("modal_input_molarmass", "value"),
-        State("modal_input_formular", "value"),
+        State("modal_input_formula", "value"),
         State("modal_input_unit", "value"),
         State("modal_input_lastchecked", "value"),
         State("modal_input_zvg", "value"),
@@ -667,7 +667,7 @@ def get_callbacks(app):
         solvent: str | None,
         cas: str | None,
         molarmass: str | None,
-        formular: str | None,
+        formula: str | None,
         unit_id: str | int | None,
         lastchecked: str | None,
         zvg: str | None,
@@ -688,7 +688,7 @@ def get_callbacks(app):
             solvent (str | None):
             cas (str | None):
             molarmass (str | None):
-            formular (str | None):
+            formula (str | None):
             unit_id (str | int | None):
             lastchecked (str | None):
             zvg (str | None):
@@ -782,7 +782,7 @@ def get_callbacks(app):
                 "solvent",
                 "cas",
                 "molarmass",
-                "formular",
+                "formula",
                 "manufacturer_id",
                 "supplier_id",
                 "room_id",
@@ -800,7 +800,7 @@ def get_callbacks(app):
                 solvent,
                 cas,
                 molarmass,
-                formular,
+                formula,
                 manufacturer_id,
                 supplier_id,
                 room_id,
@@ -1566,7 +1566,7 @@ def get_callbacks(app):
 
         set_field("cas", "input_cas")
         set_field("name", "input_name")
-        set_field("formular", "input_formular")
+        set_field("formula", "input_formula")
         set_field("room_id", "input_room")
         set_field("supplier_id", "input_supplier")
         set_field("unit_id", "input_unit")
@@ -2080,8 +2080,8 @@ def get_callbacks(app):
 
         key = event.get("key")
         is_shift = event.get("shiftKey")
-        is_metaKey = event.get("metaKey")
-        is_ctrlKey = event.get("ctrlKey")
+        is_meta_key = event.get("metaKey")
+        is_ctrl_key = event.get("ctrlKey")
         tag_name = event.get("target.tagName")
 
         if is_shift:
@@ -2093,9 +2093,9 @@ def get_callbacks(app):
                     set_props("modal_confirm_save", {"opened": True})
                     return
             elif (
-                is_metaKey
+                is_meta_key
                 and platform.system() == "Darwin"
-                or is_ctrlKey
+                or is_ctrl_key
                 and platform.system() == "Windows"
             ):
                 if key.lower() == "e":
@@ -2200,7 +2200,7 @@ def get_callbacks(app):
                     height=24,
                 ),
                 DashIconify(
-                    icon=icons.archiveClose,
+                    icon=icons.close_archive,
                     height=24,
                 ),
                 "gradient",

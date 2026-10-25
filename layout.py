@@ -13,8 +13,7 @@ from i18n import i18n
 
 i18n.load_from_file("locales/de.yaml", "de")
 
-# Definiere das Layout
-# Das linke untere, welches die Tabelle enthält
+# left part of the screen which contains the button row at the top and the main table beneath it
 left_window = html.Div(
     [
         dmc.Group(
@@ -26,7 +25,7 @@ left_window = html.Div(
                             dmc.Text(i18n.get("Reset Filter"), visibleFrom="xxl"),
                             id="btn_reset_filter",
                             rightSection=DashIconify(
-                                icon=icons.filterOff,
+                                icon=icons.filter_off,
                                 height=20,
                             ),
                             disabled=True,
@@ -116,10 +115,10 @@ left_window = html.Div(
                     "headerName": i18n.get("Name"),
                 },
                 {
-                    "field": "formular",
+                    "field": "formula",
                     "cellRenderer": "SummenformelRenderer",
                     "sortable": True,
-                    "headerName": i18n.get("Molecular formular"),
+                    "headerName": i18n.get("Molecular formula"),
                 },
                 {
                     "field": "lastchecked",
@@ -139,10 +138,10 @@ left_window = html.Div(
                 },
             ],
             defaultColDef={
-                "filter": True,  # In custom.css ist ebenso der Filterbutton ausgeblendet, sodass nur die Suchzeile angezeigt wird
+                "filter": True,  # The button to active a more complex filter is disabled in custom.css
                 "floatingFilter": True,
             },
-            style={  # Passe die Größe an das Fenster an, ziehe die anderen Elementhöhen ab
+            style={
                 "height": "calc(100vh - 150px)",
                 "margin": "0px",
                 "padding": "0px",
@@ -154,7 +153,7 @@ left_window = html.Div(
                     "type": "fitCellContents",
                     "scaleUpToFitGridWidth": True,
                 },
-                "rowSelection": {  # Aktiviere das Auswählen von Zeilen
+                "rowSelection": {
                     "mode": "singleRow",
                     "enableClickSelection": True,
                     "checkboxes": False,
@@ -166,7 +165,7 @@ left_window = html.Div(
                         "overlayText": i18n.get("No matching entries found")
                     },
                 },
-                "icons": {  # Vertausche die Richtung der Pfeile für das Sortieren, damit der Pfeil runterzeigt, wenn von A->Z sortiert wird
+                "icons": {
                     "sortAscending": "\u2193",  # ↓
                     "sortDescending": "\u2191",  # ↑
                 },
@@ -196,7 +195,7 @@ right_window = [
                                     dmc.Tooltip(
                                         dmc.ActionIcon(
                                             DashIconify(
-                                                icon=icons.databaseSearch,
+                                                icon=icons.search_database,
                                                 height=24,
                                             ),
                                             variant="light",
@@ -260,7 +259,7 @@ right_window = [
                                 ),
                                 dmc.Group(
                                     [
-                                        comp.NumberInput(  # Füllmenge
+                                        comp.NumberInput(
                                             "input_amount",
                                             i18n.get("Amount"),
                                             w="100%",
@@ -316,8 +315,8 @@ right_window = [
                                     "input_purchasedate",
                                     i18n.get("Purchase date"),
                                     "btn_purchasedate_today",
-                                ),  # Kaufdatum
-                                dmc.Select(  # Hersteller
+                                ),
+                                dmc.Select(
                                     id="input_manufacturer",
                                     value="0",
                                     label=i18n.get("Manufacturer"),
@@ -328,7 +327,7 @@ right_window = [
                                         ["manufacturer_id", "manufacturer"],
                                     ),
                                 ),
-                                dmc.Select(  # Lieferant
+                                dmc.Select(
                                     id="input_supplier",
                                     value="0",
                                     label=i18n.get("Supplier"),
@@ -339,7 +338,7 @@ right_window = [
                                         ["supplier_id", "supplier"],
                                     ),
                                 ),
-                                dmc.Select(  # Raum
+                                dmc.Select(
                                     id="input_room",
                                     value="0",
                                     label=i18n.get("Room"),
@@ -347,19 +346,19 @@ right_window = [
                                     allowDeselect=False,
                                     data=functions.generate_select_data_rooms(),
                                 ),
-                                dmc.TextInput(  # Reinheit
+                                dmc.TextInput(
                                     id="input_purity",
                                     label=i18n.get("Purity"),
                                 ),
-                                dmc.TextInput(  # Konzentration
+                                dmc.TextInput(
                                     id="input_concentration",
                                     label=i18n.get("Concentration"),
                                 ),
-                                dmc.TextInput(  # Lösungsmittel
+                                dmc.TextInput(
                                     id="input_solvent",
                                     label=i18n.get("Solvent"),
                                 ),
-                                comp.DateInput(  # Zuletzt geprüft
+                                comp.DateInput(
                                     "input_lastchecked",
                                     i18n.get("Last checked"),
                                     "btn_lastchecked_today",
@@ -384,8 +383,8 @@ right_window = [
                                             i18n.get("Molar mass"),
                                         ),
                                         dmc.TextInput(
-                                            id="input_formular",
-                                            label=i18n.get("Molecular formular"),
+                                            id="input_formula",
+                                            label=i18n.get("Molecular formula"),
                                         ),
                                     ],
                                     grow=True,
@@ -404,7 +403,7 @@ right_window = [
                                                     visibleFrom="xl",
                                                 ),
                                                 leftSection=DashIconify(
-                                                    icon=icons.externalLink, height=20
+                                                    icon=icons.external_link, height=20
                                                 ),
                                                 disabled=True,
                                                 id="btn_open_gestis",
@@ -530,7 +529,7 @@ modal_new_entry = dmc.Stack(
                         dmc.Tooltip(
                             dmc.ActionIcon(
                                 DashIconify(
-                                    icon=icons.databaseSearch,
+                                    icon=icons.search_database,
                                     height=24,
                                 ),
                                 variant="light",
@@ -596,11 +595,11 @@ modal_new_entry = dmc.Stack(
                                     ),
                                     dmc.Group(
                                         [
-                                            comp.NumberInput(  # Füllmenge
+                                            comp.NumberInput(
                                                 "modal_input_amount",
                                                 i18n.get("Amount"),
                                                 w="100%",
-                                                rightSection=dmc.Select(  #  Mengeneinheit
+                                                rightSection=dmc.Select(
                                                     id="modal_input_unit",
                                                     value="1",
                                                     allowDeselect=False,
@@ -620,12 +619,12 @@ modal_new_entry = dmc.Stack(
                                         justify="space-between",
                                         align="end",
                                     ),
-                                    comp.DateInput(  # Kaufdatum
+                                    comp.DateInput(
                                         "modal_input_purchasedate",
                                         i18n.get("Purchase date"),
                                         "modal_btn_purchasedate_today",
                                     ),
-                                    dmc.Select(  # Hersteller
+                                    dmc.Select(
                                         id="modal_input_manufacturer",
                                         label=i18n.get("Manufacturer"),
                                         searchable=True,
@@ -636,7 +635,7 @@ modal_new_entry = dmc.Stack(
                                             ["manufacturer_id", "manufacturer"],
                                         ),
                                     ),
-                                    dmc.Select(  # Lieferant
+                                    dmc.Select(
                                         id="modal_input_supplier",
                                         label=i18n.get("Supplier"),
                                         searchable=True,
@@ -647,7 +646,7 @@ modal_new_entry = dmc.Stack(
                                             ["supplier_id", "supplier"],
                                         ),
                                     ),
-                                    dmc.Select(  # Raum
+                                    dmc.Select(
                                         id="modal_input_room",
                                         label=i18n.get("Room"),
                                         searchable=True,
@@ -655,19 +654,19 @@ modal_new_entry = dmc.Stack(
                                         value="0",
                                         data=functions.generate_select_data_rooms(),
                                     ),
-                                    dmc.TextInput(  # Reinheit
+                                    dmc.TextInput(
                                         id="modal_input_purity",
                                         label=i18n.get("Purity"),
                                     ),
-                                    dmc.TextInput(  # Konzentration
+                                    dmc.TextInput(
                                         id="modal_input_concentration",
                                         label=i18n.get("Concentration"),
                                     ),
-                                    dmc.TextInput(  # Lösungsmittel
+                                    dmc.TextInput(
                                         id="modal_input_solvent",
                                         label=i18n.get("Solvent"),
                                     ),
-                                    comp.DateInput(  # Zuletzt geprüft
+                                    comp.DateInput(
                                         "modal_input_lastchecked",
                                         i18n.get("Last checked"),
                                         "modal_btn_lastchecked_today",
@@ -694,8 +693,8 @@ modal_new_entry = dmc.Stack(
                                         i18n.get("Molar mass"),
                                     ),
                                     dmc.TextInput(
-                                        id="modal_input_formular",
-                                        label=i18n.get("Molecular formular"),
+                                        id="modal_input_formula",
+                                        label=i18n.get("Molecular formula"),
                                     ),
                                     dmc.TextInput(
                                         id="modal_input_zvg",
@@ -851,8 +850,8 @@ modal_settings = dmc.Stack(
                 dmc.Title(i18n.get("Settings"), order=2),
                 dmc.Group(
                     [
-                        comp.Version(VERSION).Text(),
-                        comp.Version(VERSION).Badge(),
+                        comp.Version(VERSION).text(),
+                        comp.Version(VERSION).badge(),
                     ],
                     gap="xs",
                 ),

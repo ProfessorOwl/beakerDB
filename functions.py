@@ -94,7 +94,7 @@ class Inventory(Base):
     barcode = Column("barcode", Text(), primary_key=True)
     cas = Column("cas", Text())
     name = Column("name", Text())
-    formular = Column("formular", Text())
+    formula = Column("formula", Text())
     room_id = Column(
         "room_id",
         ForeignKey("rooms.room_id"),
@@ -132,7 +132,7 @@ class Inventory(Base):
     zvg = Column("ZVG", Integer())
 
     def __repr__(self) -> str:
-        return f"inventory(barcode={self.barcode!r}, cas={self.cas!r}, name={self.name!r}, formular={self.formular!r}, room_id={self.room_id!r}, supplier_id={self.supplier_id!r}, amount={self.amount!r}, unit_id={self.unit_id!r},purchasedate={self.purchasedate!r}, manufacturer_id={self.manufacturer_id!r}, purity={self.purity!r}, concentration={self.concentration!r}, solvent={self.solvent!r}, molarmass={self.molarmass!r}, lastchecked={self.lastchecked!r}), archived={self.archived!r}"
+        return f"inventory(barcode={self.barcode!r}, cas={self.cas!r}, name={self.name!r}, formula={self.formula!r}, room_id={self.room_id!r}, supplier_id={self.supplier_id!r}, amount={self.amount!r}, unit_id={self.unit_id!r},purchasedate={self.purchasedate!r}, manufacturer_id={self.manufacturer_id!r}, purity={self.purity!r}, concentration={self.concentration!r}, solvent={self.solvent!r}, molarmass={self.molarmass!r}, lastchecked={self.lastchecked!r}), archived={self.archived!r}"
 
 
 class Buildings(Base):
@@ -157,11 +157,11 @@ class Gestis(Base):
     )
     cas = Column("cas", Text(), doc=i18n.get("CAS no."))
     name = Column("name", Text(), doc=i18n.get("Name"))
-    formular = Column("formular", Text(), doc=i18n.get("Molecular formular"))
+    formula = Column("formula", Text(), doc=i18n.get("Molecular formula"))
     molarmass = Column("molarmass", REAL(), doc=i18n.get("Molar mass"))
 
     def __repr__(self) -> str:
-        return f"gestis(zvg={self.zvg!r}, cas={self.cas!r}, name={self.name}, formular={self.formular}, molarmass={self.molarmass})"
+        return f"gestis(zvg={self.zvg!r}, cas={self.cas!r}, name={self.name}, formula={self.formula}, molarmass={self.molarmass})"
 
 
 class Manufacturers(Base):
@@ -234,7 +234,6 @@ masterdata_tables = {
 
 
 def select_value(barcode: str, column: str, table: type[Inventory]) -> str:
-    # """Lese den Wert einer Spalte der Tabelle aus, in dessen Zeile der entsprechende Barcode steht."""
     """Return the value of a column from the table ``Inventory`` via the barcode
 
     Args:
@@ -379,10 +378,10 @@ def generate_select_data_rooms() -> list[dict[str, str]]:
         )
         stmt2 = select(Buildings.building)
         items = session.execute(stmt1).all()
-        gebäude = session.execute(stmt2).all()
+        buildings = session.execute(stmt2).all()
         session.close()
 
-    data = [{"group": i[0], "items": []} for i in gebäude]
+    data = [{"group": i[0], "items": []} for i in buildings]
     for dat in data:
         lst = []
         for i in items:
@@ -393,7 +392,6 @@ def generate_select_data_rooms() -> list[dict[str, str]]:
 
 
 def generate_select_data_search() -> list[dict[str, str]]:
-    # """Generiere eine Liste mit den Auswahlmöglichkeiten für die Dropdown-Selektoren für die Chemikalien. Diese sind nach dem Inventar und der GESTIS-Liste gruppiert."""
     """Generates a list of options for ``dmc.Select`` components containing containing all chemicals from the main and GESTIS database`
 
     Returns:
@@ -539,7 +537,7 @@ def get_main_table(is_archived: bool = False) -> pd.DataFrame:
     """
 
     def query(is_archived: int):
-        return f"SELECT cas, name, formular, barcode, room, lastchecked FROM inventory INNER JOIN rooms ON inventory.room_id == rooms.room_id WHERE archived == {is_archived} "
+        return f"SELECT cas, name, formula, barcode, room, lastchecked FROM inventory INNER JOIN rooms ON inventory.room_id == rooms.room_id WHERE archived == {is_archived} "
 
     if is_archived:
         df = pd.read_sql(
@@ -697,7 +695,7 @@ def import_gestis(path_to_xlsx: str | PathLike, lang: str):
             df.columns[0]: "zvg",
             df.columns[1]: "cas",
             df.columns[2]: "name",
-            df.columns[3]: "formular",
+            df.columns[3]: "formula",
             df.columns[4]: "molarmass",
         }
     )
@@ -711,10 +709,10 @@ def import_gestis(path_to_xlsx: str | PathLike, lang: str):
 
     df["molarmass"] = df["molarmass"].apply(pd.to_numeric)
 
-    df["formular"] = [str(i).replace("\n", ", ") for i in df["formular"]]
-    for i, value in df["formular"].items():
+    df["formula"] = [str(i).replace("\n", ", ") for i in df["formula"]]
+    for i, value in df["formula"].items():
         if value.strip() == "" or value == "." or value.lower() == "nan":
-            df.at[i, "formular"] = None
+            df.at[i, "formula"] = None
     df.to_sql("gestis", engine, if_exists="delete_rows")
 
 
@@ -750,7 +748,7 @@ def init_app(lang: str):
         )
         insert_masterdata_entry(
             Rooms,
-            ["room_id", "building_id", "building"],
+            ["room_id", "building_id", "room"],
             ["0", "0", i18n.get("Nothing selected")],
         )
         insert_masterdata_entry(Units, ["unit_id", "unit"], ["1", "g"])
