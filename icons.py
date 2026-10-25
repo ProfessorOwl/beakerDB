@@ -1,4 +1,4 @@
-# Definiere die Symbole die verwendet werden:
+# All symbols to be used in the app by iconify.design
 filter_off = "mdi:filter-off"
 edit = "mdi:edit"
 add = "mdi:add"

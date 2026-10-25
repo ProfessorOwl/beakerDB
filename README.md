@@ -5,29 +5,25 @@
 <p align="center">
 <a><img src=https://badgen.net/badge/Licence/CC%20BY-NC-SA%204.0></a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">
 
-*beakerDB* ist eine Chemikaliendatenbank, die für den Einsatz in kleinen bis mittelgroßen Gruppen gedacht ist, wie z.B. Arbeitskreise oder Schulen. 
+*beakerDB* is a database for chemicals for use in small to medium-sized groups, for example in scientific groups or schools. It uses *sqlite* as its database backend.
 
-*beakerDB* zeichnet sich durch folgende Eigenschaften aus:
-- Unterstützung eines **Barcodescanners**, um Chemikalien schnell zu katalogisieren
-- Automatisches Aktualisieren des **Prüfdatums** beim Erstellen/Ändern von Einträgen
-- Zeitbasierte **Backups** der Datenbank
-- **Archiv** für aussortierte/verworfene Chemikalien, für eine nachvollziehbare Chemikaliengeschichte
-- Möglichkeit, Chemikalien mit ihrem **GESTIS**-Eintrag zu verbinden
-- Anlegen **fester Stammdaten**, um Ordnung bei verschiedenen Lieferanten, Herstellen, Räumen und Gebäuden zu behalten
-- Lokales Datenbankmanagement mit **SQLite**
+*beakerDB* currently has the following features that enhance it beyond using a plain excel table:
+- Quickly catalogue chemicals using a **barcode scanner** for searching and creating new entries
+- Run a **server** to give your group up-to-date information about chemicals that you have stored
+- Automatically set the **date of inspection** when changing or creating entries
+- Make interval based **automatic backups** of the database
+- **Archive** chemicals that where sorted out or are empty, to keep a well documented history of all chemicals
+- Connect chemicals with a **safety sheet** from [GESTIS](https://gestis-database.dguv.de/)
+- Manage **masterdata** to keep your suppliers, manufacturers, rooms and buildings in order
 
 ## Installation
 
-Die Datenbank kommt in Form einer Pythonanwendung, die einen lokalen Webserver unter `http://localhost:8050/` bereitstellt. 
+*beakerDB* is a python application that runs a local webserver under `http://localhost:8050/` by default.
 
 ### Anleitung
-1. Die Anwendung benutzt Python 3.14. Python kannst du hier herunterladen: https://www.python.org/downloads/
-2. Lade das Repository entweder manuell herunter oder klone es:
-    ```bash
-    git clone https://github.com/ProfessorOwl/beakerDB beakerDB
-    cd beakerDB
-    ```
-3. Es ist sinnvoll, eine virtuelle Umgebung zu erstellen, damit die Python-Module nicht global installiert werden. *Achtung: Stelle sicher, dass du dich im Terminal im richten Ordner befindest!*
+1. The application uses Python 3.14. You can download Python here: https://www.python.org/downloads/.
+2. Download the [latest version](https://github.com/ProfessorOwl/beakerDB/releases/latest) of *beakerDB*  and unpack it somewhere.
+3. You should create a virtual environment for Python, so that the Python modules won't be installed globally. *Warning: Make sure that you are in the installation folder of the app containing init.py.*
     - macOS/Linux:
         ```bash
         python3 -m venv .venv
@@ -40,13 +36,12 @@ Die Datenbank kommt in Form einer Pythonanwendung, die einen lokalen Webserver u
         .\.venv\Scripts\Activate.ps1
         pip install -r requirements.txt
         ```
-4.  Der lokale Server kann nun gestartet werden mit 
+4.  The local server can then be started by running
     ```bash
     python init.py
     ```
-    Es können mehrere **Startoptionen** hinzugefügt werden, um z.B. die IP-Adresse oder den Port der Datenbank anzupassen. Für eine Übersicht einfach 
+    The app supports **command line arguments**. With them, you can quickly change the port or IP adress of the app. For a quick overview run
     ```bash
     python init.py -h
     ```
-     eingeben.
-5. Anschließend kann die App im Browser unter `http://localhost:8050` geöffnet werden.
+5. You can access the server under `http://localhost:8050`.
