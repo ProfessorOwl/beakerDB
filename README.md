@@ -20,7 +20,14 @@
 
 *beakerDB* is a python application that runs a local webserver under `http://localhost:8050/` by default.
 
-### Anleitung
+### Disclaimer
+Because it was originally developed for a german group, the server starts by default in german. This can be changed temporarily by running the server as
+```bash
+python3 init.py -l en
+```
+or permanently by changing `LANG` in [`default_values.py`](https://github.com/ProfessorOwl/beakerDB/blob/main/default_values.py) to `"en"`
+
+### Instructions
 1. The application uses Python 3.14. You can download Python here: https://www.python.org/downloads/.
 2. Download the [latest version](https://github.com/ProfessorOwl/beakerDB/releases/latest) of *beakerDB*  and unpack it somewhere.
 3. You should create a virtual environment for Python, so that the Python modules won't be installed globally. *Warning: Make sure that you are in the installation folder of the app containing init.py.*
