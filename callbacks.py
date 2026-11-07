@@ -496,6 +496,7 @@ def get_callbacks(app):
         Output("modal_input_molarmass", "value"),
         Output("modal_input_solvent", "value"),
         Output("modal_input_lastchecked", "value"),
+        Output("modal_input_zvg", "value"),
         Output("modal_input_barcode", "n_blur"),
         Input("btn_create_new_entry", "n_clicks"),
         Input("modal_btn_cancel", "n_clicks"),
@@ -575,6 +576,7 @@ def get_callbacks(app):
                     "",
                     "",
                     input_lastchecked,
+                    "",
                     patched_n_blur,
                 )
             else:
@@ -599,6 +601,7 @@ def get_callbacks(app):
             "",
             "",
             input_lastchecked,
+            "",
             patched_n_blur,
         )
 
