@@ -163,11 +163,12 @@ def get_callbacks(app):
         if len(amount_raw or []) != 0 and amount_raw:
             amount = json.loads(amount_raw)
             amount_last_entry = amount[-1][1]
+
             # Only show the sparkline when it has more than one entry
             if len(amount) > 1:
                 hide_sparkline = False
+                amount.sort(key=lambda i: i[0])
                 amount_values = [i[1] for i in amount]
-                amount_values.sort(reverse=True)
         else:
             amount_last_entry = amount_raw
 
@@ -534,7 +535,7 @@ def get_callbacks(app):
             PreventUpdate: in case the ``n_events`` triggers the callback but doesn't contain an event or details to it, or the modal for new entries or masterdata is open
 
         Returns:
-            tuple: 17 Outputs
+            tuple: 18 Outputs
         """
 
         cache_settings = json.loads(cache_settings_json)

@@ -610,14 +610,15 @@ def append_amount(barcode: str, date: str | None, amount: str | None) -> str | N
     """
 
     amount_raw = select_value(barcode, "amount", Inventory)
-
     if len(amount_raw or []) != 0 and amount_raw:
         history = json.loads(amount_raw)
         if [date, amount] != history[-1]:
-            history.append([date, amount])
+            history.append([date or "", amount])
+        history.sort(key=lambda i: i[0])
         history = json.dumps(history)
     elif amount:
-        history = [[date, amount]]
+        history = [[date or "", amount]]
+        history.sort(key=lambda i: i[0])
         history = json.dumps(history)
     else:
         history = None
@@ -625,7 +626,7 @@ def append_amount(barcode: str, date: str | None, amount: str | None) -> str | N
 
 
 def get_amount_chart_data(barcode: str) -> list[dict]:
-    """Returns the history of amount data for a ``dmc.LineChart`` component
+    """Returns the history of amount data for a ``dmc.LineChart`` component sorted by date
 
     Args:
         barcode (str): barcode of the entry to retrieve the amount from
@@ -641,7 +642,6 @@ def get_amount_chart_data(barcode: str) -> list[dict]:
 
     data = [{"date": i[0], i18n.get("Amount"): i[1]} for i in amount]
     data.sort(key=lambda i: i["date"])
-
     return data
 
 

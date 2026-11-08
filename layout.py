@@ -1038,10 +1038,10 @@ modal_confirm_backup = dmc.Stack(
 
 modal_linechart_amount = dmc.Stack(
     [
-        dmc.Title(i18n.get("Fill levels"), order=2),
+        dmc.Title(i18n.get("History"), order=2),
         dmc.LineChart(
             id="chart_amount",
-            curveType="linear",
+            curveType="monotone",
             dataKey="date",
             series=[{"name": i18n.get("Amount"), "color": "indigo"}],
             data=[],
