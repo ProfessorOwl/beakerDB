@@ -597,13 +597,16 @@ def backup_db() -> None:
     shutil.copy(src_path, dest_path)
 
 
-def append_amount(barcode: str, date: str | None, amount: str | None) -> str | None:
-    """Append ``amount`` with its ``date`` to the list of amounts saved in an entry of the main table with id ``barcode``. This function doesn`t save the amount to the sql database.
+def append_amount(
+    barcode: str, date: str | None, amount: str | None, unit: str
+) -> str | None:
+    """Append ``amount`` with its ``date`` and unit to the list of amounts saved in an entry of the main table with id ``barcode``. This function doesn`t actually save the amount to the sql database.
 
     Args:
         barcode (str): barcode of the id retrieve the amount history from and append ``amount`` to
         date (str | None): the date on which the amount was recorded
         amount (str | None): amount of the entry
+        unit (str): unit of the amount
 
     Returns:
         str | None: json encoded, actually a list containg a sequence of lists with the first the date on index 0 and amount on index 1
@@ -612,12 +615,14 @@ def append_amount(barcode: str, date: str | None, amount: str | None) -> str | N
     amount_raw = select_value(barcode, "amount", Inventory)
     if len(amount_raw or []) != 0 and amount_raw:
         history = json.loads(amount_raw)
-        if [date, amount] != history[-1]:
-            history.append([date or "", amount])
+        if [date, amount] != history[
+            -1
+        ]:  # TODO - this should search if an entry with the specific date already exists. If so, then dont append
+            history.append([date or "", amount, unit])
         history.sort(key=lambda i: i[0])
         history = json.dumps(history)
     elif amount:
-        history = [[date or "", amount]]
+        history = [[date or "", amount, unit]]
         history.sort(key=lambda i: i[0])
         history = json.dumps(history)
     else:
@@ -640,9 +645,31 @@ def get_amount_chart_data(barcode: str) -> list[dict]:
         stmt = select(Inventory.amount).where(Inventory.barcode == barcode)
         amount = json.loads(session.scalars(stmt).one_or_none() or "")
 
-    data = [{"date": i[0], i18n.get("Amount"): i[1]} for i in amount]
+    data = [
+        {"date": i[0], i18n.get("Amount"): i[1], "unit": i[2] if len(i) > 2 else ""}
+        for i in amount
+    ]
     data.sort(key=lambda i: i["date"])
     return data
+
+
+def get_unit(id: int) -> str:
+    """Returns the unit corresponding to ``id``
+
+    Args:
+        id (int): the id of the unit to search for
+
+    Returns:
+        str: the name of the unit with id ``id``
+    """
+    with Session(engine) as session:
+        stmt = select(Units.unit).where(Units.unit_id == id)
+        item = session.scalars(stmt).one_or_none()
+        session.close()
+    if item is None:
+        return ""
+    else:
+        return str(item)
 
 
 def system_key() -> dmc.Kbd:

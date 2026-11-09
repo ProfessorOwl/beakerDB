@@ -360,6 +360,7 @@ def get_callbacks(app):
             barcode,
             lastchecked,
             amount,
+            functions.get_unit(int(unit_id)),
         )
 
         hide_sparkline = True
@@ -768,11 +769,13 @@ def get_callbacks(app):
                     color="yellow.3",
                 )
             )
+
         # Load all entries for the amount and put in the new amount, if it is unequal to the last amount
         amount_history = functions.append_amount(
             barcode,
             lastchecked,
             amount,
+            functions.get_unit(int(unit_id)),
         )
 
         functions.create_row(
@@ -2033,13 +2036,14 @@ def get_callbacks(app):
     @app.callback(
         Output("modal_linechart_amount", "opened"),
         Output("chart_amount", "data"),
+        Output("amount_history_table", "rowData"),
         Input("wrapper_sparkline_amount", "n_clicks"),
         State("modal_linechart_amount", "opened"),
         State("main_table", "selectedRows"),
     )
     def open_amount_chart(
         n_clicks: int, is_open: bool, selected_rows: list[dict]
-    ) -> tuple[Literal[True], list[dict]]:
+    ) -> tuple[Literal[True], list[dict], list[dict]]:
         """Open the modal to the amount chart
 
         Args:
@@ -2053,7 +2057,7 @@ def get_callbacks(app):
 
         barcode = selected_rows[0].get("barcode", "")
         data = functions.get_amount_chart_data(barcode)
-        return True, data
+        return True, data, data
 
     @app.callback(
         Input("eventlistener_keyboard", "n_events"),

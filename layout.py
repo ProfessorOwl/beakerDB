@@ -804,7 +804,7 @@ modal_masterdata = dmc.Stack(
                 "theme": {"function": "themeQuartz.withParams({fontFamily: 'Lexend'})"},
                 "suppressScrollOnNewData": True,
                 "suppressFieldDotNotation": True,
-                "rowSelection": {  # Aktiviere das Auswählen von Zeilen
+                "rowSelection": {
                     "mode": "singleRow",
                     "enableClickSelection": True,
                     "checkboxes": False,
@@ -1036,16 +1036,62 @@ modal_confirm_backup = dmc.Stack(
     ]
 )
 
-modal_linechart_amount = dmc.Stack(
+modal_linechart_amount = dmc.Grid(
     [
-        dmc.Title(i18n.get("History"), order=2),
-        dmc.LineChart(
-            id="chart_amount",
-            curveType="monotone",
-            dataKey="date",
-            series=[{"name": i18n.get("Amount"), "color": "indigo"}],
-            data=[],
-            h=300,
+        dmc.GridCol(
+            dmc.Stack(
+                [
+                    dmc.Title(i18n.get("History"), order=2),
+                    dmc.LineChart(
+                        id="chart_amount",
+                        curveType="monotone",
+                        dataKey="date",
+                        series=[{"name": i18n.get("Amount"), "color": "indigo"}],
+                        data=[],
+                        h=300,
+                    ),
+                ]
+            ),
+            span=8,
+        ),
+        dmc.GridCol(
+            dag.AgGrid(
+                id="amount_history_table",
+                dashGridOptions={
+                    "theme": {
+                        "function": "themeQuartz.withParams({fontFamily: 'Lexend'})"
+                    },
+                    "autoSizeStrategy": {
+                        "type": "fitCellContents",
+                        "scaleUpToFitGridWidth": True,
+                    },
+                    "suppressScrollOnNewData": True,
+                    "suppressFieldDotNotation": True,
+                    "rowSelection": {
+                        "mode": "singleRow",
+                        "enableClickSelection": True,
+                        "checkboxes": False,
+                    },
+                },
+                columnDefs=[
+                    {
+                        "field": "date",
+                        "sortable": True,
+                        "sort": "desc",
+                        "headerName": i18n.get("Date"),
+                    },
+                    {
+                        "field": i18n.get("Amount"),
+                        "sortable": True,
+                    },
+                    {
+                        "field": "unit",
+                        "sortable": True,
+                        "headerName": i18n.get("Unit"),
+                    },
+                ],
+            ),
+            span=4,
         ),
     ]
 )
