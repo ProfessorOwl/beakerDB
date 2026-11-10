@@ -160,17 +160,21 @@ def get_callbacks(app):
 
         # Extract the last amount from the json array to put it in input_amount
         amount_raw = functions.select_value(barcode, "amount", functions.Inventory)
+
         if len(amount_raw or []) != 0 and amount_raw:
             amount = json.loads(amount_raw)
-            amount_last_entry = amount[-1][1]
+            if isinstance(amount, list):
+                amount = {
+                    i[0]: [i[1], i[2] if len(i) > 2 else ""] for i in tuple(amount)
+                }
+            amount_last_entry = list(amount.values())[-1][0]
 
             # Only show the sparkline when it has more than one entry
             if len(amount) > 1:
                 hide_sparkline = False
-                amount.sort(key=lambda i: i[0])
-                amount_values = [i[1] for i in amount]
+            amount_values = [v[0] for k, v in amount.items()]
         else:
-            amount_last_entry = amount_raw
+            amount_last_entry = ""
 
         patched_input["display"] = "flex"
         return (
@@ -365,7 +369,9 @@ def get_callbacks(app):
 
         hide_sparkline = True
         amount_data = (
-            [i[1] for i in json.loads(amount_history)] if amount_history else []
+            [v[0] for k, v in json.loads(amount_history).items()]
+            if amount_history
+            else []
         )
         if len(amount_data) > 1:
             hide_sparkline = False

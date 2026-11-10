@@ -612,21 +612,35 @@ def append_amount(
         str | None: json encoded, actually a list containg a sequence of lists with the first the date on index 0 and amount on index 1
     """
 
-    amount_raw = select_value(barcode, "amount", Inventory)
-    if len(amount_raw or []) != 0 and amount_raw:
-        history = json.loads(amount_raw)
-        if [date, amount] != history[
-            -1
-        ]:  # TODO - this should search if an entry with the specific date already exists. If so, then dont append
-            history.append([date or "", amount, unit])
-        history.sort(key=lambda i: i[0])
+    history_raw = select_value(barcode, "amount", Inventory)
+
+    # When the amount field is empty, keep the amount history intact
+    if amount == None or amount == "":
+        return history_raw or ""
+
+    # If date == None (e.g. when deleting the date with the cross symbol) date will be set to string "null"
+    # Unify this case with a manually deleted date
+    if date == None:
+        date = ""
+
+    if len(history_raw or []) != 0:
+        history = json.loads(history_raw)
+
+        # Check if history is still in list format of v1.0.2
+        # If so, convert it to the new format
+        if isinstance(history, list):
+            history = {i[0]: [i[1], i[2] if len(i) > 2 else ""] for i in tuple(history)}
+
+        history.update({date: [amount, unit]})
+
+        # Sort history by keys
+        print("history", history)
+        history = dict(sorted(history.items()))
         history = json.dumps(history)
-    elif amount:
-        history = [[date or "", amount, unit]]
-        history.sort(key=lambda i: i[0])
-        history = json.dumps(history)
+
     else:
-        history = None
+        history = {date: [amount, unit]}
+        history = json.dumps(history)
     return history
 
 
@@ -640,15 +654,21 @@ def get_amount_chart_data(barcode: str) -> list[dict]:
         list[dict]: list of dicts containing each a date and amount to plot in the chart.
             Note that the amount is internationalised, so that it displays in the correct language.
     """
-
     with Session(engine) as session:
         stmt = select(Inventory.amount).where(Inventory.barcode == barcode)
-        amount = json.loads(session.scalars(stmt).one_or_none() or "")
+        amount_history = json.loads(session.scalars(stmt).one_or_none() or "")
 
-    data = [
-        {"date": i[0], i18n.get("Amount"): i[1], "unit": i[2] if len(i) > 2 else ""}
-        for i in amount
-    ]
+    if isinstance(amount_history, list):
+        data = [
+            {"date": i[0], i18n.get("Amount"): i[1], "unit": i[2] if len(i) > 2 else ""}
+            for i in amount_history
+        ]
+    else:
+        data = [
+            {"date": k, i18n.get("Amount"): v[0], "unit": v[1]}
+            for k, v in amount_history.items()
+        ]
+
     data.sort(key=lambda i: i["date"])
     return data
 
