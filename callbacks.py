@@ -2066,6 +2066,50 @@ def get_callbacks(app):
         return True, data, data
 
     @app.callback(
+        Output("amount_history_table", "rowData", allow_duplicate=True),
+        Output("chart_amount", "data", allow_duplicate=True),
+        Output("chart_amount", "referenceLines"),
+        Output("sparkline_amount", "data", allow_duplicate=True),
+        Input("amount_history_table", "selectedRows"),
+        Input("amount_history_btn_delete", "n_clicks"),
+        State("amount_history_table", "rowData"),
+    )
+    def amount_history_manage_rows(
+        selected_rows: list[dict],
+        n_clicks_delete_row: int,
+        amount_row_data: list[dict],
+    ) -> tuple:
+        """Manage the rows in the amount history window and syncs the selected rows with the graph.
+
+        Args:
+            selected_rows (list[dict]): The selected rows in the amount history table
+            n_clicks_delete_row (int): Dummy input to fire when the button ``amount_history_btn_delete`` is clicked to delete a row
+            amount_row_data (list[dict]): The complete rowData of the ``amount_history_table``
+
+        Returns:
+            tuple: 4 Outputs
+        """
+
+        if selected_rows != []:
+            reference_lines = [
+                {
+                    "x": selected_rows[0]["date"],
+                }
+            ]
+            set_props("amount_history_btn_delete", {"disabled": False})
+
+        else:
+            reference_lines = []
+            set_props("amount_history_btn_delete", {"disabled": True})
+
+        if ctx.triggered_id == "amount_history_btn_delete":
+            amount_row_data.remove(selected_rows[0])
+
+        sparkline_data = [i[i18n.get("Amount")] for i in amount_row_data]
+
+        return amount_row_data, amount_row_data, reference_lines, sparkline_data
+
+    @app.callback(
         Input("eventlistener_keyboard", "n_events"),
         Input("eventlistener_keyboard", "event"),
         State("wrapper_entry", "hidden"),

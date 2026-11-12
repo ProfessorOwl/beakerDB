@@ -1047,51 +1047,73 @@ modal_linechart_amount = dmc.Grid(
                         curveType="monotone",
                         dataKey="date",
                         series=[{"name": i18n.get("Amount"), "color": "indigo"}],
+                        lineProps={
+                            "isAnimationActive": True,
+                            "animationDuration": 300,
+                            "animationEasing": "ease-in-out",
+                            "animationBegin": 200,
+                        },
                         data=[],
                         h=300,
                     ),
                 ]
             ),
-            span=8,
+            span=7,
         ),
         dmc.GridCol(
-            dag.AgGrid(
-                id="amount_history_table",
-                dashGridOptions={
-                    "theme": {
-                        "function": "themeQuartz.withParams({fontFamily: 'Lexend'})"
-                    },
-                    "autoSizeStrategy": {
-                        "type": "fitCellContents",
-                        "scaleUpToFitGridWidth": True,
-                    },
-                    "suppressScrollOnNewData": True,
-                    "suppressFieldDotNotation": True,
-                    "rowSelection": {
-                        "mode": "singleRow",
-                        "enableClickSelection": True,
-                        "checkboxes": False,
-                    },
-                },
-                columnDefs=[
-                    {
-                        "field": "date",
-                        "sortable": True,
-                        "sort": "desc",
-                        "headerName": i18n.get("Date"),
-                    },
-                    {
-                        "field": i18n.get("Amount"),
-                        "sortable": True,
-                    },
-                    {
-                        "field": "unit",
-                        "sortable": True,
-                        "headerName": i18n.get("Unit"),
-                    },
-                ],
+            dmc.Stack(
+                [
+                    dmc.Group(
+                        [
+                            comp.ButtonClicks(
+                                i18n.get("Delete"),
+                                id="amount_history_btn_delete",
+                                color="red.5",
+                                rightSection=DashIconify(icon=icons.delete, height=20),
+                                disabled=True,
+                            ),
+                        ],
+                        justify="flex-end",
+                    ),
+                    dag.AgGrid(
+                        id="amount_history_table",
+                        dashGridOptions={
+                            "theme": {
+                                "function": "themeQuartz.withParams({fontFamily: 'Lexend'})"
+                            },
+                            "autoSizeStrategy": {
+                                "type": "fitCellContents",
+                                "scaleUpToFitGridWidth": True,
+                            },
+                            "suppressScrollOnNewData": True,
+                            "suppressFieldDotNotation": True,
+                            "rowSelection": {
+                                "mode": "singleRow",
+                                "enableClickSelection": True,
+                                "checkboxes": False,
+                            },
+                        },
+                        columnDefs=[
+                            {
+                                "field": "date",
+                                "sortable": True,
+                                "sort": "desc",
+                                "headerName": i18n.get("Date"),
+                            },
+                            {
+                                "field": i18n.get("Amount"),
+                                "sortable": True,
+                            },
+                            {
+                                "field": "unit",
+                                "sortable": True,
+                                "headerName": i18n.get("Unit"),
+                            },
+                        ],
+                    ),
+                ]
             ),
-            span=4,
+            span=5,
         ),
     ]
 )
@@ -1145,6 +1167,7 @@ modal_confirm_delete = dmc.Stack(
 
 mantine_provider = dmc.MantineProvider(
     [
+        dcc.Store(id="cache_amount"),
         dcc.Store(id="cache_masterdata"),
         dcc.Store(id="cache_settings", storage_type="local"),
         dcc.Store(id="cache_current_database"),
