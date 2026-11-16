@@ -1066,11 +1066,22 @@ modal_linechart_amount = dmc.Grid(
                     dmc.Group(
                         [
                             comp.ButtonClicks(
-                                i18n.get("Delete"),
+                                i18n.get("Add row"),
+                                id="amount_history_btn_add",
+                                rightSection=DashIconify(icon=icons.add, height=20),
+                            ),
+                            comp.ButtonClicks(
+                                i18n.get("Reset changes"),
+                                id="amount_history_btn_reset",
+                                color="grey",
+                                rightSection=DashIconify(icon=icons.refresh, height=20),
+                            ),
+                            dmc.ActionIcon(
+                                DashIconify(icon=icons.delete, height=20),
                                 id="amount_history_btn_delete",
-                                color="red.5",
-                                rightSection=DashIconify(icon=icons.delete, height=20),
-                                disabled=True,
+                                color="red",
+                                h=36,
+                                w=36,
                             ),
                         ],
                         justify="flex-end",
@@ -1093,12 +1104,29 @@ modal_linechart_amount = dmc.Grid(
                                 "checkboxes": False,
                             },
                         },
+                        defaultColDef={"editable": True},
                         columnDefs=[
                             {
                                 "field": "date",
                                 "sortable": True,
                                 "sort": "desc",
                                 "headerName": i18n.get("Date"),
+                                "cellEditor": {
+                                    "function": "AllFunctionalComponentEditors"
+                                },
+                                "cellEditorParams": {
+                                    "component": dmc.DateInput(
+                                        valueFormat="YYYY-MM-DD",
+                                        firstDayOfWeek=1,
+                                        monthLabelFormat="MMMM",
+                                        monthsListFormat="MMM",
+                                        weekdayFormat="dd",
+                                        highlightToday=True,
+                                        clearable=True,
+                                    ),
+                                },
+                                # cellEditorPopup: True is mandatory so that the selector doesn't clip the cell
+                                "cellEditorPopup": True,
                             },
                             {
                                 "field": i18n.get("Amount"),

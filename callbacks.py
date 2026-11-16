@@ -2043,13 +2043,14 @@ def get_callbacks(app):
         Output("modal_linechart_amount", "opened"),
         Output("chart_amount", "data"),
         Output("amount_history_table", "rowData"),
+        Output("cache_amount", "data"),
         Input("wrapper_sparkline_amount", "n_clicks"),
         State("modal_linechart_amount", "opened"),
         State("main_table", "selectedRows"),
     )
     def open_amount_chart(
         n_clicks: int, is_open: bool, selected_rows: list[dict]
-    ) -> tuple[Literal[True], list[dict], list[dict]]:
+    ) -> tuple:
         """Open the modal to the amount chart
 
         Args:
@@ -2058,56 +2059,89 @@ def get_callbacks(app):
             selected_rows (list[dict]): selected rows in the main table
 
         Returns:
-            tuple[Literal[True], list[dict]]: Sets the property ``opened`` to ``True`` and outputs the data for the amount chart
+            tuple: 4 Outputs. Sets the property ``opened`` to ``True`` and outputs the data for the amount chart and the amount table. Saves the current data to ``cache_amount``
         """
 
         barcode = selected_rows[0].get("barcode", "")
         data = functions.get_amount_chart_data(barcode)
-        return True, data, data
+        return True, data, data, json.dumps({"old": data, "new": data})
 
     @app.callback(
         Output("amount_history_table", "rowData", allow_duplicate=True),
         Output("chart_amount", "data", allow_duplicate=True),
         Output("chart_amount", "referenceLines"),
         Output("sparkline_amount", "data", allow_duplicate=True),
-        Input("amount_history_table", "selectedRows"),
+        Output("cache_amount", "data", allow_duplicate=True),
         Input("amount_history_btn_delete", "n_clicks"),
+        Input("amount_history_btn_add", "n_clicks"),
+        Input("amount_history_btn_reset", "n_clicks"),
+        Input("amount_history_table", "selectedRows"),
+        Input("amount_history_table", "cellValueChanged"),
         State("amount_history_table", "rowData"),
+        State("cache_amount", "data"),
     )
     def amount_history_manage_rows(
-        selected_rows: list[dict],
         n_clicks_delete_row: int,
-        amount_row_data: list[dict],
+        n_clicks_add_row: int,
+        n_clicks_reset: int,
+        selected_rows: list[dict],
+        cell_value: list[CellValue],
+        row_data: list[dict],
+        cache_json: str,
     ) -> tuple:
-        """Manage the rows in the amount history window and syncs the selected rows with the graph.
+        """Manages the rows in the amount history window and syncs the selected rows with the graph.
 
         Args:
-            selected_rows (list[dict]): The selected rows in the amount history table
-            n_clicks_delete_row (int): Dummy input to fire when the button ``amount_history_btn_delete`` is clicked to delete a row
-            amount_row_data (list[dict]): The complete rowData of the ``amount_history_table``
+            n_clicks_delete_row (int): dummy input to fire when the button ``amount_history_btn_delete`` is clicked to delete a row
+            n_clicks_add_row (int): dummy input to fire when the button ``amount_history_btn_add`` is clicked to add a row
+            n_clicks_reset (int): dummy input to fire when the button ``amount_history_btn_reset`` is clicked to reset every editing on the table
+            selected_rows (list[dict]): the selected rows in the amount history table
+            cell_value (list[CellValue]): the cell value, that was edited
+            row_data (list[dict]): the complete rowData of the ``amount_history_table``
+            cache_json (str): a string containg a dict on key "old" with the unchanged ``rowData`` and "new" with the new information
 
         Returns:
-            tuple: 4 Outputs
+            tuple: 5 Outputs
         """
 
-        if selected_rows != []:
+        cache = json.loads(cache_json)
+
+        # Disable or enable the delete button if a row is selected or not
+        if selected_rows != ([] or None):
             reference_lines = [
                 {
                     "x": selected_rows[0]["date"],
                 }
             ]
-            set_props("amount_history_btn_delete", {"disabled": False})
-
         else:
             reference_lines = []
-            set_props("amount_history_btn_delete", {"disabled": True})
 
         if ctx.triggered_id == "amount_history_btn_delete":
-            amount_row_data.remove(selected_rows[0])
+            # At the moment cache["new"] is the current state of the table
+            # This check is needed to not doubly remove a previously already removed row
+            if selected_rows != [] and selected_rows[0] in cache["new"]:
+                row_data.remove(selected_rows[0])
+                cache.update({"new": row_data})
+            else:
+                raise PreventUpdate
 
-        sparkline_data = [i[i18n.get("Amount")] for i in amount_row_data]
+        if ctx.triggered_id == "amount_history_btn_reset":
+            row_data = cache["old"]
 
-        return amount_row_data, amount_row_data, reference_lines, sparkline_data
+        if "amount_history_table.cellValueChanged" in ctx.triggered_prop_ids:
+            if cell_value[0]["value"] is None:
+                row_data[cell_value[0]["rowIndex"]].update({"date": ""})
+            cache.update({"new": row_data})
+
+        sparkline_data = [i[i18n.get("Amount")] for i in row_data]
+
+        return (
+            row_data,
+            row_data,
+            reference_lines,
+            sparkline_data,
+            json.dumps(cache),
+        )
 
     @app.callback(
         Input("eventlistener_keyboard", "n_events"),
