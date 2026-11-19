@@ -109,6 +109,7 @@ def get_callbacks(app):
         Output("placeholder_entry", "display"),
         Output("wrapper_sparkline_amount", "hidden"),
         Output("sparkline_amount", "data"),
+        Output("cache_amount", "data"),
         Input("main_table", "selectedRows"),
     )
     def update_entry_data(rows: list[dict]) -> tuple:
@@ -144,6 +145,7 @@ def get_callbacks(app):
             patched_input,
             "flex",
             True,
+            no_update,
             no_update,
         )
         if not rows:
@@ -203,6 +205,7 @@ def get_callbacks(app):
             "None",
             hide_sparkline,
             amount_values,
+            None,
         )
 
     @app.callback(
@@ -2043,7 +2046,7 @@ def get_callbacks(app):
         Output("modal_linechart_amount", "opened"),
         Output("chart_amount", "data"),
         Output("amount_history_table", "rowData"),
-        Output("cache_amount", "data"),
+        Output("cache_amount", "data", allow_duplicate=True),
         Input("wrapper_sparkline_amount", "n_clicks"),
         State("cache_amount", "data"),
         State("main_table", "selectedRows"),
