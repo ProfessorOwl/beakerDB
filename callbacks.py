@@ -2080,6 +2080,10 @@ def get_callbacks(app):
         Output("amount_history_table", "selectedRows"),
         Output("sparkline_amount", "data", allow_duplicate=True),
         Output("cache_amount", "data", allow_duplicate=True),
+        Output("amount_history_text", "children"),
+        Output("amount_history_table", "columnDefs"),
+        Output("amount_history_btn_add", "disabled"),
+        Output("tooltip_amount_history_btn_add", "display"),
         Input("amount_history_btn_delete", "n_clicks"),
         Input("amount_history_btn_add", "n_clicks"),
         Input("amount_history_btn_reset", "n_clicks"),
@@ -2109,13 +2113,18 @@ def get_callbacks(app):
             cache_json (str): a string containg a dict on key "old" with the unchanged ``rowData`` and "new" with the new information
 
         Returns:
-            tuple: 6 Outputs
+            tuple: 10 Outputs
         """
 
         cache: dict = json.loads(cache_json)
+        dates = [i["date"] for i in row_data]
+        blank_row = {"date": "", "Füllmenge": None, "unit": ""}
 
-        # Disable or enable the delete button if a row is selected or not
-        if selected_rows != ([] and None):
+        if selected_rows is None:
+            selected_rows = []
+
+        # Display a reference line at the selected date
+        if selected_rows != [] and selected_rows is not None:
             reference_lines = [
                 {
                     "x": selected_rows[0]["date"],
@@ -2144,9 +2153,9 @@ def get_callbacks(app):
             row_data = cache["old"]
 
         if ctx.triggered_id == "amount_history_btn_add":
-            blank_row = {"date": "", "Füllmenge": None, "unit": ""}
-
-            if selected_rows and selected_rows[0] in row_data:
+            if dates.count("") >= 2:
+                pass
+            elif selected_rows and selected_rows[0] in row_data:
                 row_data.insert(row_data.index(selected_rows[0]) + 1, blank_row)
             else:
                 row_data.insert(0, blank_row)
@@ -2158,8 +2167,60 @@ def get_callbacks(app):
                 row_data[cell_value[0]["rowIndex"]].update({"date": ""})
             cache.update({"new": row_data})
 
+        dates = [i["date"] for i in row_data]
+
+        # Find duplicate dates, so there are no duplicate keys when saving to the database
+        duplicate_dates = [i for i in set(dates) if dates.count(i) > 1]
+        if duplicate_dates != []:
+            dates_str = str(duplicate_dates)[1:-1].replace("'", '"')
+
+            if len(duplicate_dates) == 1:
+                text = i18n.get(
+                    "Date ${dates} is duplicate. Every date can only be used once. Remove or edit duplicates be able to close the window.",
+                    values={"dates": dates_str},
+                )
+            else:
+                text = i18n.get(
+                    "Dates ${dates} are duplicate. Every date can only be used once. Remove or edit duplicates to be able to close the window.",
+                    values={"dates": dates_str},
+                )
+
+            set_props(
+                "modal_linechart_amount",
+                {"closeOnClickOutside": False, "closeOnEscape": False},
+            )
+        else:
+            text = None
+            set_props(
+                "modal_linechart_amount",
+                {"closeOnClickOutside": True, "closeOnEscape": True},
+            )
+
+        # Disable already used dates in the dmc.DateInput from the first column
+        disabled_dates = Patch()
+        disabled_dates[0].update(
+            {
+                "cellEditorParams": {
+                    "component": dmc.DateInput(
+                        valueFormat="YYYY-MM-DD",
+                        firstDayOfWeek=1,
+                        monthLabelFormat="MMMM",
+                        monthsListFormat="MMM",
+                        weekdayFormat="dd",
+                        highlightToday=True,
+                        clearable=True,
+                        disabledDates=dates,
+                    )
+                }
+            }
+        )
+
         row_data_sorted = sorted(row_data, key=lambda i: i["date"])
         sparkline_data = [i[i18n.get("Amount")] for i in row_data_sorted]
+        is_add_disabled = (
+            True if dates.count("") >= 2 or blank_row in row_data else False
+        )
+        display_tooltip_add = "block" if is_add_disabled else "none"
 
         return (
             row_data,
@@ -2168,6 +2229,10 @@ def get_callbacks(app):
             selected_rows,
             sparkline_data,
             json.dumps(cache),
+            text,
+            disabled_dates,
+            is_add_disabled,
+            display_tooltip_add,
         )
 
     @app.callback(

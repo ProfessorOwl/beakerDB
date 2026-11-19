@@ -1054,7 +1054,7 @@ modal_linechart_amount = dmc.Grid(
                             "animationBegin": 200,
                         },
                         data=[],
-                        h=300,
+                        h=400,
                     ),
                 ]
             ),
@@ -1069,6 +1069,16 @@ modal_linechart_amount = dmc.Grid(
                                 i18n.get("Add row"),
                                 id="amount_history_btn_add",
                                 rightSection=DashIconify(icon=icons.add, height=20),
+                            ),
+                            dmc.Tooltip(
+                                target="#amount_history_btn_add",
+                                id="tooltip_amount_history_btn_add",
+                                label=i18n.get(
+                                    "You cannot add new rows if the table contains a blank row or two rows with an empty date."
+                                ),
+                                display="none",
+                                multiline=True,
+                                w=250,
                             ),
                             comp.ButtonClicks(
                                 i18n.get("Reset changes"),
@@ -1109,7 +1119,6 @@ modal_linechart_amount = dmc.Grid(
                             {
                                 "field": "date",
                                 "sortable": True,
-                                # "sort": "desc",
                                 "headerName": i18n.get("Date"),
                                 "cellEditor": {
                                     "function": "AllFunctionalComponentEditors"
@@ -1170,6 +1179,11 @@ modal_linechart_amount = dmc.Grid(
                                 },
                             },
                         ],
+                    ),
+                    dmc.Text(
+                        id="amount_history_text",
+                        c="var(--mantine-color-error)",
+                        h=100,
                     ),
                 ]
             ),
