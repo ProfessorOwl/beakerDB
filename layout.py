@@ -1109,7 +1109,7 @@ modal_linechart_amount = dmc.Grid(
                             {
                                 "field": "date",
                                 "sortable": True,
-                                "sort": "desc",
+                                # "sort": "desc",
                                 "headerName": i18n.get("Date"),
                                 "cellEditor": {
                                     "function": "AllFunctionalComponentEditors"
@@ -1131,11 +1131,43 @@ modal_linechart_amount = dmc.Grid(
                             {
                                 "field": i18n.get("Amount"),
                                 "sortable": True,
+                                "cellEditor": {
+                                    "function": "AllFunctionalComponentEditors"
+                                },
+                                "cellEditorParams": {
+                                    "component": dmc.NumberInput(
+                                        decimalSeparator=",",
+                                        allowNegative=False,
+                                        allowedDecimalSeparators=[",", "."],
+                                        hideControls=True,
+                                        variant="unstyled",
+                                        bg="rgba(255, 255, 255, 0)",
+                                        bd=0,
+                                        px=15,
+                                    ),
+                                },
                             },
                             {
                                 "field": "unit",
                                 "sortable": True,
                                 "headerName": i18n.get("Unit"),
+                                "cellEditor": {
+                                    "function": "AllFunctionalComponentEditors"
+                                },
+                                "cellEditorParams": {
+                                    "component": dmc.Select(
+                                        data=functions.generate_select_data(
+                                            functions.Units,
+                                            [
+                                                "unit",
+                                                "unit",
+                                            ],
+                                        ),
+                                        variant="unstyled",
+                                        bd=0,
+                                        pl=15,
+                                    ),
+                                },
                             },
                         ],
                     ),

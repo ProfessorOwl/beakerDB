@@ -2063,13 +2063,21 @@ def get_callbacks(app):
         """
 
         barcode = selected_rows[0].get("barcode", "")
-        data = functions.get_amount_chart_data(barcode)
-        return True, data, data, json.dumps({"old": data, "new": data})
+        row_data = functions.get_amount_chart_data(barcode)
+        row_data_sorted = sorted(row_data, key=lambda i: i["date"], reverse=True)
+
+        return (
+            True,
+            row_data,
+            row_data_sorted,
+            json.dumps({"old": row_data_sorted, "new": row_data_sorted}),
+        )
 
     @app.callback(
         Output("amount_history_table", "rowData", allow_duplicate=True),
         Output("chart_amount", "data", allow_duplicate=True),
         Output("chart_amount", "referenceLines"),
+        Output("amount_history_table", "selectedRows"),
         Output("sparkline_amount", "data", allow_duplicate=True),
         Output("cache_amount", "data", allow_duplicate=True),
         Input("amount_history_btn_delete", "n_clicks"),
@@ -2101,13 +2109,13 @@ def get_callbacks(app):
             cache_json (str): a string containg a dict on key "old" with the unchanged ``rowData`` and "new" with the new information
 
         Returns:
-            tuple: 5 Outputs
+            tuple: 6 Outputs
         """
 
-        cache = json.loads(cache_json)
+        cache: dict = json.loads(cache_json)
 
         # Disable or enable the delete button if a row is selected or not
-        if selected_rows != ([] or None):
+        if selected_rows != ([] and None):
             reference_lines = [
                 {
                     "x": selected_rows[0]["date"],
@@ -2121,24 +2129,43 @@ def get_callbacks(app):
             # This check is needed to not doubly remove a previously already removed row
             if selected_rows != [] and selected_rows[0] in cache["new"]:
                 row_data.remove(selected_rows[0])
+                index = cache["new"].index(selected_rows[0])
                 cache.update({"new": row_data})
+
+                if len(row_data) == 0:
+                    raise PreventUpdate
+                elif index == len(row_data):
+                    index -= 1
+                selected_rows = [cache["new"][index]]
             else:
                 raise PreventUpdate
 
         if ctx.triggered_id == "amount_history_btn_reset":
             row_data = cache["old"]
 
+        if ctx.triggered_id == "amount_history_btn_add":
+            blank_row = {"date": "", "Füllmenge": None, "unit": ""}
+
+            if selected_rows and selected_rows[0] in row_data:
+                row_data.insert(row_data.index(selected_rows[0]) + 1, blank_row)
+            else:
+                row_data.insert(0, blank_row)
+
+            cache.update({"new": row_data})
+
         if "amount_history_table.cellValueChanged" in ctx.triggered_prop_ids:
             if cell_value[0]["value"] is None:
                 row_data[cell_value[0]["rowIndex"]].update({"date": ""})
             cache.update({"new": row_data})
 
-        sparkline_data = [i[i18n.get("Amount")] for i in row_data]
+        row_data_sorted = sorted(row_data, key=lambda i: i["date"])
+        sparkline_data = [i[i18n.get("Amount")] for i in row_data_sorted]
 
         return (
             row_data,
-            row_data,
+            row_data_sorted,
             reference_lines,
+            selected_rows,
             sparkline_data,
             json.dumps(cache),
         )
