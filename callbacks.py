@@ -2045,25 +2045,31 @@ def get_callbacks(app):
         Output("amount_history_table", "rowData"),
         Output("cache_amount", "data"),
         Input("wrapper_sparkline_amount", "n_clicks"),
-        State("modal_linechart_amount", "opened"),
+        State("cache_amount", "data"),
         State("main_table", "selectedRows"),
     )
     def open_amount_chart(
-        n_clicks: int, is_open: bool, selected_rows: list[dict]
+        n_clicks: int,
+        cache_json: str | None,
+        selected_rows: list[dict],
     ) -> tuple:
         """Open the modal to the amount chart
 
         Args:
             n_clicks (int): dummy input to trigger the callback when ``wrapper_sparkline_amount`` is clicked
-            is_open (bool): if the modal ``modal_linechart_amount`` is open
+            cache_json (str): a string containg a dict on key "old" with the unchanged ``rowData`` and "new" with the new information
             selected_rows (list[dict]): selected rows in the main table
 
         Returns:
             tuple: 4 Outputs. Sets the property ``opened`` to ``True`` and outputs the data for the amount chart and the amount table. Saves the current data to ``cache_amount``
         """
+        if cache_json != None:
+            cache = json.loads(cache_json)
+            row_data = sorted(cache["new"], key=lambda i: i["date"])
+        else:
+            barcode = selected_rows[0].get("barcode", "")
+            row_data = functions.get_amount_chart_data(barcode)
 
-        barcode = selected_rows[0].get("barcode", "")
-        row_data = functions.get_amount_chart_data(barcode)
         row_data_sorted = sorted(row_data, key=lambda i: i["date"], reverse=True)
 
         return (
