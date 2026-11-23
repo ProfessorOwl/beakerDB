@@ -91,6 +91,7 @@ def get_callbacks(app):
     @app.callback(
         Output("input_barcode", "value"),
         Output("input_amount", "value"),
+        Output("input_lastchecked", "value"),
         Output("input_name", "value"),
         Output("input_formula", "value"),
         Output("input_cas", "value"),
@@ -103,12 +104,12 @@ def get_callbacks(app):
         Output("input_concentration", "value"),
         Output("input_molarmass", "value"),
         Output("input_solvent", "value"),
-        Output("input_lastchecked", "value"),
         Output("input_zvg", "value"),
         Output("wrapper_entry", "style"),
         Output("placeholder_entry", "display"),
         Output("wrapper_sparkline_amount", "hidden"),
         Output("sparkline_amount", "data"),
+        Output("cache_amount", "data"),
         Input("main_table", "selectedRows"),
     )
     def update_entry_data(rows: list[dict]) -> tuple:
@@ -118,7 +119,7 @@ def get_callbacks(app):
             rows (list[dict]): a dict containing every column name from ``main_table`` as a key and the value from the row as value
 
         Returns:
-            tuple: 20 Outputs
+            tuple: 21 Outputs
         """
 
         patched_input = Patch()
@@ -145,6 +146,7 @@ def get_callbacks(app):
             "flex",
             True,
             no_update,
+            no_update,
         )
         if not rows:
             return nothing_selected
@@ -160,22 +162,31 @@ def get_callbacks(app):
 
         # Extract the last amount from the json array to put it in input_amount
         amount_raw = functions.select_value(barcode, "amount", functions.Inventory)
+
         if len(amount_raw or []) != 0 and amount_raw:
             amount = json.loads(amount_raw)
-            amount_last_entry = amount[-1][1]
+            if isinstance(amount, list):
+                amount = {
+                    i[0]: [i[1], i[2] if len(i) > 2 else ""] for i in tuple(amount)
+                }
+            amount_last_entry_value = list(amount.values())[-1][0]
+            amount_last_entry_date = list(amount.keys())[-1]
 
             # Only show the sparkline when it has more than one entry
             if len(amount) > 1:
                 hide_sparkline = False
-                amount.sort(key=lambda i: i[0])
-                amount_values = [i[1] for i in amount]
+            amount_values = [v[0] for k, v in amount.items()]
+
         else:
-            amount_last_entry = amount_raw
+            amount_last_entry_value = ""
+            amount_last_entry_date = None
 
         patched_input["display"] = "flex"
         return (
             barcode,
-            amount_last_entry,
+            amount_last_entry_value,
+            amount_last_entry_date
+            or functions.select_value(barcode, "lastchecked", functions.Inventory),
             *[
                 functions.select_value(barcode, x, functions.Inventory)
                 for x in [
@@ -191,7 +202,6 @@ def get_callbacks(app):
                     "concentration",
                     "molarmass",
                     "solvent",
-                    "lastchecked",
                     "zvg",
                 ]
             ],
@@ -199,6 +209,7 @@ def get_callbacks(app):
             "None",
             hide_sparkline,
             amount_values,
+            None,
         )
 
     @app.callback(
@@ -206,6 +217,7 @@ def get_callbacks(app):
         Output("notifications", "sendNotifications"),
         Output("wrapper_sparkline_amount", "hidden", allow_duplicate=True),
         Output("sparkline_amount", "data", allow_duplicate=True),
+        Output("cache_amount", "data", allow_duplicate=True),
         Input("btn_save_entry", "n_clicks"),
         State("input_name", "value"),
         State("input_barcode", "value"),
@@ -224,6 +236,7 @@ def get_callbacks(app):
         State("input_lastchecked", "value"),
         State("input_zvg", "value"),
         State("cache_settings", "data"),
+        State("cache_amount", "data"),
     )
     def save_entry(
         n_clicks: int,
@@ -244,6 +257,7 @@ def get_callbacks(app):
         lastchecked: str | None,
         zvg: str | None,
         cache_settings_json: str,
+        cache_amount_json: str | None,
     ) -> tuple:
         """Save every entry to the database and refresh ``main_table`` once ``btn_save_entry`` is clicked
 
@@ -265,10 +279,11 @@ def get_callbacks(app):
             unit_id (str | int | None):
             lastchecked (str | None):
             zvg (str | None):
-            cache_settings (str): cache used for the settings
+            cache_settings_json (str): cache used for the settings
+            cache_amount_json (str | None): cache used to store the amount history
 
         Returns:
-            tuple: 4 Outputs
+            tuple: 5 Outputs
         """
 
         # In case the fields are empty or "", set them to 0
@@ -280,6 +295,11 @@ def get_callbacks(app):
             room_id = 0
         if unit_id == None or "":
             unit_id = 0
+
+        if cache_amount_json is None:
+            cache_amount = None
+        else:
+            cache_amount = json.loads(cache_amount_json)
 
         messages = [
             dict(
@@ -355,16 +375,25 @@ def get_callbacks(app):
                 )
             )
 
-        # Load all entries for the amount and put in the new amount, if it is unequal to the last amount
+        # Load all entries for the amount and put in the new amount
+        if cache_amount:
+            cache_amount = {
+                i["date"]: [i[i18n.get("Amount")], i["unit"]]
+                for i in cache_amount["new"]
+            }
         amount_history = functions.append_amount(
             barcode,
             lastchecked,
             amount,
+            functions.get_unit(int(unit_id)),
+            cache_amount,
         )
 
         hide_sparkline = True
         amount_data = (
-            [i[1] for i in json.loads(amount_history)] if amount_history else []
+            [v[0] for k, v in json.loads(amount_history).items()]
+            if amount_history
+            else []
         )
         if len(amount_data) > 1:
             hide_sparkline = False
@@ -412,7 +441,7 @@ def get_callbacks(app):
 
         df = functions.get_main_table()
 
-        return (df.to_dict("records"), messages, hide_sparkline, amount_data)
+        return (df.to_dict("records"), messages, hide_sparkline, amount_data, None)
 
     @app.callback(
         Output("main_table", "rowData", allow_duplicate=True),
@@ -768,11 +797,13 @@ def get_callbacks(app):
                     color="yellow.3",
                 )
             )
+
         # Load all entries for the amount and put in the new amount, if it is unequal to the last amount
         amount_history = functions.append_amount(
             barcode,
             lastchecked,
             amount,
+            functions.get_unit(int(unit_id)),
         )
 
         functions.create_row(
@@ -1382,9 +1413,11 @@ def get_callbacks(app):
         Output("modal_input_room", "data"),
         Input("btn_masterdata_save", "n_clicks"),
         Input("btn_save_entry", "n_clicks"),
+        prevent_initial_call=False,
     )
     def update_fields_from_masterdata(
-        n_clicks_masterdata: int, n_clicks_save: int
+        n_clicks_masterdata: int,
+        n_clicks_save: int,
     ) -> tuple:
         """After saving the masterdata, update every select component that depends on its data (database_search, units, manufacturers, suppliers and rooms).
 
@@ -1396,48 +1429,46 @@ def get_callbacks(app):
             tuple: 10 Outputs
         """
 
-        if ctx.triggered_id == "btn_masterdata_save":
+        if ctx.triggered_id == "btn_save_entry":
             return (
                 functions.generate_select_data_search(),
-                functions.generate_select_data(
-                    functions.Units,
-                    ["unit_id", "unit"],
-                ),
-                functions.generate_select_data(
-                    functions.Manufacturers, ["manufacturer_id", "manufacturer"]
-                ),
-                functions.generate_select_data(
-                    functions.Suppliers, ["supplier_id", "supplier"]
-                ),
-                functions.generate_select_data_rooms(),
+                no_update,
+                no_update,
+                no_update,
+                no_update,
                 functions.generate_select_data_search(),
-                functions.generate_select_data(
-                    functions.Units,
-                    ["unit_id", "unit"],
-                ),
-                functions.generate_select_data(
-                    functions.Manufacturers, ["manufacturer_id", "manufacturer"]
-                ),
-                functions.generate_select_data(
-                    functions.Suppliers, ["supplier_id", "supplier"]
-                ),
-                functions.generate_select_data_rooms(),
+                no_update,
+                no_update,
+                no_update,
+                no_update,
             )
         else:
             return (
                 functions.generate_select_data_search(),
-                no_update,
-                no_update,
-                no_update,
-                no_update,
+                functions.generate_select_data(
+                    functions.Units,
+                    ["unit_id", "unit"],
+                ),
+                functions.generate_select_data(
+                    functions.Manufacturers, ["manufacturer_id", "manufacturer"]
+                ),
+                functions.generate_select_data(
+                    functions.Suppliers, ["supplier_id", "supplier"]
+                ),
+                functions.generate_select_data_rooms(),
                 functions.generate_select_data_search(),
-                no_update,
-                no_update,
-                no_update,
-                no_update,
+                functions.generate_select_data(
+                    functions.Units,
+                    ["unit_id", "unit"],
+                ),
+                functions.generate_select_data(
+                    functions.Manufacturers, ["manufacturer_id", "manufacturer"]
+                ),
+                functions.generate_select_data(
+                    functions.Suppliers, ["supplier_id", "supplier"]
+                ),
+                functions.generate_select_data_rooms(),
             )
-
-    #!SECTION
 
     # Initialize the script for the barcode scanner, which discerns between normal keyboard input and typed input.
     clientside_callback(
@@ -2033,27 +2064,226 @@ def get_callbacks(app):
     @app.callback(
         Output("modal_linechart_amount", "opened"),
         Output("chart_amount", "data"),
+        Output("amount_history_table", "rowData"),
+        Output("cache_amount", "data", allow_duplicate=True),
+        Output("amount_history_table", "columnDefs"),
         Input("wrapper_sparkline_amount", "n_clicks"),
-        State("modal_linechart_amount", "opened"),
+        State("cache_amount", "data"),
         State("main_table", "selectedRows"),
     )
     def open_amount_chart(
-        n_clicks: int, is_open: bool, selected_rows: list[dict]
-    ) -> tuple[Literal[True], list[dict]]:
+        n_clicks: int,
+        cache_json: str | None,
+        selected_rows: list[dict],
+    ) -> tuple:
         """Open the modal to the amount chart
 
         Args:
             n_clicks (int): dummy input to trigger the callback when ``wrapper_sparkline_amount`` is clicked
-            is_open (bool): if the modal ``modal_linechart_amount`` is open
+            cache_json (str): a string containg a dict on key "old" with the unchanged ``rowData`` and "new" with the new information
             selected_rows (list[dict]): selected rows in the main table
 
         Returns:
-            tuple[Literal[True], list[dict]]: Sets the property ``opened`` to ``True`` and outputs the data for the amount chart
+            tuple: 4 Outputs. Sets the property ``opened`` to ``True`` and outputs the data for the amount chart and the amount table. Saves the current data to ``cache_amount``
+        """
+        if cache_json != None:
+            cache = json.loads(cache_json)
+            row_data = sorted(cache["new"], key=lambda i: i["date"])
+        else:
+            barcode = selected_rows[0].get("barcode", "")
+            row_data = functions.get_amount_chart_data(barcode)
+
+        row_data_sorted = sorted(row_data, key=lambda i: i["date"], reverse=True)
+
+        amount_history_table_column_defs = Patch()
+        amount_history_table_column_defs[-1].update(
+            {
+                "cellEditorParams": {
+                    "component": dmc.Select(
+                        data=functions.generate_select_data(
+                            functions.Units,
+                            [
+                                "unit",
+                                "unit",
+                            ],
+                        ),
+                        variant="unstyled",
+                        bd=0,
+                        pl=15,
+                    ),
+                }
+            }
+        )
+
+        return (
+            True,
+            row_data,
+            row_data_sorted,
+            json.dumps({"old": row_data_sorted, "new": row_data_sorted}),
+            amount_history_table_column_defs,
+        )
+
+    @app.callback(
+        Output("amount_history_table", "rowData", allow_duplicate=True),
+        Output("chart_amount", "data", allow_duplicate=True),
+        Output("chart_amount", "referenceLines"),
+        Output("amount_history_table", "selectedRows"),
+        Output("sparkline_amount", "data", allow_duplicate=True),
+        Output("cache_amount", "data", allow_duplicate=True),
+        Output("amount_history_text", "children"),
+        Output("amount_history_table", "columnDefs", allow_duplicate=True),
+        Output("amount_history_btn_add", "disabled"),
+        Output("tooltip_amount_history_btn_add", "display"),
+        Input("amount_history_btn_delete", "n_clicks"),
+        Input("amount_history_btn_add", "n_clicks"),
+        Input("amount_history_btn_reset", "n_clicks"),
+        Input("amount_history_table", "selectedRows"),
+        Input("amount_history_table", "cellValueChanged"),
+        State("amount_history_table", "rowData"),
+        State("cache_amount", "data"),
+    )
+    def amount_history_manage_rows(
+        n_clicks_delete_row: int,
+        n_clicks_add_row: int,
+        n_clicks_reset: int,
+        selected_rows: list[dict],
+        cell_value: list[CellValue],
+        row_data: list[dict],
+        cache_json: str,
+    ) -> tuple:
+        """Manages the rows in the amount history window and syncs the selected rows with the graph.
+
+        Args:
+            n_clicks_delete_row (int): dummy input to fire when the button ``amount_history_btn_delete`` is clicked to delete a row
+            n_clicks_add_row (int): dummy input to fire when the button ``amount_history_btn_add`` is clicked to add a row
+            n_clicks_reset (int): dummy input to fire when the button ``amount_history_btn_reset`` is clicked to reset every editing on the table
+            selected_rows (list[dict]): the selected rows in the amount history table
+            cell_value (list[CellValue]): the cell value, that was edited
+            row_data (list[dict]): the complete rowData of the ``amount_history_table``
+            cache_json (str): a string containg a dict on key "old" with the unchanged ``rowData`` and "new" with the new information
+
+        Returns:
+            tuple: 10 Outputs
         """
 
-        barcode = selected_rows[0].get("barcode", "")
-        data = functions.get_amount_chart_data(barcode)
-        return True, data
+        cache: dict = json.loads(cache_json)
+        dates = [i["date"] for i in row_data]
+        blank_row = {"date": "", "Füllmenge": None, "unit": ""}
+
+        if selected_rows is None:
+            selected_rows = []
+
+        # Display a reference line at the selected date
+        if selected_rows != [] and selected_rows is not None:
+            reference_lines = [
+                {
+                    "x": selected_rows[0]["date"],
+                }
+            ]
+        else:
+            reference_lines = []
+
+        if ctx.triggered_id == "amount_history_btn_delete":
+            # At the moment cache["new"] is the current state of the table
+            # This check is needed to not doubly remove a previously already removed row
+            if selected_rows != [] and selected_rows[0] in cache["new"]:
+                row_data.remove(selected_rows[0])
+                index = cache["new"].index(selected_rows[0])
+                cache.update({"new": row_data})
+
+                if len(row_data) == 0:
+                    raise PreventUpdate
+                elif index == len(row_data):
+                    index -= 1
+                selected_rows = [cache["new"][index]]
+            else:
+                raise PreventUpdate
+
+        if ctx.triggered_id == "amount_history_btn_reset":
+            row_data = cache["old"]
+
+        if ctx.triggered_id == "amount_history_btn_add":
+            if dates.count("") >= 2:
+                pass
+            elif selected_rows and selected_rows[0] in row_data:
+                row_data.insert(row_data.index(selected_rows[0]) + 1, blank_row)
+            else:
+                row_data.insert(0, blank_row)
+
+            cache.update({"new": row_data})
+
+        if "amount_history_table.cellValueChanged" in ctx.triggered_prop_ids:
+            if cell_value[0]["value"] is None:
+                row_data[cell_value[0]["rowIndex"]].update({"date": ""})
+            cache.update({"new": row_data})
+
+        dates = [i["date"] for i in row_data]
+
+        # Find duplicate dates, so there are no duplicate keys when saving to the database
+        duplicate_dates = [i for i in set(dates) if dates.count(i) > 1]
+        if duplicate_dates != []:
+            dates_str = str(duplicate_dates)[1:-1].replace("'", '"')
+
+            if len(duplicate_dates) == 1:
+                text = i18n.get(
+                    "Date ${dates} is duplicate. Every date can only be used once. Remove or edit duplicates be able to close the window.",
+                    values={"dates": dates_str},
+                )
+            else:
+                text = i18n.get(
+                    "Dates ${dates} are duplicate. Every date can only be used once. Remove or edit duplicates to be able to close the window.",
+                    values={"dates": dates_str},
+                )
+
+            set_props(
+                "modal_linechart_amount",
+                {"closeOnClickOutside": False, "closeOnEscape": False},
+            )
+        else:
+            text = None
+            set_props(
+                "modal_linechart_amount",
+                {"closeOnClickOutside": True, "closeOnEscape": True},
+            )
+
+        # Disable already used dates in the dmc.DateInput from the first column
+        disabled_dates = Patch()
+        disabled_dates[0].update(
+            {
+                "cellEditorParams": {
+                    "component": dmc.DateInput(
+                        valueFormat="YYYY-MM-DD",
+                        firstDayOfWeek=1,
+                        monthLabelFormat="MMMM",
+                        monthsListFormat="MMM",
+                        weekdayFormat="dd",
+                        highlightToday=True,
+                        clearable=True,
+                        disabledDates=dates,
+                    )
+                }
+            }
+        )
+
+        row_data_sorted = sorted(row_data, key=lambda i: i["date"])
+        sparkline_data = [i[i18n.get("Amount")] for i in row_data_sorted]
+        is_add_disabled = (
+            True if dates.count("") >= 2 or blank_row in row_data else False
+        )
+        display_tooltip_add = "block" if is_add_disabled else "none"
+
+        return (
+            row_data,
+            row_data_sorted,
+            reference_lines,
+            selected_rows,
+            sparkline_data,
+            json.dumps(cache),
+            text,
+            disabled_dates,
+            is_add_disabled,
+            display_tooltip_add,
+        )
 
     @app.callback(
         Input("eventlistener_keyboard", "n_events"),

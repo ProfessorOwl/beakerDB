@@ -106,3 +106,7 @@
 "The referenced ID of the new entry is not yet assigned. Choose another ID or create an entry with the specified ID in the other table.": "Die referenzierte ID des neuen Eintrages ist noch nicht vergeben. Wähle eine andere ID aus oder erstelle in der entsprechenden Tabelle eine neue."
 "The referenced ID of the updated Entry is not yet assigned. Choose another ID or create an entry with the specified ID in the other table.": "Die referenzierte ID des aktualisierten Eintrages ist noch nicht vergeben. Wähle eine andere ID aus oder erstelle in der entsprechenden Tabelle eine neue."
 "Ctrl": "Strg"
+"Date": "Datum"
+"Date ${dates} is duplicate. Every date can only be used once. Remove or edit duplicates be able to close the window.": "Das Datum ${dates} kommt doppelt vor. Jedes Datum kann nur einmal verwendet werden. Entferne oder ändere Duplikate, um das Fenster schließen zu können."
+"Dates ${dates} are duplicate. Every date can only be used once. Remove or edit duplicates to be able to close the window.": "Die Daten ${dates} kommen doppelt vor. Jedes Datum kann nur einmal verwendet werden. Entferne oder ändere Duplikate, um das Fenster schließen zu können."
+"You cannot add new rows if the table contains a blank row or two rows with an empty date.": "Du kannst keine neuen Zeilen zur Tabelle hinzufügen, wenn die Tabelle bereits eine leere Zeile oder zwei Zeilen ohne Datum enthält."

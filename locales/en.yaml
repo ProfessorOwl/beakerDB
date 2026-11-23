@@ -107,3 +107,7 @@
 "The referenced ID of the new entry is not yet assigned. Choose another ID or create an entry with the specified ID in the other table.": "The referenced ID of the new entry is not yet assigned. Choose another ID or create an entry with the specified ID in the other table."
 "The referenced ID of the updated Entry is not yet assigned. Choose another ID or create an entry with the specified ID in the other table.": "The referenced ID of the updated Entry is not yet assigned. Choose another ID or create an entry with the specified ID in the other table."
 "Ctrl": "Ctrl"
+"Date": "Date"
+"Date ${dates} is duplicate. Every date can only be used once. Remove or edit duplicates be able to close the window.": "Date ${dates} is duplicate. Every date can only be used once. Remove or edit duplicates to be able to close the window."
+"Dates ${dates} are duplicate. Every date can only be used once. Remove or edit duplicates to be able to close the window.": "Dates ${dates} are duplicate. Every date can only be used once. Remove or edit duplicates to be able to close the window."
+"You cannot add new rows if the table contains a blank row or two rows with an empty date.": "You cannot add new rows if the table contains a blank row or two rows with an empty date."
