@@ -1359,7 +1359,7 @@ def get_callbacks(app):
                         title=i18n.get("Saved!"),
                         message=i18n.get(
                             "The entry with ID ${id} was correctly saved.",
-                            values={id: id},
+                            values={"id": id},
                         ),
                         id=str(uuid.uuid4()),
                         action="show",
@@ -1384,7 +1384,7 @@ def get_callbacks(app):
                     title=i18n.get("Saved!"),
                     message=i18n.get(
                         "The entries with IDs ${ids} were correctly saved.",
-                        values={id: ids_joined},
+                        values={"ids": ids_joined},
                     ),
                     id=str(uuid.uuid4()),
                     action="show",
