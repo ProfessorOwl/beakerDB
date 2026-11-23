@@ -66,7 +66,7 @@ left_window = html.Div(
                             hiddenFrom="lg",
                         ),
                         dmc.Tooltip(
-                            dmc.ActionIcon(
+                            comp.ActionIconClicks(
                                 DashIconify(
                                     icon=icons.archive,
                                     height=24,
@@ -79,7 +79,7 @@ left_window = html.Div(
                             label=i18n.get("Archive"),
                         ),
                         dmc.Tooltip(
-                            dmc.ActionIcon(
+                            comp.ActionIconClicks(
                                 DashIconify(
                                     icon=icons.settings,
                                     height=24,
@@ -193,7 +193,7 @@ right_window = [
                             [
                                 dmc.PopoverTarget(
                                     dmc.Tooltip(
-                                        dmc.ActionIcon(
+                                        comp.ActionIconClicks(
                                             DashIconify(
                                                 icon=icons.search_database,
                                                 height=24,
@@ -222,7 +222,7 @@ right_window = [
                                             ),
                                             dmc.GridCol(
                                                 dmc.Tooltip(
-                                                    dmc.ActionIcon(
+                                                    comp.ActionIconClicks(
                                                         DashIconify(
                                                             icon=icons.download,
                                                             height=24,
@@ -473,7 +473,7 @@ right_window = [
                         flex=1,
                     ),
                     dmc.Tooltip(
-                        dmc.ActionIcon(
+                        comp.ActionIconClicks(
                             DashIconify(icon=icons.delete, color="#fff", height=20),
                             id="btn_delete_entry",
                             color="red",
@@ -527,7 +527,7 @@ modal_new_entry = dmc.Stack(
                 [
                     dmc.PopoverTarget(
                         dmc.Tooltip(
-                            dmc.ActionIcon(
+                            comp.ActionIconClicks(
                                 DashIconify(
                                     icon=icons.search_database,
                                     height=24,
@@ -554,7 +554,7 @@ modal_new_entry = dmc.Stack(
                                 ),
                                 dmc.GridCol(
                                     dmc.Tooltip(
-                                        dmc.ActionIcon(
+                                        comp.ActionIconClicks(
                                             DashIconify(
                                                 icon=icons.download,
                                                 height=24,
@@ -1086,7 +1086,7 @@ modal_linechart_amount = dmc.Grid(
                                 color="grey",
                                 rightSection=DashIconify(icon=icons.refresh, height=20),
                             ),
-                            dmc.ActionIcon(
+                            comp.ActionIconClicks(
                                 DashIconify(icon=icons.delete, height=20),
                                 id="amount_history_btn_delete",
                                 color="red",

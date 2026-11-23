@@ -99,3 +99,10 @@ class ButtonClicks(dmc.Button):
 
     def __init__(self, children, **kwargs):
         super().__init__(children=children, n_clicks=0, **kwargs)
+
+
+class ActionIconClicks(dmc.ActionIcon):
+    """ActionIcon with ``n_clicks=0`` by default"""
+
+    def __init__(self, children, **kwargs):
+        super().__init__(children=children, n_clicks=0, **kwargs)
