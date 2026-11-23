@@ -91,6 +91,7 @@ def get_callbacks(app):
     @app.callback(
         Output("input_barcode", "value"),
         Output("input_amount", "value"),
+        Output("input_lastchecked", "value"),
         Output("input_name", "value"),
         Output("input_formula", "value"),
         Output("input_cas", "value"),
@@ -103,7 +104,6 @@ def get_callbacks(app):
         Output("input_concentration", "value"),
         Output("input_molarmass", "value"),
         Output("input_solvent", "value"),
-        Output("input_lastchecked", "value"),
         Output("input_zvg", "value"),
         Output("wrapper_entry", "style"),
         Output("placeholder_entry", "display"),
@@ -119,7 +119,7 @@ def get_callbacks(app):
             rows (list[dict]): a dict containing every column name from ``main_table`` as a key and the value from the row as value
 
         Returns:
-            tuple: 20 Outputs
+            tuple: 21 Outputs
         """
 
         patched_input = Patch()
@@ -169,19 +169,24 @@ def get_callbacks(app):
                 amount = {
                     i[0]: [i[1], i[2] if len(i) > 2 else ""] for i in tuple(amount)
                 }
-            amount_last_entry = list(amount.values())[-1][0]
+            amount_last_entry_value = list(amount.values())[-1][0]
+            amount_last_entry_date = list(amount.keys())[-1]
 
             # Only show the sparkline when it has more than one entry
             if len(amount) > 1:
                 hide_sparkline = False
             amount_values = [v[0] for k, v in amount.items()]
+
         else:
-            amount_last_entry = ""
+            amount_last_entry_value = ""
+            amount_last_entry_date = None
 
         patched_input["display"] = "flex"
         return (
             barcode,
-            amount_last_entry,
+            amount_last_entry_value,
+            amount_last_entry_date
+            or functions.select_value(barcode, "lastchecked", functions.Inventory),
             *[
                 functions.select_value(barcode, x, functions.Inventory)
                 for x in [
@@ -197,7 +202,6 @@ def get_callbacks(app):
                     "concentration",
                     "molarmass",
                     "solvent",
-                    "lastchecked",
                     "zvg",
                 ]
             ],
@@ -213,6 +217,7 @@ def get_callbacks(app):
         Output("notifications", "sendNotifications"),
         Output("wrapper_sparkline_amount", "hidden", allow_duplicate=True),
         Output("sparkline_amount", "data", allow_duplicate=True),
+        Output("cache_amount", "data", allow_duplicate=True),
         Input("btn_save_entry", "n_clicks"),
         State("input_name", "value"),
         State("input_barcode", "value"),
@@ -231,6 +236,7 @@ def get_callbacks(app):
         State("input_lastchecked", "value"),
         State("input_zvg", "value"),
         State("cache_settings", "data"),
+        State("cache_amount", "data"),
     )
     def save_entry(
         n_clicks: int,
@@ -251,6 +257,7 @@ def get_callbacks(app):
         lastchecked: str | None,
         zvg: str | None,
         cache_settings_json: str,
+        cache_amount_json: str | None,
     ) -> tuple:
         """Save every entry to the database and refresh ``main_table`` once ``btn_save_entry`` is clicked
 
@@ -272,10 +279,11 @@ def get_callbacks(app):
             unit_id (str | int | None):
             lastchecked (str | None):
             zvg (str | None):
-            cache_settings (str): cache used for the settings
+            cache_settings_json (str): cache used for the settings
+            cache_amount_json (str | None): cache used to store the amount history
 
         Returns:
-            tuple: 4 Outputs
+            tuple: 5 Outputs
         """
 
         # In case the fields are empty or "", set them to 0
@@ -287,6 +295,11 @@ def get_callbacks(app):
             room_id = 0
         if unit_id == None or "":
             unit_id = 0
+
+        if cache_amount_json is None:
+            cache_amount = None
+        else:
+            cache_amount = json.loads(cache_amount_json)
 
         messages = [
             dict(
@@ -362,12 +375,18 @@ def get_callbacks(app):
                 )
             )
 
-        # Load all entries for the amount and put in the new amount, if it is unequal to the last amount
+        # Load all entries for the amount and put in the new amount
+        if cache_amount:
+            cache_amount = {
+                i["date"]: [i[i18n.get("Amount")], i["unit"]]
+                for i in cache_amount["new"]
+            }
         amount_history = functions.append_amount(
             barcode,
             lastchecked,
             amount,
             functions.get_unit(int(unit_id)),
+            cache_amount,
         )
 
         hide_sparkline = True
@@ -422,7 +441,7 @@ def get_callbacks(app):
 
         df = functions.get_main_table()
 
-        return (df.to_dict("records"), messages, hide_sparkline, amount_data)
+        return (df.to_dict("records"), messages, hide_sparkline, amount_data, None)
 
     @app.callback(
         Output("main_table", "rowData", allow_duplicate=True),

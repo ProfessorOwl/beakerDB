@@ -533,7 +533,7 @@ def get_main_table(is_archived: bool = False) -> pd.DataFrame:
     """Returns the data for the main table via sql. ``is_archived`` filters for entries where column ``archived`` is ``True``
 
     Args:
-        is_archived (bool, optional): When set to ``True``, filters for entries where column ``archived`` is ``True`` . Defaults to False.
+        is_archived (bool, optional): When set to ``True``, filters for entries where column ``archived`` is ``True``. Defaults to ``False``.
     """
 
     def query(is_archived: int):
@@ -598,28 +598,35 @@ def backup_db() -> None:
 
 
 def append_amount(
-    barcode: str, date: str | None, amount: str | None, unit: str
+    barcode: str,
+    date: str | None,
+    amount: str | None,
+    unit: str,
+    cache: dict | None = None,
 ) -> str | None:
     """Append ``amount`` with its ``date`` and unit to the list of amounts saved in an entry of the main table with id ``barcode``. This function doesn`t actually save the amount to the sql database.
 
     Args:
-        barcode (str): barcode of the id retrieve the amount history from and append ``amount`` to
+        barcode (str ): barcode of the id retrieve the amount history from and append ``amount`` to
         date (str | None): the date on which the amount was recorded
         amount (str | None): amount of the entry
         unit (str): unit of the amount
+        cache (dict | None): optional dict to append to instead of searching the database for its barcode. Defaults to ``None``
 
     Returns:
         str | None: json encoded, actually a list containg a sequence of lists with the first the date on index 0 and amount on index 1
     """
-
-    history_raw = select_value(barcode, "amount", Inventory)
+    if cache is None:
+        history_raw = select_value(barcode, "amount", Inventory)
+    else:
+        history_raw = json.dumps(cache)
 
     # When the amount field is empty, keep the amount history intact
     if amount == None or amount == "":
         return history_raw or ""
 
     # If date == None (e.g. when deleting the date with the cross symbol) date will be set to string "null"
-    # Unify this case with a manually deleted date
+    # To unify this case with a manually deleted date, set it to an empty string
     if date == None:
         date = ""
 
@@ -634,13 +641,12 @@ def append_amount(
         history.update({date: [amount, unit]})
 
         # Sort history by keys
-        print("history", history)
         history = dict(sorted(history.items()))
         history = json.dumps(history)
-
     else:
         history = {date: [amount, unit]}
         history = json.dumps(history)
+
     return history
 
 
