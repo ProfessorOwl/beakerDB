@@ -1413,9 +1413,11 @@ def get_callbacks(app):
         Output("modal_input_room", "data"),
         Input("btn_masterdata_save", "n_clicks"),
         Input("btn_save_entry", "n_clicks"),
+        prevent_initial_call=False,
     )
     def update_fields_from_masterdata(
-        n_clicks_masterdata: int, n_clicks_save: int
+        n_clicks_masterdata: int,
+        n_clicks_save: int,
     ) -> tuple:
         """After saving the masterdata, update every select component that depends on its data (database_search, units, manufacturers, suppliers and rooms).
 
@@ -1427,48 +1429,46 @@ def get_callbacks(app):
             tuple: 10 Outputs
         """
 
-        if ctx.triggered_id == "btn_masterdata_save":
+        if ctx.triggered_id == "btn_save_entry":
             return (
                 functions.generate_select_data_search(),
-                functions.generate_select_data(
-                    functions.Units,
-                    ["unit_id", "unit"],
-                ),
-                functions.generate_select_data(
-                    functions.Manufacturers, ["manufacturer_id", "manufacturer"]
-                ),
-                functions.generate_select_data(
-                    functions.Suppliers, ["supplier_id", "supplier"]
-                ),
-                functions.generate_select_data_rooms(),
+                no_update,
+                no_update,
+                no_update,
+                no_update,
                 functions.generate_select_data_search(),
-                functions.generate_select_data(
-                    functions.Units,
-                    ["unit_id", "unit"],
-                ),
-                functions.generate_select_data(
-                    functions.Manufacturers, ["manufacturer_id", "manufacturer"]
-                ),
-                functions.generate_select_data(
-                    functions.Suppliers, ["supplier_id", "supplier"]
-                ),
-                functions.generate_select_data_rooms(),
+                no_update,
+                no_update,
+                no_update,
+                no_update,
             )
         else:
             return (
                 functions.generate_select_data_search(),
-                no_update,
-                no_update,
-                no_update,
-                no_update,
+                functions.generate_select_data(
+                    functions.Units,
+                    ["unit_id", "unit"],
+                ),
+                functions.generate_select_data(
+                    functions.Manufacturers, ["manufacturer_id", "manufacturer"]
+                ),
+                functions.generate_select_data(
+                    functions.Suppliers, ["supplier_id", "supplier"]
+                ),
+                functions.generate_select_data_rooms(),
                 functions.generate_select_data_search(),
-                no_update,
-                no_update,
-                no_update,
-                no_update,
+                functions.generate_select_data(
+                    functions.Units,
+                    ["unit_id", "unit"],
+                ),
+                functions.generate_select_data(
+                    functions.Manufacturers, ["manufacturer_id", "manufacturer"]
+                ),
+                functions.generate_select_data(
+                    functions.Suppliers, ["supplier_id", "supplier"]
+                ),
+                functions.generate_select_data_rooms(),
             )
-
-    #!SECTION
 
     # Initialize the script for the barcode scanner, which discerns between normal keyboard input and typed input.
     clientside_callback(
@@ -2066,6 +2066,7 @@ def get_callbacks(app):
         Output("chart_amount", "data"),
         Output("amount_history_table", "rowData"),
         Output("cache_amount", "data", allow_duplicate=True),
+        Output("amount_history_table", "columnDefs"),
         Input("wrapper_sparkline_amount", "n_clicks"),
         State("cache_amount", "data"),
         State("main_table", "selectedRows"),
@@ -2094,11 +2095,32 @@ def get_callbacks(app):
 
         row_data_sorted = sorted(row_data, key=lambda i: i["date"], reverse=True)
 
+        amount_history_table_column_defs = Patch()
+        amount_history_table_column_defs[-1].update(
+            {
+                "cellEditorParams": {
+                    "component": dmc.Select(
+                        data=functions.generate_select_data(
+                            functions.Units,
+                            [
+                                "unit",
+                                "unit",
+                            ],
+                        ),
+                        variant="unstyled",
+                        bd=0,
+                        pl=15,
+                    ),
+                }
+            }
+        )
+
         return (
             True,
             row_data,
             row_data_sorted,
             json.dumps({"old": row_data_sorted, "new": row_data_sorted}),
+            amount_history_table_column_defs,
         )
 
     @app.callback(
@@ -2109,7 +2131,7 @@ def get_callbacks(app):
         Output("sparkline_amount", "data", allow_duplicate=True),
         Output("cache_amount", "data", allow_duplicate=True),
         Output("amount_history_text", "children"),
-        Output("amount_history_table", "columnDefs"),
+        Output("amount_history_table", "columnDefs", allow_duplicate=True),
         Output("amount_history_btn_add", "disabled"),
         Output("tooltip_amount_history_btn_add", "display"),
         Input("amount_history_btn_delete", "n_clicks"),
