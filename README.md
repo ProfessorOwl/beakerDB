@@ -15,10 +15,11 @@
 - **Archive** chemicals that where sorted out or are empty, to keep a well documented history of all chemicals
 - Connect chemicals with a **safety sheet** from [GESTIS](https://gestis-database.dguv.de/)
 - Manage **masterdata** to keep your suppliers, manufacturers, rooms and buildings in order
+- **Track usage** of your chemicals using an editable usage history in a graph and a table 
 
 ## Installation
 
-*beakerDB* is a python application that runs a local webserver under `http://localhost:8050/` by default.
+*beakerDB* is a Python application that runs a local webserver under `http://localhost:8050/` by default.
 
 ### Disclaimer
 Because it was originally developed for a german group, the server starts by default in german. This can be changed temporarily by running the server as
@@ -52,3 +53,22 @@ or permanently by changing `LANG` in [`default_values.py`](https://github.com/Pr
     python init.py -h
     ```
 5. You can access the server under `http://localhost:8050`.
+
+## Updating
+If you already have a running system of *beakerDB* you can update it by downloading the [latest release](https://github.com/ProfessorOwl/beakerDB/releases/latest) and extracting it into your existing installation.
+
+> [!CAUTION]
+> Do not delete the whole folder of your existing installation, just replace the files inside.
+> Otherwise your database and all its backups will be lost!
+
+Don't forget to update the installed packages of your virtual environments, as these can change in a new release. Open a terminal and move into your install directory. Then execute the following code:
+- macOS/Linux:
+    ```bash
+    source .venv/bin/activate
+    pip install -r requirements.txt
+    ```
+- Windows:
+    ```bash
+    .\.venv\Scripts\Activate.ps1
+    pip install -r requirements.txt
+    ```
