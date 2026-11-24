@@ -778,6 +778,7 @@ modal_masterdata = dmc.Stack(
                             id="btn_masterdata_delete_row",
                             rightSection=DashIconify(icon=icons.delete, height=20),
                             color="red",
+                            disabled=True,
                         ),
                         comp.ButtonClicks(
                             i18n.get("Add row"),

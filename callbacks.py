@@ -1128,8 +1128,11 @@ def get_callbacks(app):
             bool: _description_
         """
 
-        if selected_rows:
+        if selected_rows and selected_rows != []:
             selected_row = selected_rows[0]
+        else:
+            return True
+
         first_column_name = column_defs[0].get("field")
         selected_row_id = selected_row.get(first_column_name)
 
