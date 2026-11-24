@@ -16,7 +16,7 @@
 "Save database?": "Datenbank speichern?"
 "Should a backup of the open database be created?": "Soll ein Backup der geöffneten Datenbank erstellt werden?"
 "Date change": "Datumsänderung"
-"Determines whether the \"Last checked\" field is automatically set to today when creating or editing entries.": 'Bestimmt, ob das Feld "Zuletzt geprüft" beim Erstellen oder Ändern von Einträgen automatisch auf den heutigen Tag gesetzt wird.'
+"Determines whether the \"Last inspection\" field is automatically set to today when creating or editing entries.": 'Bestimmt, ob das Feld "Zuletzt geprüft" beim Erstellen oder Ändern von Einträgen automatisch auf den heutigen Tag gesetzt wird.'
 "Frequency of local backups": "Häufigkeit lokaler Backups"
 "Defines how often a local backup is created.": "Legt fest, wie oft ein lokales Backup erstellt wird."
 "never": "Nie"
@@ -57,7 +57,7 @@
 "Purity": "Reinheit"
 "Concentration": "Konzentration"
 "Solvent": "Lösungsmittel"
-"Last checked": "Zuletzt geprüft"
+"Last inspection": "Zuletzt geprüft"
 "Cancel": "Abbrechen"
 "Reset changes": "Änderungen zurücksetzen"
 "Save changes": "Änderungen speichern"
@@ -93,7 +93,7 @@
 "The entry ${barcode} was archived.": "Der Eintrag ${barcode} wurde archiviert."
 "Put in Archive": "Archivieren"
 "None": "Ohne"
-"The check date of the entry was set to today": "Das Prüfdatum des Eintrages wurde auf den heutigen Tag gesetzt."
+"The inspection date of the entry was set to today": "Das Prüfdatum des Eintrages wurde auf den heutigen Tag gesetzt."
 "Barcode cannot be empty": "Barcode darf nicht leer sein"
 "Barcode is already used": "Barcode ist bereits vergeben"
 "New entry saved!": "Neuen Eintrag gespeichert!"

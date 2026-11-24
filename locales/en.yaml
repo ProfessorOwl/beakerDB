@@ -16,7 +16,7 @@
 "Save database?": "Save database?"
 "Should a backup of the open database be created?": "Should a backup of the open database be created?"
 "Date change": "Date change"
-"Determines whether the \"Last checked\" field is automatically set to today when creating or editing entries.": 'Determines whether the "Last checked" field is automatically set to today when creating or editing entries.'
+"Determines whether the \"Last inspection\" field is automatically set to today when creating or editing entries.": 'Determines whether the "Last inspection" field is automatically set to today when creating or editing entries.'
 "Frequency of local backups": "Frequency of local backups"
 "Defines how often a local backup is created.": "Defines how often a local backup is created."
 "never": "Never"
@@ -57,7 +57,7 @@
 "Purity": "Purity"
 "Concentration": "Concentration"
 "Solvent": "Solvent"
-"Last checked": "Last checked"
+"Last inspection": "Last inspection"
 "Cancel": "Cancel"
 "Reset changes": "Reset changes"
 "Save changes": "Save changes"
@@ -93,7 +93,7 @@
 "The entry ${barcode} was archived.": "The entry ${barcode} was archived."
 "Put in Archive": "Put in Archive"
 "None": "None"
-"The check date of the entry was set to today": "The check date of the entry was set to today"
+"The inspection date of the entry was set to today": "The inspection date of the entry was set to today"
 "Barcode cannot be empty": "Barcode cannot be empty"
 "Barcode is already used": "Barcode is already used"
 "New entry saved!": "New entry saved!"

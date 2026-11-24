@@ -122,7 +122,7 @@ left_window = html.Div(
                 },
                 {
                     "field": "lastchecked",
-                    "headerName": i18n.get("Last checked"),
+                    "headerName": i18n.get("Last inspection"),
                     "sortable": True,
                     "filter": "agTextColumnFilter",
                 },
@@ -360,7 +360,7 @@ right_window = [
                                 ),
                                 comp.DateInput(
                                     "input_lastchecked",
-                                    i18n.get("Last checked"),
+                                    i18n.get("Last inspection"),
                                     "btn_lastchecked_today",
                                 ),
                             ],
@@ -668,7 +668,7 @@ modal_new_entry = dmc.Stack(
                                     ),
                                     comp.DateInput(
                                         "modal_input_lastchecked",
-                                        i18n.get("Last checked"),
+                                        i18n.get("Last inspection"),
                                         "modal_btn_lastchecked_today",
                                     ),
                                 ],
@@ -901,7 +901,7 @@ modal_settings = dmc.Stack(
                             dmc.Title(i18n.get("Date change"), order=4),
                             dmc.Text(
                                 i18n.get(
-                                    'Determines whether the "Last checked" field is automatically set to today when creating or editing entries.'
+                                    'Determines whether the "Last inspection" field is automatically set to today when creating or editing entries.'
                                 )
                             ),
                             dmc.Select(

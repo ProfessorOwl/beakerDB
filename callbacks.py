@@ -362,7 +362,9 @@ def get_callbacks(app):
             messages.append(
                 dict(
                     title=i18n.get("Warning!"),
-                    message=i18n.get("The check date of the entry was set to today"),
+                    message=i18n.get(
+                        "The inspection date of the entry was set to today"
+                    ),
                     id=str(uuid.uuid4()),
                     action="show",
                     icon=DashIconify(
