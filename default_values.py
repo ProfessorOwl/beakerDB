@@ -2,7 +2,7 @@ from pathlib import Path
 import json
 import datetime as dt
 
-VERSION = "v1.1.6"
+VERSION = "v1.1.7"
 
 
 DEFAULT_SETTINGS = json.loads(Path("default_settings.json").read_bytes())

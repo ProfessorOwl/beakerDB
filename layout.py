@@ -1277,7 +1277,7 @@ mantine_provider = dmc.MantineProvider(
                 dmc.GridCol(right_window, span=4),
             ],
             id="wrapper_main",
-            gutter=0,
+            gap=0,
         ),
         dmc.Modal(
             modal_new_entry,
