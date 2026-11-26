@@ -1,4 +1,4 @@
-from dash import Dash
+from dash import Dash, _dash_renderer
 
 import waitress
 
@@ -9,6 +9,8 @@ functions.init_app(args.language)
 
 # Construct the server of the database. Cannot import from layout before the app is not safely initialized
 from layout import mantine_provider
+
+_dash_renderer._set_react_version("19.2.4")
 
 app = Dash(__name__)
 app.__init__(prevent_initial_callbacks=True)

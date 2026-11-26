@@ -533,7 +533,7 @@ def get_main_table(is_archived: bool = False) -> pd.DataFrame:
     """Returns the data for the main table via sql. ``is_archived`` filters for entries where column ``archived`` is ``True``
 
     Args:
-        is_archived (bool, optional): When set to ``True``, filters for entries where column ``archived`` is ``True`` . Defaults to False.
+        is_archived (bool, optional): When set to ``True``, filters for entries where column ``archived`` is ``True``. Defaults to ``False``.
     """
 
     def query(is_archived: int):
@@ -597,35 +597,61 @@ def backup_db() -> None:
     shutil.copy(src_path, dest_path)
 
 
-def append_amount(barcode: str, date: str | None, amount: str | None) -> str | None:
-    """Append ``amount`` with its ``date`` to the list of amounts saved in an entry of the main table with id ``barcode``. This function doesn`t save the amount to the sql database.
+def append_amount(
+    barcode: str,
+    date: str | None,
+    amount: str | None,
+    unit: str,
+    cache: dict | None = None,
+) -> str | None:
+    """Append ``amount`` with its ``date`` and unit to the list of amounts saved in an entry of the main table with id ``barcode``. This function doesn`t actually save the amount to the sql database.
 
     Args:
-        barcode (str): barcode of the id retrieve the amount history from and append ``amount`` to
+        barcode (str ): barcode of the id retrieve the amount history from and append ``amount`` to
         date (str | None): the date on which the amount was recorded
         amount (str | None): amount of the entry
+        unit (str): unit of the amount
+        cache (dict | None): optional dict to append to instead of searching the database for its barcode. Defaults to ``None``
 
     Returns:
         str | None: json encoded, actually a list containg a sequence of lists with the first the date on index 0 and amount on index 1
     """
+    if cache is None:
+        history_raw = select_value(barcode, "amount", Inventory)
+    else:
+        history_raw = json.dumps(cache)
 
-    amount_raw = select_value(barcode, "amount", Inventory)
+    # When the amount field is empty, keep the amount history intact
+    if amount == None or amount == "":
+        return history_raw or ""
 
-    if len(amount_raw or []) != 0 and amount_raw:
-        history = json.loads(amount_raw)
-        if [date, amount] != history[-1]:
-            history.append([date, amount])
-        history = json.dumps(history)
-    elif amount:
-        history = [[date, amount]]
+    # If date == None (e.g. when deleting the date with the cross symbol) date will be set to string "null"
+    # To unify this case with a manually deleted date, set it to an empty string
+    if date == None:
+        date = ""
+
+    if len(history_raw or []) != 0:
+        history = json.loads(history_raw)
+
+        # Check if history is still in list format of v1.0.2
+        # If so, convert it to the new format
+        if isinstance(history, list):
+            history = {i[0]: [i[1], i[2] if len(i) > 2 else ""] for i in tuple(history)}
+
+        history.update({date: [amount, unit]})
+
+        # Sort history by keys
+        history = dict(sorted(history.items()))
         history = json.dumps(history)
     else:
-        history = None
+        history = {date: [amount, unit]}
+        history = json.dumps(history)
+
     return history
 
 
 def get_amount_chart_data(barcode: str) -> list[dict]:
-    """Returns the history of amount data for a ``dmc.LineChart`` component
+    """Returns the history of amount data for a ``dmc.LineChart`` component sorted by date
 
     Args:
         barcode (str): barcode of the entry to retrieve the amount from
@@ -634,15 +660,42 @@ def get_amount_chart_data(barcode: str) -> list[dict]:
         list[dict]: list of dicts containing each a date and amount to plot in the chart.
             Note that the amount is internationalised, so that it displays in the correct language.
     """
-
     with Session(engine) as session:
         stmt = select(Inventory.amount).where(Inventory.barcode == barcode)
-        amount = json.loads(session.scalars(stmt).one_or_none() or "")
+        amount_history = json.loads(session.scalars(stmt).one_or_none() or "")
 
-    data = [{"date": i[0], i18n.get("Amount"): i[1]} for i in amount]
+    if isinstance(amount_history, list):
+        data = [
+            {"date": i[0], i18n.get("Amount"): i[1], "unit": i[2] if len(i) > 2 else ""}
+            for i in amount_history
+        ]
+    else:
+        data = [
+            {"date": k, i18n.get("Amount"): v[0], "unit": v[1]}
+            for k, v in amount_history.items()
+        ]
+
     data.sort(key=lambda i: i["date"])
-
     return data
+
+
+def get_unit(id: int) -> str:
+    """Returns the unit corresponding to ``id``
+
+    Args:
+        id (int): the id of the unit to search for
+
+    Returns:
+        str: the name of the unit with id ``id``
+    """
+    with Session(engine) as session:
+        stmt = select(Units.unit).where(Units.unit_id == id)
+        item = session.scalars(stmt).one_or_none()
+        session.close()
+    if item is None:
+        return ""
+    else:
+        return str(item)
 
 
 def system_key() -> dmc.Kbd:

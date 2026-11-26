@@ -66,7 +66,7 @@ left_window = html.Div(
                             hiddenFrom="lg",
                         ),
                         dmc.Tooltip(
-                            dmc.ActionIcon(
+                            comp.ActionIconClicks(
                                 DashIconify(
                                     icon=icons.archive,
                                     height=24,
@@ -79,7 +79,7 @@ left_window = html.Div(
                             label=i18n.get("Archive"),
                         ),
                         dmc.Tooltip(
-                            dmc.ActionIcon(
+                            comp.ActionIconClicks(
                                 DashIconify(
                                     icon=icons.settings,
                                     height=24,
@@ -122,7 +122,7 @@ left_window = html.Div(
                 },
                 {
                     "field": "lastchecked",
-                    "headerName": i18n.get("Last checked"),
+                    "headerName": i18n.get("Last inspection"),
                     "sortable": True,
                     "filter": "agTextColumnFilter",
                 },
@@ -193,7 +193,7 @@ right_window = [
                             [
                                 dmc.PopoverTarget(
                                     dmc.Tooltip(
-                                        dmc.ActionIcon(
+                                        comp.ActionIconClicks(
                                             DashIconify(
                                                 icon=icons.search_database,
                                                 height=24,
@@ -222,7 +222,7 @@ right_window = [
                                             ),
                                             dmc.GridCol(
                                                 dmc.Tooltip(
-                                                    dmc.ActionIcon(
+                                                    comp.ActionIconClicks(
                                                         DashIconify(
                                                             icon=icons.download,
                                                             height=24,
@@ -360,7 +360,7 @@ right_window = [
                                 ),
                                 comp.DateInput(
                                     "input_lastchecked",
-                                    i18n.get("Last checked"),
+                                    i18n.get("Last inspection"),
                                     "btn_lastchecked_today",
                                 ),
                             ],
@@ -473,7 +473,7 @@ right_window = [
                         flex=1,
                     ),
                     dmc.Tooltip(
-                        dmc.ActionIcon(
+                        comp.ActionIconClicks(
                             DashIconify(icon=icons.delete, color="#fff", height=20),
                             id="btn_delete_entry",
                             color="red",
@@ -527,7 +527,7 @@ modal_new_entry = dmc.Stack(
                 [
                     dmc.PopoverTarget(
                         dmc.Tooltip(
-                            dmc.ActionIcon(
+                            comp.ActionIconClicks(
                                 DashIconify(
                                     icon=icons.search_database,
                                     height=24,
@@ -554,7 +554,7 @@ modal_new_entry = dmc.Stack(
                                 ),
                                 dmc.GridCol(
                                     dmc.Tooltip(
-                                        dmc.ActionIcon(
+                                        comp.ActionIconClicks(
                                             DashIconify(
                                                 icon=icons.download,
                                                 height=24,
@@ -668,7 +668,7 @@ modal_new_entry = dmc.Stack(
                                     ),
                                     comp.DateInput(
                                         "modal_input_lastchecked",
-                                        i18n.get("Last checked"),
+                                        i18n.get("Last inspection"),
                                         "modal_btn_lastchecked_today",
                                     ),
                                 ],
@@ -778,6 +778,7 @@ modal_masterdata = dmc.Stack(
                             id="btn_masterdata_delete_row",
                             rightSection=DashIconify(icon=icons.delete, height=20),
                             color="red",
+                            disabled=True,
                         ),
                         comp.ButtonClicks(
                             i18n.get("Add row"),
@@ -804,7 +805,7 @@ modal_masterdata = dmc.Stack(
                 "theme": {"function": "themeQuartz.withParams({fontFamily: 'Lexend'})"},
                 "suppressScrollOnNewData": True,
                 "suppressFieldDotNotation": True,
-                "rowSelection": {  # Aktiviere das Auswählen von Zeilen
+                "rowSelection": {
                     "mode": "singleRow",
                     "enableClickSelection": True,
                     "checkboxes": False,
@@ -900,7 +901,7 @@ modal_settings = dmc.Stack(
                             dmc.Title(i18n.get("Date change"), order=4),
                             dmc.Text(
                                 i18n.get(
-                                    'Determines whether the "Last checked" field is automatically set to today when creating or editing entries.'
+                                    'Determines whether the "Last inspection" field is automatically set to today when creating or editing entries.'
                                 )
                             ),
                             dmc.Select(
@@ -1036,16 +1037,158 @@ modal_confirm_backup = dmc.Stack(
     ]
 )
 
-modal_linechart_amount = dmc.Stack(
+modal_linechart_amount = dmc.Grid(
     [
-        dmc.Title(i18n.get("Fill levels"), order=2),
-        dmc.LineChart(
-            id="chart_amount",
-            curveType="linear",
-            dataKey="date",
-            series=[{"name": i18n.get("Amount"), "color": "indigo"}],
-            data=[],
-            h=300,
+        dmc.GridCol(
+            dmc.Stack(
+                [
+                    dmc.Title(i18n.get("History"), order=2),
+                    dmc.LineChart(
+                        id="chart_amount",
+                        curveType="monotone",
+                        dataKey="date",
+                        series=[{"name": i18n.get("Amount"), "color": "indigo"}],
+                        lineProps={
+                            "isAnimationActive": True,
+                            "animationDuration": 300,
+                            "animationEasing": "ease-in-out",
+                            "animationBegin": 200,
+                        },
+                        data=[],
+                        h=400,
+                    ),
+                ]
+            ),
+            span=7,
+        ),
+        dmc.GridCol(
+            dmc.Stack(
+                [
+                    dmc.Group(
+                        [
+                            comp.ButtonClicks(
+                                i18n.get("Add row"),
+                                id="amount_history_btn_add",
+                                rightSection=DashIconify(icon=icons.add, height=20),
+                            ),
+                            dmc.Tooltip(
+                                target="#amount_history_btn_add",
+                                id="tooltip_amount_history_btn_add",
+                                label=i18n.get(
+                                    "You cannot add new rows if the table contains a blank row or two rows with an empty date."
+                                ),
+                                display="none",
+                                multiline=True,
+                                w=250,
+                            ),
+                            comp.ButtonClicks(
+                                i18n.get("Reset changes"),
+                                id="amount_history_btn_reset",
+                                color="grey",
+                                rightSection=DashIconify(icon=icons.refresh, height=20),
+                            ),
+                            comp.ActionIconClicks(
+                                DashIconify(icon=icons.delete, height=20),
+                                id="amount_history_btn_delete",
+                                color="red",
+                                h=36,
+                                w=36,
+                            ),
+                        ],
+                        justify="flex-end",
+                    ),
+                    dag.AgGrid(
+                        id="amount_history_table",
+                        dashGridOptions={
+                            "theme": {
+                                "function": "themeQuartz.withParams({fontFamily: 'Lexend'})"
+                            },
+                            "autoSizeStrategy": {
+                                "type": "fitCellContents",
+                                "scaleUpToFitGridWidth": True,
+                            },
+                            "suppressScrollOnNewData": True,
+                            "suppressFieldDotNotation": True,
+                            "rowSelection": {
+                                "mode": "singleRow",
+                                "enableClickSelection": True,
+                                "checkboxes": False,
+                            },
+                        },
+                        defaultColDef={"editable": True},
+                        columnDefs=[
+                            {
+                                "field": "date",
+                                "sortable": True,
+                                "headerName": i18n.get("Date"),
+                                "cellEditor": {
+                                    "function": "AllFunctionalComponentEditors"
+                                },
+                                "cellEditorParams": {
+                                    "component": dmc.DateInput(
+                                        valueFormat="YYYY-MM-DD",
+                                        firstDayOfWeek=1,
+                                        monthLabelFormat="MMMM",
+                                        monthsListFormat="MMM",
+                                        weekdayFormat="dd",
+                                        highlightToday=True,
+                                        clearable=True,
+                                    ),
+                                },
+                                # cellEditorPopup: True is mandatory so that the selector doesn't clip the cell
+                                "cellEditorPopup": True,
+                            },
+                            {
+                                "field": i18n.get("Amount"),
+                                "sortable": True,
+                                "cellEditor": {
+                                    "function": "AllFunctionalComponentEditors"
+                                },
+                                "cellEditorParams": {
+                                    "component": dmc.NumberInput(
+                                        decimalSeparator=",",
+                                        allowNegative=False,
+                                        allowedDecimalSeparators=[",", "."],
+                                        hideControls=True,
+                                        variant="unstyled",
+                                        bg="rgba(255, 255, 255, 0)",
+                                        bd=0,
+                                        px=15,
+                                    ),
+                                },
+                            },
+                            {
+                                "field": "unit",
+                                "sortable": True,
+                                "headerName": i18n.get("Unit"),
+                                "cellEditor": {
+                                    "function": "AllFunctionalComponentEditors"
+                                },
+                                "cellEditorParams": {
+                                    "component": dmc.Select(
+                                        data=functions.generate_select_data(
+                                            functions.Units,
+                                            [
+                                                "unit",
+                                                "unit",
+                                            ],
+                                        ),
+                                        variant="unstyled",
+                                        bd=0,
+                                        pl=15,
+                                    ),
+                                },
+                            },
+                        ],
+                    ),
+                    dmc.Text(
+                        id="amount_history_text",
+                        c="var(--mantine-color-error)",
+                        h=100,
+                    ),
+                ]
+            ),
+            span=5,
         ),
     ]
 )
@@ -1099,6 +1242,7 @@ modal_confirm_delete = dmc.Stack(
 
 mantine_provider = dmc.MantineProvider(
     [
+        dcc.Store(id="cache_amount"),
         dcc.Store(id="cache_masterdata"),
         dcc.Store(id="cache_settings", storage_type="local"),
         dcc.Store(id="cache_current_database"),
@@ -1133,7 +1277,7 @@ mantine_provider = dmc.MantineProvider(
                 dmc.GridCol(right_window, span=4),
             ],
             id="wrapper_main",
-            gutter=0,
+            gap=0,
         ),
         dmc.Modal(
             modal_new_entry,
